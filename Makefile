@@ -8,7 +8,7 @@ PKGREL=2
 KREL=2
 
 KERNEL_SRC=ubuntu-zesty
-KERNELSRCTAR=${KERNEL_SRC}.tgz
+KERNEL_SRC_SUBMODULE=submodules/ubuntu-zesty
 
 EXTRAVERSION=-${KREL}-pve
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
@@ -66,9 +66,9 @@ HPSASRC=${HPSADIR}-140.tar.bz2
 #RR272XDIR=rr272x_1x-linux-src-v1.5
 
 SPLDIR=pkg-spl
-SPLSRC=pkg-spl.tar.gz
+SPLSRC=submodules/zfs/pkg-spl.tar.gz
 ZFSDIR=pkg-zfs
-ZFSSRC=pkg-zfs.tar.gz
+ZFSSRC=submodules/zfs/pkg-zfs.tar.gz
 ZFS_MODULES=zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko
 SPL_MODULES=spl.ko splat.ko
 
@@ -119,14 +119,6 @@ ${VIRTUAL_HDR_DEB} pve-headers: proxmox-ve/pve-headers.control
 	install -m 0644 proxmox-ve/changelog.Debian proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}
 	gzip -n --best proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/changelog.Debian
 	dpkg-deb --build proxmox-ve/data ${VIRTUAL_HDR_DEB}
-
-# see https://wiki.ubuntu.com/Kernel/Dev/KernelGitGuide
-.PHONY: download
-download:
-	rm -rf ${KERNEL_SRC} ${KERNELSRCTAR}
-	#git clone git://kernel.ubuntu.com/ubuntu/ubuntu-vivid.git
-	git clone --single-branch -b Ubuntu-4.10.0-13.15 git://kernel.ubuntu.com/ubuntu/ubuntu-zesty.git ${KERNEL_SRC}
-	tar czf ${KERNELSRCTAR} --exclude .git ${KERNEL_SRC} 
 
 check_gcc: 
 ifeq    ($(CC), cc)
@@ -244,9 +236,9 @@ PVE_CONFIG_OPTS= \
 	make -C ${KERNEL_SRC}/tools/perf man
 	touch $@
 
-${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNELSRCTAR} 
+${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	rm -rf ${KERNEL_SRC}
-	tar xf ${KERNELSRCTAR}
+	cp -a ${KERNEL_SRC_SUBMODULE} ${KERNEL_SRC}
 	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/amd64/config.common.amd64 ${KERNEL_SRC}/debian.master/config/amd64/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cd ${KERNEL_SRC}; patch -p1 < ../uname-version-timestamp.patch
 	cd ${KERNEL_SRC}; patch -p1 <../bridge-patch.diff
@@ -447,6 +439,17 @@ upload: ${DEBS}
 .PHONY: distclean
 distclean: clean
 	rm -rf linux-firmware.git dvb-firmware.git ${KERNEL_SRC}.org 
+
+# upgrade to current master
+.PHONY: update_modules
+update_modules: submodules
+	git submodule foreach 'git pull --ff-only origin master'
+
+# make sure submodules were initialized
+.PHONY: submodules
+submodules ${SPLSRC} ${ZFSSRC}:
+	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init
+
 
 .PHONY: clean
 clean:
