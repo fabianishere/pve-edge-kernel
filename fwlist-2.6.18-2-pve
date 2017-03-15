@@ -1,0 +1,5 @@
+rt2661.bin kernel/drivers/net/wireless/rt2x00/rt61pci.ko
+rt2561s.bin kernel/drivers/net/wireless/rt2x00/rt61pci.ko
+rt2561.bin kernel/drivers/net/wireless/rt2x00/rt61pci.ko
+rt73.bin kernel/drivers/net/wireless/rt2x00/rt73usb.ko
+iwlwifi-4965-2.ucode kernel/drivers/net/wireless/iwlwifi/iwlagn.ko

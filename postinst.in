@@ -1,0 +1,25 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# Ignore all invocations except when called on to configure.
+exit 0 unless $ARGV[0] =~ /configure/;
+
+# do nothing if run from proxmox installer
+exit 0 if -e "/proxmox_install_mode";
+
+my $imagedir = "/boot";
+
+my $version = "@@KVNAME@@";
+
+system("depmod $version");
+
+if (-d "/etc/kernel/postinst.d") {
+  print STDERR "Examining /etc/kernel/postinst.d.\n";
+  system ("run-parts --verbose --exit-on-error --arg=$version " .
+          "--arg=$imagedir/vmlinuz-$version " .
+          "/etc/kernel/postinst.d") &&
+            die "Failed to process /etc/kernel/postinst.d";
+}
+
+exit 0

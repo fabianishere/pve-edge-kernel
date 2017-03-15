@@ -1,0 +1,81 @@
+#! /bin/sh
+
+# Abort if any command returns an error value 
+set -e 
+
+# This script is called as the last step of the installation of the 
+# package.  All the package's files are in place, dpkg has already
+# done its automatic conffile handling, and all the packages we depend
+# of are already fully installed and configured.
+
+# The following idempotent stuff doesn't generally need protecting 
+# against being run in the abort-* cases.
+
+case "$1" in
+  configure)
+    # Configure this package.  If the package must prompt the user for
+    # information, do it here.
+
+    # cleanup - remove Proxmox Release Key key from /etc/apt/trusted.gpg
+    /usr/bin/apt-key --keyring /etc/apt/trusted.gpg del 9887F95A >/dev/null 2>&1 || /bin/true
+
+    # cleanup - remove old stretch-incompatible variant of installing release key
+    rm -f /etc/apt/trusted.gpg.d/proxmox-ve.gpg /etc/apt/trusted.gpg.d/proxmox-ve.gpg~
+
+    # setup kernel links for installation CD (rescue boot)
+    mkdir -p /boot/pve
+    ln -sf /boot/vmlinuz-@KVNAME@ /boot/pve/vmlinuz
+    ln -sf /boot/initrd.img-@KVNAME@ /boot/pve/initrd.img
+    
+    # There are three sub-cases:
+    if test "${2+set}" != set; then
+      # We're being installed by an ancient dpkg which doesn't remember
+      # which version was most recently configured, or even whether
+      # there is a most recently configured version.
+      :
+
+    elif test -z "$2" -o "$2" = "<unknown>"; then
+      # The package has not ever been configured on this system, or was
+      # purged since it was last configured.
+      :
+
+    else
+      # Version $2 is the most recently configured version of this
+      # package.
+      :
+
+    fi ;;
+  abort-upgrade)
+    # Back out of an attempt to upgrade this package FROM THIS VERSION
+    # to version $2.  Undo the effects of "prerm upgrade $2".
+    :
+
+    ;;
+  abort-remove)
+    if test "$2" != in-favour; then
+      echo "$0: undocumented call to \`postinst $*'" 1>&2
+      exit 0
+    fi
+    # Back out of an attempt to remove this package, which was due to
+    # a conflict with package $3 (version $4).  Undo the effects of
+    # "prerm remove in-favour $3 $4".
+    :
+
+    ;;
+  abort-deconfigure)
+    if test "$2" != in-favour -o "$5" != removing; then
+      echo "$0: undocumented call to \`postinst $*'" 1>&2
+      exit 0
+    fi
+    # Back out of an attempt to deconfigure this package, which was
+    # due to package $6 (version $7) which we depend on being removed
+    # to make way for package $3 (version $4).  Undo the effects of
+    # "prerm deconfigure in-favour $3 $4 removing $6 $7".
+    :
+
+    ;;
+  *) echo "$0: didn't understand being called with \`$1'" 1>&2
+     exit 0;;
+esac
+
+exit 0

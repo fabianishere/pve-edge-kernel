@@ -1,0 +1,924 @@
+pve-kernel (4.10.1-2) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-13.15
+
+  * bump ABI to 4.10.1-2-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 10 Mar 2017 10:20:14 +0100
+
+pve-kernel (4.10.1-1) unstable; urgency=medium
+
+  * update to Ubuntu Zesty's 4.10.0-11.13 kernel
+
+  * update igb to 5.3.5.4
+
+  * update ixgbe to 5.0.4
+
+  * update e1000e to 3.3.5.3
+
+  * don't build DRBD9 anymore, pve-kernel now comes with mainline DRBD8
+
+  * drop intel_idle Atom Cedarview revert
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 3 Mar 2017 15:54:29 +0100
+
+pve-kernel (4.4.44-83) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-63.84
+
+  * add KVM RTC cherry-pick for Windows live-migration
+
+  * disable intel_idle for Atom N2000 series
+
+  * update DRBD 9 module to 9.0.6
+
+  * bump ABI to pve-kernel-4.4.44-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 1 Mar 2017 09:22:35 +0100
+
+pve-kernel (4.4.40-82) unstable; urgency=medium
+
+  * fix CVE-2017-6074: local root privilege escalation in dccp module
+
+  * fix #1276: include package version in uname information
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 23 Feb 2017 15:14:06 +0100
+
+pve-kernel (4.4.40-80) unstable; urgency=medium
+
+  * bump ABI to pve-kernel-4.4.40-1
+
+  * update ZFS/SPL sources to 0.6.5.9
+
+  * fix CVE-2017-2596: kvm: page reference leakage
+
+  * update to Ubuntu-4.4.0-62.83
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 8 Feb 2017 15:54:24 +0100
+
+pve-kernel (4.4.35-79) unstable; urgency=medium
+
+  * change default transparent hugepages setting to madvise
+
+  * revert buggy NVME commits (http://bugs.launchpad.net/bugs/1626894)
+
+  * fix CVE-2017-2583: potential DoS or privilege escalation in KVM guests
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 19 Jan 2017 14:43:35 +0100
+
+pve-kernel (4.4.35-78) unstable; urgency=medium
+
+  * revert OOM-commits causing premature OOM kills
+
+  * bump ABI to pve-kernel-4.4.35-2
+
+  * bump version to 4.4.35-78
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 9 Jan 2017 10:03:41 +0100
+
+pve-kernel (4.4.35-77) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-58.79
+
+  * add cpuset remap patch
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 22 Dec 2016 11:58:43 +0100
+
+pve-kernel (4.4.35-76) unstable; urgency=medium
+
+  * version bump for new 4.4. release
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 09 Dec 2016 11:22:21 +0100
+
+pve-kernel (4.4.35-75) unstable; urgency=medium
+
+  * cherry-pick fix for bn2x2 bridge issue (Ubuntu bug #1616107)
+
+  * fix CVE-2016-8655
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 6 Dec 2016 09:38:59 +0100
+
+pve-kernel (4.4.35-74) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-52.73
+
+  * update to DRBD 9.0.5-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 5 Dec 2016 10:19:19 +0100
+
+pve-kernel (4.4.30-73) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-51.72
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 30 Nov 2016 09:43:00 +0100
+
+pve-kernel (4.4.24-72) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-47.68
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 14 Nov 2016 12:16:54 +0100
+
+pve-kernel (4.4.21-71) unstable; urgency=medium
+
+  * fix zpool import hang with vdev on zvol
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 27 Oct 2016 09:17:26 +0200
+
+pve-kernel (4.4.21-70) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-45.66
+
+  * update ZFS/SPL to 0.6.5.8
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 20 Oct 2016 13:21:56 +0200
+
+pve-kernel (4.4.21-69) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-43.63
+
+  * fix #927: IPoIB performance regression
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 14 Oct 2016 08:59:12 +0200
+
+pve-kernel (4.4.21-68) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-42.62
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 13 Oct 2016 09:16:07 +0200
+
+pve-kernel (4.4.21-67) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-41.61
+
+  * bump API to 4.4.21-1-pve
+
+  * drop e31200_edac skylake support patch, applied upstream
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 10 Oct 2016 13:58:01 +0200
+
+pve-kernel (4.4.19-66) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-38.57
+
+  * bump API to 4.4.19-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 14 Sep 2016 13:22:45 +0200
+
+pve-kernel (4.4.16-65) unstable; urgency=medium
+
+  * update drbd to 9.0.4-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 07 Sep 2016 17:27:10 +0200
+
+pve-kernel (4.4.16-64) unstable; urgency=medium
+
+  * sd: Fix rw_max for devices that report an optimal xfer size
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 31 Aug 2016 14:42:18 +0200
+
+pve-kernel (4.4.16-63) unstable; urgency=medium
+
+  * bump deb release to -63 for proxmox-ve package update
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 29 Aug 2016 12:08:09 +0200
+
+pve-kernel (4.4.16-62) unstable; urgency=medium
+
+  * watchdog: mei_wdt: implement MEI iAMT watchdog driver
+
+  * update e1000e to 3.3.5
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 25 Aug 2016 11:03:48 +0200
+
+pve-kernel (4.4.16-61) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-36.55
+
+  * bump API to 4.4.16-1-pve
+
+  * drop ceph-scheduler-fix.patch (applied upstream)
+
+  * EDAC, ie31200_edac: Add Skylake support
+
+  * update igb to 5.3.5.3
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 24 Aug 2016 15:08:27 +0200
+
+pve-kernel (4.4.15-60) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-33.52
+
+  * drop CVE fixes applied upstream
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 25 Jul 2016 09:03:35 +0200
+
+pve-kernel (4.4.13-59) unstable; urgency=medium
+
+  * fix a divide by zero bug with load average calculation in the scheduler on
+    dual processor systems (ceph-scheduler-fix.patch)
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 25 Jul 2016 08:22:03 +0200
+
+pve-kernel (4.4.13-58) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-31.50
+
+  * bump API to 4.4.13-2-pve
+
+  * update drbd to 9.0.3-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 15 Jul 2016 06:19:41 +0200
+
+pve-kernel (4.4.13-57) unstable; urgency=medium
+
+  * fix CVE-2016-4470
+
+  * fix CVE-2016-4794
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 14 Jul 2016 12:37:41 +0200
+
+pve-kernel (4.4.13-56) unstable; urgency=medium
+
+  * update to zfs/spl 0.6.5.7
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 27 Jun 2016 12:30:00 +0200
+
+pve-kernel (4.4.13-55) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-28.47
+
+  * bump API to 4.4.13-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 25 Jun 2016 11:50:10 +0200
+
+pve-kernel (4.4.10-54) unstable; urgency=medium
+
+  * Update to Ubuntu-4.4.0-24.43
+
+  * bump API to 4.4.10-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 10 Jun 2016 20:55:02 +0200
+
+pve-kernel (4.4.8-53) unstable; urgency=medium
+
+  * update ixgbe to 4.4.6
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 10 Jun 2016 13:34:15 +0200
+
+pve-kernel (4.4.8-52) unstable; urgency=medium
+
+  * ixgbe: Correct handling of any outer UDP checksum setting
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 31 May 2016 06:54:52 +0200
+
+pve-kernel (4.4.8-51) unstable; urgency=medium
+
+  * Update to Ubuntu-4.4.0-22.40 (fix CVE-2016-0758 and CVE-2016-3713)
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 17 May 2016 15:56:58 +0200
+
+pve-kernel (4.4.8-50) unstable; urgency=medium
+
+  * Fix CVE-2016-4485, CVE-2016-4486, CVE-2016-4558
+
+  * By default disable the new dynamic halt polling behavior
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 12 May 2016 09:20:02 +0200
+
+pve-kernel (4.4.8-49) unstable; urgency=medium
+
+  * bump API to 4.4.8-1-pve
+
+  * update to Update to Ubuntu-4.4.0-22.39
+
+  * fix #981: backport Skylake ACS quirk patches from 4.7
+
+  * add fix for zfs acl write bug
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 09 May 2016 10:28:20 +0200
+
+pve-kernel (4.4.6-48) unstable; urgency=medium
+
+  * fix CVE-2016-3951
+
+  * fix #950: cherry-pick length check for tcp_mark_head_lost
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 21 Apr 2016 09:33:27 +0200
+
+pve-kernel (4.4.6-47) unstable; urgency=medium
+
+  * fix CVE-2016-3955
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 20 Apr 2016 09:18:45 +0200
+
+pve-kernel (4.4.6-46) unstable; urgency=medium
+
+  * update to Ubuntu-4.4.0-21.37
+
+  * update DRBD to 9.0.2-1
+
+  * delete apparmor-fix-bad--include-path.patch (upstream)
+
+  * detete ntp-Fix-ADJ_SETOFFSET-being-used-w-ADJ_NANO.patch (upstream)
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 20 Apr 2016 06:19:02 +0200
+
+pve-kernel (4.4.6-45) unstable; urgency=medium
+
+  * Backport ntp clock_adjtime fix from 4.5
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 15 Apr 2016 09:29:51 +0200
+
+pve-kernel (4.4.6-44) unstable; urgency=medium
+
+  * set CONFIG_BLK_DEV_NVME=y to avoid HW detection problems
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 14 Apr 2016 12:31:34 +0200
+
+pve-kernel (4.4.6-43) unstable; urgency=medium
+
+  * update e1000e to 3.3.3
+
+  * update ixgbe to 4.3.15
+
+  * update igb to 5.3.4.4
+
+  * update to Linux 4.4.6 (ubuntu-xenial Ubuntu-4.4.0-17.33)
+
+  * remove kvmstealtime.patch (now upstream)
+
+  * remove 0001-KVM-VMX-Fix-host-initiated-access-to-guest-MSR_TSC_A.patch
+  (upstream)
+
+  * remove iSCSI-block-sd-Fix-device-imposed-transfer-length-limits.patch
+  (upstream)
+
+  * remove aacraid backport patches (now upstream)
+  
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 11 Apr 2016 09:33:40 +0200
+
+pve-kernel (4.2.8-42) unstable; urgency=medium
+
+  * update spl/zfs 0.6.5.6
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 30 Mar 2016 11:06:34 +0200
+
+pve-kernel (4.2.8-41) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-34.39
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 19 Mar 2016 10:19:00 +0100
+
+pve-kernel (4.2.8-40) unstable; urgency=medium
+
+  * fix iSCSI patch on commit ef5f1ab8555594d7d400308a4a38b2d0cdf1458f
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 17 Mar 2016 16:50:57 +0100
+
+pve-kernel (4.2.8-39) unstable; urgency=medium
+
+  * fix freeze of VMs on live migration
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 26 Feb 2016 12:10:39 +0100
+
+pve-kernel (4.2.8-38) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-30.35
+
+  * remove apparmor-socket-mediation.patch (now upstream)
+
+  * remove CVE-2015-8785 an CVE-2016-2069 fix (now upstream)
+
+  * remove 000X-mttr.patch (now upstream)
+  
+  * update DRBD to 9.0.1 (commit 3d38916489fac62b036d8e79d3fcd81d318ca4cb)
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 24 Feb 2016 08:30:17 +0100
+
+pve-kernel (4.2.8-37) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-27.32
+
+  * bump API to 4.2.8-1-pve
+
+  * remove kvm-x86-obey-KVM_X86_QUIRK_CD_NW_CLEARED-in-kvm_set_cr0.patch
+    (upstream)
+
+  * remove CVE-2015-7513-KVM-x86-Reload-pit-counters-for-all-channels.patch
+    (upstream)
+
+  * remove CVE-2015-8787-netfilter-NULL-pointer-check.patch (upstream)
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 03 Feb 2016 15:18:40 +0100
+
+pve-kernel (4.2.6-36) unstable; urgency=medium
+
+  * Fix CVE-2016-2069: TBL flushing
+
+  * Fix CVE-2015-8787: netfilter NULL pointer checking
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 28 Jan 2016 11:09:09 +0100
+
+pve-kernel (4.2.6-35) unstable; urgency=medium
+
+  * Fix CVE-2015-8785: fuse infinite loop
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 25 Jan 2016 09:21:20 +0100
+
+pve-kernel (4.2.6-34) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-25.30 (fix CVE-2016-0728)
+
+  * remove KVM-svm-unconditionally-intercept-DB.patch (upstream)
+
+  * remove CVE-2015-8709-ptrace-require-mapped-uids-gids.patch (upstream)
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 21 Jan 2016 08:55:17 +0100
+
+pve-kernel (4.2.6-33) unstable; urgency=medium
+
+  * update spl/zfs to 0.6.5.4
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 14 Jan 2016 11:31:40 +0100
+
+pve-kernel (4.2.6-32) unstable; urgency=medium
+
+  * backport iSCSI fix from 4.4-rc5
+
+  * fix CVE-2015-7513
+
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 10 Jan 2016 15:04:45 +0100
+
+pve-kernel (4.2.6-31) unstable; urgency=medium
+
+  * Fix CVE-2015-8709: privilege escalation in user namespaces
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 07 Jan 2016 11:20:19 +0100
+
+pve-kernel (4.2.6-30) unstable; urgency=medium
+
+  * rea-dd override_for_missing_acs_capabilities patch
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 04 Jan 2016 06:21:55 +0100
+
+pve-kernel (4.2.6-29) unstable; urgency=medium
+
+  * kvm mttr fixes (pci passthrough)
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 31 Dec 2015 12:43:56 +0100
+
+pve-kernel (4.2.6-28) unstable; urgency=medium
+
+  * update aacraid driver (backport from kernel 4.4rc5)
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 19 Dec 2015 15:26:05 +0100
+
+pve-kernel (4.2.6-27) unstable; urgency=medium
+
+  * AppArmor: add temporary socket mediation fix
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 18 Dec 2015 12:39:05 +0100
+
+pve-kernel (4.2.6-26) unstable; urgency=medium
+
+  * fix CVE-2015-8104 (KVM-svm-unconditionally-intercept-DB.patch)
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 09 Dec 2015 10:32:45 +0100
+
+pve-kernel (4.2.3-25) unstable; urgency=medium
+
+  * blacklist ipmi_watchdog.ko
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 04 Dec 2015 19:04:52 +0100
+
+pve-kernel (4.2.3-24) unstable; urgency=medium
+
+  * include autogenerated blacklist for watchdog devices
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 02 Dec 2015 11:38:06 +0100
+
+pve-kernel (4.2.3-23) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-19.23
+
+  * bump kernel API to 4.2.6-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 01 Dec 2015 18:24:23 +0100
+
+pve-kernel (4.2.3-22) unstable; urgency=medium
+
+  * add kvm-x86-obey-KVM_X86_QUIRK_CD_NW_CLEARED-in-kvm_set_cr0.patch
+
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 15 Nov 2015 15:50:52 +0100
+
+pve-kernel (4.2.3-21) unstable; urgency=medium
+
+  * update spl/zfs to 0.6.5.3
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 05 Nov 2015 07:32:30 +0100
+
+pve-kernel (4.2.3-20) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-17.21
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 03 Nov 2015 10:15:03 +0100
+
+pve-kernel (4.2.3-19) unstable; urgency=medium
+
+  * update e1000e to 3.2.7.1
+
+  * bump kernel API to 4.2.3-2-pve
+  
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 02 Nov 2015 10:05:01 +0100
+
+pve-kernel (4.2.3-18) unstable; urgency=medium
+
+  * kvm : fix stealtime bug
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 21 Oct 2015 14:23:45 +0200
+
+pve-kernel (4.2.3-17) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-16.19 (rebase to v4.2.3)
+
+  * remove patch fix-rtnl_bridge_getlink.patch (now upsream)
+  
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 18 Oct 2015 10:56:49 +0200
+
+pve-kernel (4.2.2-16) unstable; urgency=medium
+
+  * update zfs to 0.6.5.2
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 05 Oct 2015 18:05:05 +0200
+
+pve-kernel (4.2.2-15) unstable; urgency=medium
+
+  * add newer ixgbe driver (ixgbe-4.1.5.tar.gz)
+
+  * update kernel source to Ubuntu-4.2.0-14.16 (rebase to v4.2.2)
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 03 Oct 2015 08:23:43 +0200
+
+pve-kernel (4.2.1-14) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-11.13 (rebase to v4.2.1)
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 25 Sep 2015 09:26:29 +0200
+
+pve-kernel (4.2.0-13) unstable; urgency=medium
+
+  * update kernel source to Ubuntu-4.2.0-10.12
+
+  * update zfs/spl to 0.6.5
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 21 Sep 2015 10:30:10 +0200
+
+pve-kernel (4.2.0-12) unstable; urgency=medium
+
+  * kernel4.2: fix bridge vlan command with bond
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 16 Sep 2015 16:34:16 +0200
+
+pve-kernel (4.2.0-11) unstable; urgency=medium
+
+  * do not use TRANSPARENT_HUGEPAGE by default
+
+  * update kernel source to Ubuntu-4.2.0-10.11
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 15 Sep 2015 09:53:08 +0200
+
+pve-kernel (4.2.0-10) unstable; urgency=medium
+
+  * update drbd9 driver
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 08 Sep 2015 18:47:35 +0200
+
+pve-kernel (4.2.0-9) unstable; urgency=medium
+
+  * update to kernel 4.2.0
+
+  * use upstream igb driver
+
+  * update drbd9 driver
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 05 Sep 2015 20:19:04 +0200
+
+pve-kernel (4.1.3-8) unstable; urgency=medium
+
+  * fix bug #674: avoid zfs loop mount crash
+
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 09 Aug 2015 17:01:06 +0200
+
+pve-kernel (4.1.3-7) unstable; urgency=medium
+
+  * use zfs/spl sources from our zfs userspace tool (to
+  avoid version missmatch)
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 30 Jul 2015 18:39:00 +0200
+
+pve-kernel (4.1.3-6) unstable; urgency=medium
+
+  * update to 4.1.3 (ubuntgu wily)
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 30 Jul 2015 07:37:56 +0200
+
+pve-kernel-3.19.8 (3.19.8-5) unstable; urgency=medium
+
+  * add bridge-vlanrage patches
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 24 Jul 2015 11:13:14 +0200
+
+pve-kernel-3.19.8 (3.19.8-4) unstable; urgency=medium
+
+  * update kernel to Linux 3.19.8-ckt2
+
+  * update zfs/spl to 0.6.4.2
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 21 Jul 2015 12:16:06 +0200
+
+pve-kernel-3.19.8 (3.19.8-3) unstable; urgency=medium
+
+  * update DRBD to 9.0.0
+
+  * update kernel to Linux 3.19.8-ckt1
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 17 Jun 2015 06:20:05 +0200
+
+pve-kernel-3.19.8 (3.19.8-2) unstable; urgency=medium
+
+  * include latest igb and ixgbe drivers
+
+  * disable evbug module
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 27 May 2015 15:13:05 +0200
+
+pve-kernel-3.19.8 (3.19.8-1) unstable; urgency=medium
+
+  * update to ubuntu-vivid based kernel
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 27 May 2015 09:43:40 +0200
+
+pve-kernel-3.10.0 (3.10.0-35) unstable; urgency=medium
+
+  * update igb driver to 5.2.18
+  
+  * update ixgbe driver to 4.0.3
+  
+  * update i40e driver to 1.2.38
+
+  * drbd9 update to commit 6d340f1f63db9d2dd38e3696e47c0d0e49f3f6b2
+  
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 08 May 2015 10:21:56 +0200
+
+pve-kernel-3.10.0 (3.10.0-34) unstable; urgency=medium
+
+  * update zfs/spl 0.6.4, bump api version to 9-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 14 Apr 2015 13:11:38 +0200
+
+pve-kernel-3.10.0 (3.10.0-33) unstable; urgency=medium
+
+  * updaupdate to kernel-3.10.0-229.1.2.el7.src.rpm
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 10 Apr 2015 16:15:34 +0200
+
+pve-kernel-3.10.0 (3.10.0-32) unstable; urgency=medium
+
+  * use apparmor as default security module
+
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 05 Apr 2015 10:12:49 +0200
+
+pve-kernel-3.10.0 (3.10.0-31) unstable; urgency=medium
+
+  * include latest DRBD 9.0 driver
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 17 Mar 2015 16:10:00 +0100
+
+pve-kernel-3.10.0 (3.10.0-30) unstable; urgency=medium
+
+  * update to kernel-3.10.0-229.el7.src.rpm
+  
+  * remove tg3-fix-deadlock_in_tg3_change_mtu.patch (now upstream)
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 14 Mar 2015 10:32:36 +0100
+
+pve-kernel-3.10.0 (3.10.0-29) unstable; urgency=low
+
+  * IPv6: forwaring ICMP6 neighbor solicitation on bridge
+
+  * vhost-net: extend device allocation to vmalloc
+  
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 06 Mar 2015 07:09:19 +0100
+
+pve-kernel-3.10.0 (3.10.0-28) unstable; urgency=low
+
+  * update to kernel-3.10.0-123.20.1.el7.src.rpm
+
+  * add latest Intel(R) Ethernet Connection XL710 Network Driver (i40e)
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 27 Feb 2015 06:01:27 +0100
+
+pve-kernel-3.10.0 (3.10.0-27) unstable; urgency=low
+
+  * enable vhost-scsi module
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 22 Jan 2015 10:57:12 +0100
+
+pve-kernel-3.10.0 (3.10.0-26) unstable; urgency=low
+
+  * update hpsa module
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 13 Jan 2015 17:32:17 +0100
+
+pve-kernel-3.10.0 (3.10.0-25) unstable; urgency=low
+
+  * add zfs modules
+
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 11 Jan 2015 08:37:21 +0100
+
+pve-kernel-3.10.0 (3.10.0-24) unstable; urgency=low
+
+  * update to kernel kernel-3.10.0-123.13.2.el7.src.rpm 
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 27 Dec 2014 09:31:58 +0100
+
+pve-kernel-3.10.0 (3.10.0-23) unstable; urgency=low
+
+  * update igb to 5.2.15
+  
+  * update ixgbe to 3.23.2
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 26 Dec 2014 10:39:17 +0100
+
+pve-kernel-3.10.0 (3.10.0-22) unstable; urgency=low
+
+  * update netxtreme2 drivers to 7.11.05
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 24 Dec 2014 14:36:07 +0100
+
+pve-kernel-3.10.0 (3.10.0-21) unstable; urgency=low
+
+  * include cephfs module
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 16 Dec 2014 14:25:21 +0100
+
+pve-kernel-3.10.0 (3.10.0-20) unstable; urgency=low
+
+  * update to kernel-3.10.0-123.9.3.el7.src.rpm
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 05 Dec 2014 13:16:13 +0100
+
+pve-kernel-3.10.0 (3.10.0-19) unstable; urgency=low
+
+  * update to kernel-3.10.0-123.8.1.el7.src.rpm
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 15 Oct 2014 07:35:13 +0200
+
+pve-kernel-3.10.0 (3.10.0-18) unstable; urgency=low
+
+  * tg3: Fix deadlock in tg3_change_mtu 
+    (patch tg3-fix-deadlock_in_tg3_change_mtu.patch)
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 16 Sep 2014 07:35:33 +0200
+
+pve-kernel-3.10.0 (3.10.0-17) unstable; urgency=low
+
+  * allow grub-efi-ia32 boot loader
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 23 Aug 2014 09:05:20 +0200
+
+pve-kernel-3.10.0 (3.10.0-16) unstable; urgency=low
+
+  * update to kernel-3.10.0-123.6.3.el7.src.rpm
+  
+  * remove patch n_tty-Fix-n_tty_write-crash-when-echoing-in-raw-mode.patch 
+    (now upstream)
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 21 Aug 2014 08:46:54 +0200
+
+pve-kernel-3.10.0 (3.10.0-15) unstable; urgency=low
+
+  * gpu passthrough: add override_for_missing_acs_capabilities.patch,
+    needed for some radeon cards.
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 11 Aug 2014 07:53:41 +0200
+
+pve-kernel-3.10.0 (3.10.0-14) unstable; urgency=low
+
+  * update e1000e to 3.1.0.2
+  
+  * update igb to 5.2.9.4
+  
+  * update ixgbe to 3.21.2
+  
+  * update netxtreme2 to 7.10.14
+  
+  * update arcmsr to 1.30.0X.19-140509
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 08 Aug 2014 08:01:28 +0200
+
+pve-kernel-3.10.0 (3.10.0-13) unstable; urgency=low
+
+  * recompile to enable vfio xfga
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 02 Aug 2014 09:05:37 +0200
+
+pve-kernel-3.10.0 (3.10.0-12) unstable; urgency=low
+
+  * fix bug #292: add postrm file for cleanup
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 29 Jul 2014 08:13:00 +0200
+
+pve-kernel-3.10.0 (3.10.0-11) unstable; urgency=low
+
+  * update to kernel-3.10.0-123.el7.src.rpm
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 12 Jun 2014 13:23:12 +0200
+
+pve-kernel-3.10.0 (3.10.0-10) unstable; urgency=low
+
+  * add fix for CVE-2014-0196
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 13 May 2014 07:06:37 +0200
+
+pve-kernel-3.10.0 (3.10.0-9) unstable; urgency=low
+
+  * enable BCACHE
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 02 May 2014 06:01:04 +0200
+
+pve-kernel-3.10.0 (3.10.0-8) unstable; urgency=low
+
+  * compile NBD and RBD modules
+  
+  * set CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 24 Apr 2014 10:22:35 +0200
+
+pve-kernel-3.10.0 (3.10.0-7) unstable; urgency=low
+
+  * update to kernel-3.10.0-121.el7.src.rpm
+  
+  * remove net-core-always-propagate-flag-changes.patch (upstream)
+  
+  * bump kernal version to 3.10.0-2-pve
+  
+  * use bnx2 from upstream (Broadcom bnx2 drivers does not compile)
+  
+  * update e1000e to 3.0.4.1
+  
+  * update igb to 5.1.2
+  
+  * update ixgbe to 3.19.1
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 23 Apr 2014 09:13:18 +0200
+
+pve-kernel-3.10.0 (3.10.0-6) unstable; urgency=low
+
+  * set CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE=y
+  
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 10 Apr 2014 08:39:31 +0200
+
+pve-kernel-3.10.0 (3.10.0-5) unstable; urgency=low
+
+  * set CONFIG_BRIDGE=y
+  
+  * disable module signatures
+  
+  * re-add patch bridge-patch.diff
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 17 Dec 2013 12:06:42 +0100
+
+pve-kernel-3.10.0 (3.10.0-4) unstable; urgency=low
+
+  * add latest e1000e driver
+  
+  * add latest igb driver
+  
+  * add latest ixgbe driver
+  
+  * add latest netxtreme2 drivers
+  
+  * add latest aacraid driver
+
+  * add latest ARECA RAID driver
+  
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 16 Dec 2013 07:25:17 +0100
+
+pve-kernel-3.10.0 (3.10.0-3) unstable; urgency=low
+
+  * app patch to enable VLAN on bridge
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 14 Dec 2013 09:38:07 +0100
+
+pve-kernel-3.10.0 (3.10.0-2) unstable; urgency=low
+
+  * enable DRBD
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 13 Dec 2013 15:33:35 +0100
+
+pve-kernel-3.10.0 (3.10.0-1) unstable; urgency=low
+
+  * first try
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 12 Dec 2013 12:34:04 +0100

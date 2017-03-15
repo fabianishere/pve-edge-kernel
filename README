@@ -1,0 +1,152 @@
+KERNEL SOURCE:
+==============
+
+We currently use the Ubuntu kernel sources, available from:
+
+ http://kernel.ubuntu.com/git/ubuntu/ubuntu-xenial.git/
+
+Ubuntu will maintain those kernels till:
+
+ https://wiki.ubuntu.com/Kernel/Dev/ExtendedStable
+
+
+Additional/Updated Modules:
+---------------------------
+
+- include latest e1000e driver from intel/sourceforge
+
+- include latest ixgbe driver from intel/sourceforge
+
+ - include latest igb driver from intel/sourceforge
+
+# Note: hpsa does not compile with kernel 3.19.8
+#- include latest HPSA driver (HP Smart Array)
+#
+#  * http://sourceforge.net/projects/cciss/
+
+- include native OpenZFS filesystem kernel modules for Linux
+
+  * https://github.com/zfsonlinux/
+
+  For licensing questions, see: http://open-zfs.org/wiki/Talk:FAQ
+
+- include latest DRBD 9 driver, see http://drbd.linbit.com/home/what-is-drbd/
+
+
+FIRMWARE:
+=========
+
+We create our own firmware package, which includes the firmware for
+all proxmox-ve kernels. So far this include
+
+pve-kernel-2.6.18
+pve-kernel-2.6.24
+pve-kernel-2.6.32
+pve-kernel-3.10.0
+pve-kernel-3.19.0
+
+We use 'find-firmware.pl' to extract lists of required firmeware
+files.  The script 'assemble-firmware.pl' is used to read those lists
+and copy the files from various source directory into a target
+directory.
+
+We do not include firmeware for some wireless HW when there is a
+separate debian package for that, for example:
+
+zd1211-firmware
+atmel-firmware
+bluez-firmware 
+
+
+PATCHES:
+--------
+
+ bridge-patch.diff: Avoid bridge problems with changing MAC
+  see also: http://forum.openvz.org/index.php?t=msg&th=5291
+
+  Behaviour after 2.6.27 has changed slighly - after setting mac address
+  of bridge device, then address won't change. So we could omit
+  that patch, requiring to set hwaddress in /etc/network/interfaces.
+
+Watchdog blacklist
+------------------
+
+By default, all watchdog modules are black-listed because it is totally undefined
+which device is actually used for /dev/watchdog.
+We ship this list in /lib/modprobe.d/blacklist_pve-kernel-<VERSION>.conf
+The user typically edit /etc/modules to enable a specific watchdog device.
+
+Additional information
+----------------------
+
+We use the default configuration provided by Ubuntu, and apply
+the following modification:
+
+see Makefile (PVE_CONFIG_OPTS)
+
+- enable CONFIG_CEPH_FS=m (request from user)
+
+- enable common CONFIG_BLK_DEV_XXX to avoid hardware detection
+  problems (udev, undate-initramfs have serious problems without that)
+
+  	 CONFIG_BLK_DEV_SD=y
+  	 CONFIG_BLK_DEV_SR=y
+  	 CONFIG_BLK_DEV_DM=y
+
+- add workaround for Debian bug #807000 (see
+  https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=807000)
+
+  	 CONFIG_BLK_DEV_NVME=y
+
+- compile NBD and RBD modules
+	 CONFIG_BLK_DEV_NBD=m
+	 CONFIG_BLK_DEV_RBD=m
+
+- set LOOP_MIN_COUNT to 8 (debian defaults)
+	 CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
+
+- disable module signatures (CONFIG_MODULE_SIG)
+ 
+- enable IBM JFS file system 
+
+  This is disabled in RHEL kernel for no real reason, so we enable
+  it as requested by users (bug #64)
+
+- enable apple HFS and HFSPLUS
+
+  This is disabled in RHEL kernel for no real reason, so we enable
+  it as requested by users
+
+- enable CONFIG_BCACHE=m (requested by user)
+
+- enable CONFIG_BRIDGE=y
+
+  Else we get warnings on boot, that
+  net.bridge.bridge-nf-call-iptables is an unknown key
+
+- enable CONFIG_DEFAULT_SECURITY_APPARMOR
+
+  We need this for lxc
+  
+- set CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE=y
+
+  because if not set, it can give some dynamic memory or cpu frequencies 
+  change, and vms can crash (mainly windows guest).
+
+  see http://forum.proxmox.com/threads/18238-Windows-7-x64-VMs-crashing-randomly-during-process-termination?p=93273#post93273
+
+- use 'deadline' as default scheduler
+
+  This is the suggested setting for KVM. We also measure bad fsync
+  performance with ext4 and cfq.
+
+- disable CONFIG_INPUT_EVBUG
+
+  Module evbug is not blacklisted on debian, so we simply disable it
+  to avoid key-event logs (which is a big security problem)
+
+Testing final kernel with kvm
+-----------------------------
+
+kvm -kernel data/boot/vmlinuz-3.19.8-1-pve -initrd initrd.img-3.19.8-1-pve -append "vga=791 video=vesafb:ywrap,mtrr" /dev/zero
+

@@ -1,0 +1,178 @@
+From 40d641241a5399afc93d4eb75d8794f72fe3c0fb Mon Sep 17 00:00:00 2001
+From: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Date: Wed, 21 Dec 2016 15:37:20 +0100
+Subject: [PATCH] cgroup, cpuset: add cpuset.remap_cpus
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Changes a cpuset, recursively remapping all its descendants
+to the new range.
+
+Signed-off-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/cpumask.h | 17 ++++++++++++++++
+ kernel/cpuset.c         | 54 +++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 60 insertions(+), 11 deletions(-)
+
+diff --git a/include/linux/cpumask.h b/include/linux/cpumask.h
+index 59915ea..f5487c8 100644
+--- a/include/linux/cpumask.h
++++ b/include/linux/cpumask.h
+@@ -514,6 +514,23 @@ static inline void cpumask_copy(struct cpumask *dstp,
+ }
+ 
+ /**
++ * cpumask_remap - *dstp = map(old, new)(*srcp)
++ * @dstp: the result
++ * @srcp: the input cpumask
++ * @oldp: the old mask
++ * @newp: the new mask
++ */
++static inline void cpumask_remap(struct cpumask *dstp,
++				 const struct cpumask *srcp,
++				 const struct cpumask *oldp,
++				 const struct cpumask *newp)
++{
++	bitmap_remap(cpumask_bits(dstp), cpumask_bits(srcp),
++		     cpumask_bits(oldp), cpumask_bits(newp),
++		     nr_cpumask_bits);
++}
++
++/**
+  * cpumask_any - pick a "random" cpu from *srcp
+  * @srcp: the input cpumask
+  *
+diff --git a/kernel/cpuset.c b/kernel/cpuset.c
+index 7e78cfe..ff5ff3a 100644
+--- a/kernel/cpuset.c
++++ b/kernel/cpuset.c
+@@ -462,7 +462,8 @@ static void free_trial_cpuset(struct cpuset *trial)
+  * Return 0 if valid, -errno if not.
+  */
+ 
+-static int validate_change(struct cpuset *cur, struct cpuset *trial)
++static int validate_change(struct cpuset *cur, struct cpuset *trial,
++			   int remap)
+ {
+ 	struct cgroup_subsys_state *css;
+ 	struct cpuset *c, *par;
+@@ -470,11 +471,13 @@ static int validate_change(struct cpuset *cur, struct cpuset *trial)
+ 
+ 	rcu_read_lock();
+ 
+-	/* Each of our child cpusets must be a subset of us */
+-	ret = -EBUSY;
+-	cpuset_for_each_child(c, css, cur)
+-		if (!is_cpuset_subset(c, trial))
+-			goto out;
++	if (!remap) {
++		/* Each of our child cpusets must be a subset of us */
++		ret = -EBUSY;
++		cpuset_for_each_child(c, css, cur)
++			if (!is_cpuset_subset(c, trial))
++				goto out;
++	}
+ 
+ 	/* Remaining checks don't apply to root cpuset */
+ 	ret = 0;
+@@ -937,11 +940,15 @@ static void update_cpumasks_hier(struct cpuset *cs, struct cpumask *new_cpus)
+  * @cs: the cpuset to consider
+  * @trialcs: trial cpuset
+  * @buf: buffer of cpu numbers written to this cpuset
++ * @remap: recursively remap all child nodes
+  */
+ static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
+-			  const char *buf)
++			  const char *buf, int remap)
+ {
+ 	int retval;
++	struct cpuset *cp;
++	struct cgroup_subsys_state *pos_css;
++	struct cpumask tempmask;
+ 
+ 	/* top_cpuset.cpus_allowed tracks cpu_online_mask; it's read-only */
+ 	if (cs == &top_cpuset)
+@@ -969,11 +976,25 @@ static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
+ 	if (cpumask_equal(cs->cpus_allowed, trialcs->cpus_allowed))
+ 		return 0;
+ 
+-	retval = validate_change(cs, trialcs);
++	retval = validate_change(cs, trialcs, remap);
+ 	if (retval < 0)
+ 		return retval;
+ 
+ 	spin_lock_irq(&callback_lock);
++	if (remap) {
++		rcu_read_lock();
++		cpuset_for_each_descendant_pre(cp, pos_css, cs) {
++			/* skip empty subtrees */
++			if (cpumask_empty(cp->cpus_allowed)) {
++				pos_css = css_rightmost_descendant(pos_css);
++				continue;
++			}
++			cpumask_copy(&tempmask, cp->cpus_allowed);
++			cpumask_remap(cp->cpus_allowed, &tempmask,
++				      cs->cpus_allowed, trialcs->cpus_allowed);
++		}
++		rcu_read_unlock();
++	}
+ 	cpumask_copy(cs->cpus_allowed, trialcs->cpus_allowed);
+ 	spin_unlock_irq(&callback_lock);
+ 
+@@ -1250,7 +1271,7 @@ static int update_nodemask(struct cpuset *cs, struct cpuset *trialcs,
+ 		retval = 0;		/* Too easy - nothing to do */
+ 		goto done;
+ 	}
+-	retval = validate_change(cs, trialcs);
++	retval = validate_change(cs, trialcs, 0);
+ 	if (retval < 0)
+ 		goto done;
+ 
+@@ -1337,7 +1358,7 @@ static int update_flag(cpuset_flagbits_t bit, struct cpuset *cs,
+ 	else
+ 		clear_bit(bit, &trialcs->flags);
+ 
+-	err = validate_change(cs, trialcs);
++	err = validate_change(cs, trialcs, 0);
+ 	if (err < 0)
+ 		goto out;
+ 
+@@ -1596,6 +1617,7 @@ static void cpuset_attach(struct cgroup_taskset *tset)
+ typedef enum {
+ 	FILE_MEMORY_MIGRATE,
+ 	FILE_CPULIST,
++	FILE_REMAP_CPULIST,
+ 	FILE_MEMLIST,
+ 	FILE_EFFECTIVE_CPULIST,
+ 	FILE_EFFECTIVE_MEMLIST,
+@@ -1728,7 +1750,10 @@ static ssize_t cpuset_write_resmask(struct kernfs_open_file *of,
+ 
+ 	switch (of_cft(of)->private) {
+ 	case FILE_CPULIST:
+-		retval = update_cpumask(cs, trialcs, buf);
++		retval = update_cpumask(cs, trialcs, buf, 0);
++		break;
++	case FILE_REMAP_CPULIST:
++		retval = update_cpumask(cs, trialcs, buf, 1);
+ 		break;
+ 	case FILE_MEMLIST:
+ 		retval = update_nodemask(cs, trialcs, buf);
+@@ -1845,6 +1870,13 @@ static struct cftype files[] = {
+ 	},
+ 
+ 	{
++		.name = "remap_cpus",
++		.write = cpuset_write_resmask,
++		.max_write_len = (100U + 6 * NR_CPUS),
++		.private = FILE_REMAP_CPULIST,
++	},
++
++	{
+ 		.name = "mems",
+ 		.seq_show = cpuset_common_seq_show,
+ 		.write = cpuset_write_resmask,
+-- 
+2.1.4
+

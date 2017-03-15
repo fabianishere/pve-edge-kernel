@@ -1,0 +1,60 @@
+#! /bin/sh
+
+# Abort if any command returns an error value 
+set -e 
+
+case "$1" in
+  configure)
+
+    # There are three sub-cases:
+    if test "${2+set}" != set; then
+      # We're being installed by an ancient dpkg which doesn't remember
+      # which version was most recently configured, or even whether
+      # there is a most recently configured version.
+      :
+
+    elif test -z "$2" -o "$2" = "<unknown>"; then
+      # The package has not ever been configured on this system, or was
+      # purged since it was last configured.
+      :
+
+    else
+      # Version $2 is the most recently configured version of this
+      # package.
+      :
+
+    fi ;;
+  abort-upgrade)
+    # Back out of an attempt to upgrade this package FROM THIS VERSION
+    # to version $2.  Undo the effects of "prerm upgrade $2".
+    :
+
+    ;;
+  abort-remove)
+    if test "$2" != in-favour; then
+      echo "$0: undocumented call to \`postinst $*'" 1>&2
+      exit 0
+    fi
+    # Back out of an attempt to remove this package, which was due to
+    # a conflict with package $3 (version $4).  Undo the effects of
+    # "prerm remove in-favour $3 $4".
+    :
+
+    ;;
+  abort-deconfigure)
+    if test "$2" != in-favour -o "$5" != removing; then
+      echo "$0: undocumented call to \`postinst $*'" 1>&2
+      exit 0
+    fi
+    # Back out of an attempt to deconfigure this package, which was
+    # due to package $6 (version $7) which we depend on being removed
+    # to make way for package $3 (version $4).  Undo the effects of
+    # "prerm deconfigure in-favour $3 $4 removing $6 $7".
+    :
+
+    ;;
+  *) echo "$0: didn't understand being called with \`$1'" 1>&2
+     exit 0;;
+esac
+
+exit 0

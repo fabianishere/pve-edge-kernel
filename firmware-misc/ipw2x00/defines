@@ -1,0 +1,39 @@
+[base]
+desc: Intel Pro Wireless 2100, 2200 and 2915
+files:
+ ipw2100-1.3.fw
+ ipw2100-1.3-i.fw
+ ipw2100-1.3-p.fw
+ ipw2200-bss.fw
+ ipw2200-ibss.fw
+ ipw2200-sniffer.fw
+license-accept: required                                                                                                       
+license-title: Intel Pro Wireless 2100 and 2200/2915 License
+longdesc: Intel Pro Wireless 2100, 2200 and 2915 cards supported by the
+ ipw2100 and ipw2200 drivers
+uri: http://ipw2100.sourceforge.net/firmware.php?fid=4, http://ipw2200.sourceforge.net/firmware.php?fid=7
+
+[ipw2100-1.3.fw_base]
+desc: Intel Pro Wireless 2100 firmware (bootstrap)
+version: 1.3
+
+[ipw2100-1.3-i.fw_base]
+desc: Intel Pro Wireless 2100 firmware (ibss mode)
+version: 1.3
+
+[ipw2100-1.3-p.fw_base]
+desc: Intel Pro Wireless 2100 firmware (monitor mode)
+version: 1.3
+
+[ipw2200-bss.fw_base]
+desc: Intel Pro Wireless 2200/2915 firmware (bss)
+version: 3.0
+
+[ipw2200-ibss.fw_base]
+desc: Intel Pro Wireless 2200/2915 firmware (ibss)
+version: 3.0
+
+[ipw2200-sniffer.fw_base]
+desc: Intel Pro Wireless 2200/2915 firmware (snf)
+version: 3.0
+

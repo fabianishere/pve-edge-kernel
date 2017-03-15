@@ -1,0 +1,11 @@
+Package: pve-headers
+Version: @RELEASE@-@PKGREL@
+Architecture: all
+Section: admin
+Priority: optional
+Depends: pve-headers-@KVNAME@
+Maintainer: Proxmox Support Team <support@proxmox.com>
+Description: Latest Proxmox VE Kernel Headers
+ This is a virtual package which will install the kernel headers
+ for the latest available proxmox kernel from the @KERNEL_VER@
+ series.

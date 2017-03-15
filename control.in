@@ -1,0 +1,11 @@
+Package: pve-kernel-@KVNAME@
+Version: @KERNEL_VER@-@PKGREL@
+Section: admin
+Priority: optional
+Architecture: amd64
+Provides: linux-image, linux-image-2.6
+Suggests: pve-firmware
+Depends: grub-pc | grub-efi-amd64 | grub-efi-ia32, initramfs-tools, busybox
+Maintainer: Proxmox Support Team <support@proxmox.com>
+Description: The Proxmox PVE Kernel Image
+ This package contains the linux kernel and initial ramdisk used for booting

@@ -1,0 +1,12 @@
+Source: pve-kernel
+Maintainer: Proxmox Support Team <support@proxmox.com>
+
+Package: linux-tools-4.10
+Architecture: amd64
+Section: devel
+Priority: optional
+Depends: ${misc:Depends}, ${shlibs:Depends}, linux-base
+Description: Linux kernel version specific tools for version 4.10
+ This package provides the architecture dependent parts for kernel
+ version locked tools (such as perf and x86_energy_perf_policy)
+ 

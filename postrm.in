@@ -1,0 +1,46 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# Ignore all 'upgrade' invocations .
+exit 0 if $ARGV[0] =~ /upgrade/;
+
+my $imagedir = "/boot";
+
+my $version = "@@KVNAME@@";
+
+if (-d "/etc/kernel/postrm.d") {
+  print STDERR "Examining /etc/kernel/postrm.d.\n";
+  system ("run-parts --verbose --exit-on-error --arg=$version " .
+          "--arg=$imagedir/vmlinuz-$version " .
+          "/etc/kernel/postrm.d") &&
+            die "Failed to process /etc/kernel/postrm.d";
+}
+
+unlink "$imagedir/initrd.img-$version";
+unlink "$imagedir/initrd.img-$version.bak";
+unlink "/var/lib/initramfs-tools/$version";
+
+# Ignore all invocations except when called on to purge.
+exit 0 unless $ARGV[0] =~ /purge/;
+
+my @files_to_remove = qw{
+                         modules.dep modules.isapnpmap modules.pcimap
+                         modules.usbmap modules.parportmap
+                         modules.generic_string modules.ieee1394map
+                         modules.ieee1394map modules.pnpbiosmap
+                         modules.alias modules.ccwmap modules.inputmap
+                         modules.symbols modules.ofmap
+                         modules.seriomap modules.*.bin
+			 modules.softdep modules.devname
+                       };
+
+foreach my $extra_file (@files_to_remove) {
+    for (glob("/lib/modules/$version/$extra_file")) {
+	unlink;
+    }
+}
+
+system ("rmdir", "/lib/modules/$version") if -d "/lib/modules/$version";
+
+exit 0

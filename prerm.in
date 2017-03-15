@@ -1,0 +1,23 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# Ignore all invocations uxcept when called on to remove
+exit 0 unless ($ARGV[0] && $ARGV[0] =~ /remove/) ;
+
+# do nothing if run from proxmox installer
+exit 0 if -e "/proxmox_install_mode";
+
+my $imagedir = "/boot";
+
+my $version = "@@KVNAME@@";
+
+if (-d "/etc/kernel/prerm.d") {
+  print STDERR "Examining /etc/kernel/prerm.d.\n";
+  system ("run-parts --verbose --exit-on-error --arg=$version " . 
+          "--arg=$imagedir/vmlinuz-$version " .
+          "/etc/kernel/prerm.d") &&
+	  die "Failed to process /etc/kernel/prerm.d";
+}
+
+exit 0

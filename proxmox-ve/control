@@ -1,0 +1,16 @@
+Package: proxmox-ve
+Version: @RELEASE@-@PKGREL@
+Architecture: all
+Section: admin
+Priority: optional
+Provides: proxmox-virtual-environment
+Conflicts: pve-kernel, proxmox-virtual-environment, proxmox-ve-3.10.0
+Replaces: pve-kernel, proxmox-virtual-environment, proxmox-ve-3.10.0
+Depends: libc6 (>= 2.7-18), pve-kernel-@KVNAME@, pve-firmware, pve-manager, qemu-server, pve-qemu-kvm, openssh-client, openssh-server, apt, vncterm, spiceterm
+Maintainer: Proxmox Support Team <support@proxmox.com>
+Description: The Proxmox Virtual Environment
+ The Proxmox Virtual Environment is an easy to use Open Source
+ virtualization platform for running Virtual Appliances and Virtual
+ Machines. This is a meta package which will install everything
+ needed. This package also depends on the latest available Proxmox
+ kernel from the @KERNEL_VER@ series.
