@@ -23,10 +23,6 @@ TOP=$(shell pwd)
 
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-FW_VER=2.0
-FW_REL=1
-FW_DEB=pve-firmware_${FW_VER}-${FW_REL}_all.deb
-
 E1000EDIR=e1000e-3.3.5.3
 E1000ESRC=${E1000EDIR}.tar.gz
 
@@ -88,7 +84,7 @@ VIRTUAL_HDR_DEB=${VIRTUALHDRPACKAGE}_${RELEASE}-${PKGREL}_all.deb
 LINUX_TOOLS_PKG=linux-tools-4.10
 LINUX_TOOLS_DEB=${LINUX_TOOLS_PKG}_${KERNEL_VER}-${PKGREL}_amd64.deb
 
-DEBS=${DST_DEB} ${HDR_DEB} ${FW_DEB} ${PVE_DEB} ${VIRTUAL_HDR_DEB} ${LINUX_TOOLS_DEB}
+DEBS=${DST_DEB} ${HDR_DEB} ${PVE_DEB} ${VIRTUAL_HDR_DEB} ${LINUX_TOOLS_DEB}
 
 all: check_gcc ${DEBS}
 
@@ -127,7 +123,7 @@ else
 	$(CC) --version|grep "6\.3" || false
 endif
 
-${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian
+${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian fwcheck
 	mkdir -p data/DEBIAN
 	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' <control.in >data/DEBIAN/control
 	sed -e 's/@@KVNAME@@/${KVNAME}/g'  <prerm.in >data/DEBIAN/prerm
@@ -162,6 +158,12 @@ ${LINUX_TOOLS_DEB}: .compile_mark control.tools changelog.Debian copyright
 fwlist-${KVNAME}: data
 	./find-firmware.pl data/lib/modules/${KVNAME} >fwlist.tmp
 	mv fwlist.tmp $@
+
+fwcheck: fwlist-${KVNAME} fwlist-previous
+	echo "checking fwlist for changes since last built firmware package.."
+	echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
+	bash -c "diff -up -N <(sort fwlist-previous | uniq) <(sort fwlist-${KVNAME} | uniq) > fwlist.diff"
+	rm fwlist.diff
 
 data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
 	rm -rf data tmp; mkdir -p tmp/lib/modules/${KVNAME}
@@ -398,39 +400,6 @@ dvb-firmware.git/README:
 linux-firmware.git/WHENCE:
 	git clone git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git linux-firmware.git
 
-${FW_DEB} fw: control.firmware linux-firmware.git/WHENCE dvb-firmware.git/README changelog.firmware fwlist-2.6.18-2-pve fwlist-2.6.24-12-pve fwlist-2.6.32-3-pve fwlist-2.6.32-4-pve fwlist-2.6.32-6-pve fwlist-2.6.32-13-pve fwlist-2.6.32-14-pve fwlist-2.6.32-20-pve fwlist-2.6.32-21-pve fwlist-3.10.0-3-pve fwlist-3.10.0-7-pve fwlist-3.10.0-8-pve fwlist-3.19.8-1-pve fwlist-4.2.8-1-pve fwlist-4.4.13-2-pve fwlist-4.4.16-1-pve fwlist-4.4.21-1-pve fwlist-4.4.44-1-pve fwlist-${KVNAME}
-	rm -rf fwdata
-	mkdir -p fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-${KVNAME} fwdata/lib/firmware
-	# include any files from older/newer kernels here
-	./assemble-firmware.pl fwlist-2.6.18-2-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.24-12-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-3-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-4-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-6-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-13-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-14-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-20-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-2.6.32-21-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-3.10.0-3-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-3.10.0-7-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-3.10.0-8-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-3.19.8-1-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-4.2.8-1-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-4.4.13-2-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-4.4.16-1-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-4.4.21-1-pve fwdata/lib/firmware
-	./assemble-firmware.pl fwlist-4.4.44-1-pve fwdata/lib/firmware
-	install -d fwdata/usr/share/doc/pve-firmware
-	cp linux-firmware.git/WHENCE fwdata/usr/share/doc/pve-firmware/README
-	install -d fwdata/usr/share/doc/pve-firmware/licenses
-	cp linux-firmware.git/LICEN[CS]E* fwdata/usr/share/doc/pve-firmware/licenses
-	install -D -m 0644 changelog.firmware fwdata/usr/share/doc/pve-firmware/changelog.Debian
-	gzip -n -9 fwdata/usr/share/doc/pve-firmware/changelog.Debian
-	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" >fwdata/usr/share/doc/pve-firmware/SOURCE
-	install -d fwdata/DEBIAN
-	sed -e 's/@VERSION@/${FW_VER}-${FW_REL}/' <control.firmware >fwdata/DEBIAN/control
-	dpkg-deb --build fwdata ${FW_DEB}
 
 .PHONY: upload
 upload: ${DEBS}
