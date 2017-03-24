@@ -19,6 +19,8 @@ ARCH=amd64
 GITVERSION:=$(shell cat .git/refs/heads/master)
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate -lchangelog.Debian)
 
+SKIPABI=0
+
 TOP=$(shell pwd)
 
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
@@ -123,7 +125,7 @@ else
 	$(CC) --version|grep "6\.3" || false
 endif
 
-${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian fwcheck
+${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian fwcheck abicheck
 	mkdir -p data/DEBIAN
 	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' <control.in >data/DEBIAN/control
 	sed -e 's/@@KVNAME@@/${KVNAME}/g'  <prerm.in >data/DEBIAN/prerm
@@ -167,6 +169,9 @@ fwcheck: fwlist-${KVNAME} fwlist-previous
 
 abi-${KVNAME}: .compile_mark
 	sed -e 's/^\(.\+\)[[:space:]]\+\(.\+\)[[:space:]]\(.\+\)$$/\3 \2 \1/' ${KERNEL_SRC}/Module.symvers | sort > abi-${KVNAME}
+
+abicheck: abi-${KVNAME} abi-current abi-blacklist
+	./abi-check abi-${KVNAME} abi-current ${SKIPABI}
 
 data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
 	rm -rf data tmp; mkdir -p tmp/lib/modules/${KVNAME}
