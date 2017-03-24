@@ -1,11 +1,11 @@
 #!/usr/bin/perl -w
 
-my $flavour = shift;
-my $prev_abinum = shift;
-my $abinum = shift;
-my $prev_abidir = shift;
-my $abidir = shift;
+my $abinew = shift;
+my $abiold = shift;
 my $skipabi = shift;
+
+$abinew =~ /abi-(.*)/;
+my $abinum = $1;
 
 my $fail_exit = 1;
 my $EE = "EE:";
@@ -14,26 +14,25 @@ my $abiskip = 0;
 
 my $count;
 
-print "II: Checking ABI for $flavour...\n";
+print "II: Checking ABI...\n";
 
-if (-f "$prev_abidir/ignore"
-    or -f "$prev_abidir/$flavour.ignore" or "$skipabi" eq "true") {
+if ($skipabi) {
 	print "WW: Explicitly asked to ignore ABI, running in no-fail mode\n";
 	$fail_exit = 0;
 	$abiskip = 1;
 	$EE = "WW:";
 }
 
-if ($prev_abinum != $abinum) {
-	print "II: Different ABI's, running in no-fail mode\n";
-	$fail_exit = 0;
-	$EE = "WW:";
-}
-
-if (not -f "$abidir/$flavour" or not -f "$prev_abidir/$flavour") {
+#if ($prev_abinum != $abinum) {
+#	print "II: Different ABI's, running in no-fail mode\n";
+#	$fail_exit = 0;
+#	$EE = "WW:";
+#}
+#
+if (not -f "$abinew" or not -f "$abiold") {
 	print "EE: Previous or current ABI file missing!\n";
-	print "    $abidir/$flavour\n" if not -f "$abidir/$flavour";
-	print "    $prev_abidir/$flavour\n" if not -f "$prev_abidir/$flavour";
+	print "    $abinew\n" if not -f "$abinew";
+	print "    $abiold\n" if not -f "$abiold";
 
 	# Exit if the ABI files are missing, but return status based on whether
 	# skip ABI was indicated.
@@ -53,7 +52,7 @@ my %module_syms;
 my $ignore = 0;
 print "    Reading symbols/modules to ignore...";
 
-for $file ("$prev_abidir/../blacklist", "$prev_abidir/../../perm-blacklist") {
+for $file ("abi-blacklist") {
 	if (-f $file) {
 		open(IGNORE, "< $file") or
 			die "Could not open $file";
@@ -86,8 +85,8 @@ sub is_ignored($$) {
 # Read new syms first
 print "    Reading new symbols ($abinum)...";
 $count = 0;
-open(NEW, "< $abidir/$flavour") or
-	die "Could not open $abidir/$flavour";
+open(NEW, "< $abinew") or
+	die "Could not open $abinew";
 while (<NEW>) {
 	chomp;
 	m/^(\S+)\s(.+)\s(0x[0-9a-f]+)\s(.+)$/;
@@ -101,10 +100,10 @@ close(NEW);
 print "read $count symbols.\n";
 
 # Now the old symbols, checking for missing ones
-print "    Reading old symbols ($prev_abinum)...";
+print "    Reading old symbols...";
 $count = 0;
-open(OLD, "< $prev_abidir/$flavour") or
-	die "Could not open $prev_abidir/$flavour";
+open(OLD, "< $abiold") or
+	die "Could not open $abiold";
 while (<OLD>) {
 	chomp;
 	m/^(\S+)\s(.+)\s(0x[0-9a-f]+)\s(.+)$/;
@@ -146,8 +145,8 @@ foreach $sym (keys(%symbols)) {
 }
 print "    " if $count;
 print "found $count new symbols\n";
-if ($count and $prev_abinum == $abinum) {
-	print "WW: Found new symbols within same ABI. Not recommended\n";
+if ($count) {
+	print "WW: Found new symbols. Not recommended unless ABI was bumped\n";
 }
 
 print "II: Checking for changes to ABI...\n";
