@@ -165,6 +165,9 @@ fwcheck: fwlist-${KVNAME} fwlist-previous
 	bash -c "diff -up -N <(sort fwlist-previous | uniq) <(sort fwlist-${KVNAME} | uniq) > fwlist.diff"
 	rm fwlist.diff
 
+abi-${KVNAME}: .compile_mark
+	sed -e 's/^\(.\+\)[[:space:]]\+\(.\+\)[[:space:]]\(.\+\)$$/\3 \2 \1/' ${KERNEL_SRC}/Module.symvers | sort > abi-${KVNAME}
+
 data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
 	rm -rf data tmp; mkdir -p tmp/lib/modules/${KVNAME}
 	mkdir tmp/boot
@@ -225,6 +228,7 @@ PVE_CONFIG_OPTS= \
 -e CONFIG_MEMCG_KMEM \
 -d CONFIG_DEFAULT_CFQ \
 --set-str CONFIG_DEFAULT_IOSCHED deadline \
+-e CONFIG_MODVERSIONS \
 -d CONFIG_DEFAULT_SECURITY_DAC \
 -e CONFIG_DEFAULT_SECURITY_APPARMOR \
 --set-str CONFIG_DEFAULT_SECURITY apparmor
