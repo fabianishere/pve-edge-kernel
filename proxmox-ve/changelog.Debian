@@ -1,3 +1,9 @@
+proxmox-ve (5.0-3) unstable; urgency=medium
+
+  * depend on newest 4.10.3-1-pve kernel
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 24 Mar 2017 13:44:18 +0100
+
 proxmox-ve (5.0-2) unstable; urgency=medium
 
   * depend on newest 4.10.1-2-pve kernel

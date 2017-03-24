@@ -1,11 +1,11 @@
 RELEASE=5.0
 
 # also update proxmox-ve/changelog if you change KERNEL_VER or KREL
-KERNEL_VER=4.10.1
-PKGREL=2
+KERNEL_VER=4.10.3
+PKGREL=3
 # also include firmware of previous version into
 # the fw package:  fwlist-2.6.32-PREV-pve
-KREL=2
+KREL=1
 
 KERNEL_SRC=ubuntu-zesty
 KERNEL_SRC_SUBMODULE=submodules/ubuntu-zesty
