@@ -431,7 +431,7 @@ submodules ${SPLSRC} ${ZFSSRC}:
 
 .PHONY: clean
 clean:
-	rm -rf *~ .compile_mark watchdog-blacklist.tmp ${KERNEL_CFG_ORG} ${KERNEL_SRC} ${KERNEL_SRC}.tmp ${KERNEL_CFG_ORG} ${KERNEL_SRC}.org orig tmp data proxmox-ve/data *.deb ${headers_tmp} fwdata fwlist.tmp *.ko fwlist-${KVNAME} ${ZFSDIR} ${SPLDIR} ${SPL_MODULES} ${ZFS_MODULES} hpsa.ko ${HPSADIR} ${DRBDDIR} drbd-9.0 ${IGBDIR} igb.ko ${IXGBEDIR} ixgbe.ko ${E1000EDIR} e1000e.ko linux-tools ${LINUX_TOOLS_DEB}
+	rm -rf *~ .compile_mark watchdog-blacklist.tmp ${KERNEL_CFG_ORG} ${KERNEL_SRC} ${KERNEL_SRC}.tmp ${KERNEL_CFG_ORG} ${KERNEL_SRC}.org orig tmp data proxmox-ve/data *.deb ${headers_tmp} fwdata fwlist.tmp *.ko abi-${KVNAME} fwlist-${KVNAME} ${ZFSDIR} ${SPLDIR} ${SPL_MODULES} ${ZFS_MODULES} hpsa.ko ${HPSADIR} ${DRBDDIR} drbd-9.0 ${IGBDIR} igb.ko ${IXGBEDIR} ixgbe.ko ${E1000EDIR} e1000e.ko linux-tools ${LINUX_TOOLS_DEB}
 
 
 
