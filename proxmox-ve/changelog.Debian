@@ -1,3 +1,11 @@
+proxmox-ve (5.0-5) unstable; urgency=medium
+
+  * depend on newest 4.10.5-1-pve kernel
+
+  * remove old 4.x release key
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 28 Mar 2017 10:14:00 +0200
+
 proxmox-ve (5.0-3) unstable; urgency=medium
 
   * depend on newest 4.10.3-1-pve kernel

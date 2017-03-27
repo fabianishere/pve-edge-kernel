@@ -2,7 +2,7 @@ RELEASE=5.0
 
 # also update proxmox-ve/changelog if you change KERNEL_VER or KREL
 KERNEL_VER=4.10.5
-PKGREL=3
+PKGREL=4
 # also include firmware of previous version into
 # the fw package:  fwlist-2.6.32-PREV-pve
 KREL=1
@@ -402,13 +402,6 @@ ${HDR_DEB} hdr: .compile_mark headers-control.in headers-postinst.in
 	ln -sf /usr/src/linux-headers-${KVNAME} ${headers_tmp}/lib/modules/${KVNAME}/build
 	dpkg-deb --build $(headers_tmp) ${HDR_DEB}
 	#lintian ${HDR_DEB}
-
-dvb-firmware.git/README:
-	git clone https://github.com/OpenELEC/dvb-firmware.git dvb-firmware.git
-
-linux-firmware.git/WHENCE:
-	git clone git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git linux-firmware.git
-
 
 .PHONY: upload
 upload: ${DEBS}

@@ -1,3 +1,13 @@
+pve-kernel (4.10.5-4) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-15.17
+
+  * bump ABI to 4.10.5-1-pve
+
+  * include fix for MTU > 1500 on OpenVSwitch
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 28 Mar 2017 10:13:56 +0200
+
 pve-kernel (4.10.3-3) unstable; urgency=medium
 
   * update to Ubuntu-4.10.0-14.16
