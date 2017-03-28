@@ -162,10 +162,12 @@ fwlist-${KVNAME}: data
 
 .PHONY: fwcheck
 fwcheck: fwlist-${KVNAME} fwlist-previous
-	echo "checking fwlist for changes since last built firmware package.."
-	echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
+	@echo "checking fwlist for changes since last built firmware package.."
+	@echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
 	bash -c "diff -up -N <(sort fwlist-previous | uniq) <(sort fwlist-${KVNAME} | uniq) > fwlist.diff"
 	rm fwlist.diff
+	@echo "done, no need to rebuild pve-firmware"
+
 
 abi-${KVNAME}: .compile_mark
 	sed -e 's/^\(.\+\)[[:space:]]\+\(.\+\)[[:space:]]\(.\+\)$$/\3 \2 \1/' ${KERNEL_SRC}/Module.symvers | sort > abi-${KVNAME}
