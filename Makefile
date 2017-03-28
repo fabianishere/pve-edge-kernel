@@ -112,7 +112,7 @@ ${VIRTUAL_HDR_DEB} pve-headers: proxmox-ve/pve-headers.control
 	mkdir -p proxmox-ve/data/DEBIAN
 	mkdir -p proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/
 	sed -e 's/@KVNAME@/${KVNAME}/' -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@RELEASE@/${RELEASE}/' -e 's/@PKGREL@/${PKGREL}/' <proxmox-ve/pve-headers.control >proxmox-ve/data/DEBIAN/control
-	echo "git clone git://git.proxmox.com/git/pve-kernel-4.0.git\\ngit checkout ${GITVERSION}" > proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/SOURCE
+	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" > proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/SOURCE
 	install -m 0644 proxmox-ve/copyright proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}
 	install -m 0644 proxmox-ve/changelog.Debian proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}
 	gzip -n --best proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/changelog.Debian
