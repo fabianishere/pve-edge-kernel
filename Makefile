@@ -95,7 +95,6 @@ ${PVE_DEB} pve: proxmox-ve/control proxmox-ve/postinst ${PVE_RELEASE_KEYS}
 	mkdir -p proxmox-ve/data/DEBIAN
 	mkdir -p proxmox-ve/data/usr/share/doc/${PVEPKG}/
 	mkdir -p proxmox-ve/data/etc/apt/trusted.gpg.d
-	install -m 0644 proxmox-ve/proxmox-release-4.x.pubkey proxmox-ve/data/etc/apt/trusted.gpg.d/proxmox-ve-release-4.x.gpg
 	install -m 0644 proxmox-ve/proxmox-release-5.x.pubkey proxmox-ve/data/etc/apt/trusted.gpg.d/proxmox-ve-release-5.x.gpg
 	sed -e 's/@KVNAME@/${KVNAME}/' -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@RELEASE@/${RELEASE}/' -e 's/@PKGREL@/${PKGREL}/' <proxmox-ve/control >proxmox-ve/data/DEBIAN/control
 	sed -e 's/@KVNAME@/${KVNAME}/' <proxmox-ve/postinst >proxmox-ve/data/DEBIAN/postinst
