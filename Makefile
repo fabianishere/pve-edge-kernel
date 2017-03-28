@@ -124,7 +124,7 @@ else
 	$(CC) --version|grep "6\.3" || false
 endif
 
-${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian fwcheck abicheck
+${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian | fwcheck abicheck
 	mkdir -p data/DEBIAN
 	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' <control.in >data/DEBIAN/control
 	sed -e 's/@@KVNAME@@/${KVNAME}/g'  <prerm.in >data/DEBIAN/prerm
@@ -160,6 +160,7 @@ fwlist-${KVNAME}: data
 	./find-firmware.pl data/lib/modules/${KVNAME} >fwlist.tmp
 	mv fwlist.tmp $@
 
+.PHONY: fwcheck
 fwcheck: fwlist-${KVNAME} fwlist-previous
 	echo "checking fwlist for changes since last built firmware package.."
 	echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
@@ -169,6 +170,7 @@ fwcheck: fwlist-${KVNAME} fwlist-previous
 abi-${KVNAME}: .compile_mark
 	sed -e 's/^\(.\+\)[[:space:]]\+\(.\+\)[[:space:]]\(.\+\)$$/\3 \2 \1/' ${KERNEL_SRC}/Module.symvers | sort > abi-${KVNAME}
 
+.PHONY: abicheck
 abicheck: abi-${KVNAME} abi-previous abi-blacklist
 	./abi-check abi-${KVNAME} abi-previous ${SKIPABI}
 
