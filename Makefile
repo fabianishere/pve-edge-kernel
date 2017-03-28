@@ -170,8 +170,8 @@ fwcheck: fwlist-${KVNAME} fwlist-previous
 abi-${KVNAME}: .compile_mark
 	sed -e 's/^\(.\+\)[[:space:]]\+\(.\+\)[[:space:]]\(.\+\)$$/\3 \2 \1/' ${KERNEL_SRC}/Module.symvers | sort > abi-${KVNAME}
 
-abicheck: abi-${KVNAME} abi-current abi-blacklist
-	./abi-check abi-${KVNAME} abi-current ${SKIPABI}
+abicheck: abi-${KVNAME} abi-previous abi-blacklist
+	./abi-check abi-${KVNAME} abi-previous ${SKIPABI}
 
 data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
 	rm -rf data tmp; mkdir -p tmp/lib/modules/${KVNAME}
