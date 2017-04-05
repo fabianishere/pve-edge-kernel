@@ -1,3 +1,13 @@
+pve-kernel (4.10.8-6) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-19.21
+
+  * fix #1351: kernel bug when adding network rate limit
+
+  * bump ABI to 4.10.8-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 13 Apr 2017 11:24:12 +0200
+
 pve-kernel (4.10.5-5) unstable; urgency=medium
 
   * set default IO scheduler to deadline again
