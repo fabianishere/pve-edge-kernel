@@ -273,7 +273,7 @@ aacraid.ko: .compile_mark ${AACRAIDSRC}
 	cd ${AACRAIDDIR};tar xzf ../${AACRAIDSRC}
 	cd ${AACRAIDDIR};rpm2cpio aacraid-${AACRAIDVER}.src.rpm|cpio -i
 	cd ${AACRAIDDIR};tar xf aacraid_source.tgz
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	make -C ${TOP}/${KERNEL_SRC} M=${TOP}/${AACRAIDDIR} KSRC=${TOP}/${KERNEL_SRC} modules
 	cp ${AACRAIDDIR}/aacraid.ko .
 
@@ -281,14 +281,14 @@ hpsa.ko hpsa: .compile_mark ${HPSASRC}
 	rm -rf ${HPSADIR}
 	tar xf ${HPSASRC}
 #	sed -i ${HPSADIR}/drivers/scsi/hpsa_kernel_compat.h -e 's/^\/\* #define RHEL7.*/#define RHEL7/'
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	make -C ${TOP}/${KERNEL_SRC} M=${TOP}/${HPSADIR}/drivers/scsi KSRC=${TOP}/${KERNEL_SRC} modules
 	cp ${HPSADIR}/drivers/scsi/hpsa.ko hpsa.ko
 
 e1000e.ko e1000e: .compile_mark ${E1000ESRC}
 	rm -rf ${E1000EDIR}
 	tar xf ${E1000ESRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${E1000EDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
 	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_compat.patch
 	cd ${E1000EDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
@@ -297,7 +297,7 @@ e1000e.ko e1000e: .compile_mark ${E1000ESRC}
 igb.ko igb: .compile_mark ${IGBSRC}
 	rm -rf ${IGBDIR}
 	tar xf ${IGBSRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${IGBDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
 	cd ${IGBDIR}; patch -p1 < ../igb_4.9_compat.patch
 	cd ${IGBDIR}; patch -p1 < ../igb_4.10_compat.patch
@@ -307,7 +307,7 @@ igb.ko igb: .compile_mark ${IGBSRC}
 ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 	rm -rf ${IXGBEDIR}
 	tar xf ${IXGBESRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_compat.patch
 	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IXGBEDIR}/src/ixgbe.ko ixgbe.ko
@@ -315,14 +315,14 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 i40e.ko i40e: .compile_mark ${I40ESRC}
 	rm -rf ${I40EDIR}
 	tar xf ${I40ESRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${I40EDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${I40EDIR}/src/i40e.ko i40e.ko
 
 bnx2.ko cnic.ko bnx2x.ko: ${BNX2SRC}
 	rm -rf ${BNX2DIR}
 	tar xf ${BNX2SRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${BNX2DIR}; make -C bnx2/src KVER=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cd ${BNX2DIR}; make -C bnx2x/src KVER=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp `find ${BNX2DIR} -name bnx2.ko -o -name cnic.ko -o -name bnx2x.ko` .
@@ -330,7 +330,7 @@ bnx2.ko cnic.ko bnx2x.ko: ${BNX2SRC}
 arcmsr.ko: .compile_mark ${ARECASRC}
 	rm -rf ${ARECADIR}
 	mkdir ${ARECADIR}; cd ${ARECADIR}; unzip ../${ARECASRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${ARECADIR}; make -C ${TOP}/${KERNEL_SRC} SUBDIRS=${TOP}/${ARECADIR} KSRC=${TOP}/${KERNEL_SRC} modules
 	cp ${ARECADIR}/arcmsr.ko arcmsr.ko
 
