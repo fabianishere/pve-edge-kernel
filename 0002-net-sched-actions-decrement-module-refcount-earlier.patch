@@ -1,0 +1,67 @@
+From b3c6f3b25edface1ece9b30aa1fe5d6f9abae098 Mon Sep 17 00:00:00 2001
+From: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Date: Thu, 13 Apr 2017 10:13:32 +0200
+Subject: [Zesty][PATCH 2/2] UBUNTU: SAUCE: net sched actions: decrement module refcount earlier
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1682368
+
+Whether the reference count has to be decremented depends
+on whether the policy was created. If TCA_ACT_COOKIE is
+passed and an error occurs there, the same condition still
+has to be honored.
+
+Signed-off-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
+(cherry-picked from http://marc.info/?l=linux-netdev&m=149200742616349)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ net/sched/act_api.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
+
+diff --git a/net/sched/act_api.c b/net/sched/act_api.c
+index 32f12f5..07068ca 100644
+--- a/net/sched/act_api.c
++++ b/net/sched/act_api.c
+@@ -607,28 +607,29 @@ struct tc_action *tcf_action_init_1(struct net *net, struct nlattr *nla,
+ 	if (err < 0)
+ 		goto err_mod;
+ 
++	/* module count goes up only when brand new policy is created
++	 * if it exists and is only bound to in a_o->init() then
++	 * ACT_P_CREATED is not returned (a zero is).
++	 */
++	if (err != ACT_P_CREATED)
++		module_put(a_o->owner);
++
+ 	if (name == NULL && tb[TCA_ACT_COOKIE]) {
+ 		int cklen = nla_len(tb[TCA_ACT_COOKIE]);
+ 
+ 		if (cklen > TC_COOKIE_MAX_SIZE) {
+ 			err = -EINVAL;
+ 			tcf_hash_release(a, bind);
+-			goto err_mod;
++			goto err_out;
+ 		}
+ 
+ 		if (nla_memdup_cookie(a, tb) < 0) {
+ 			err = -ENOMEM;
+ 			tcf_hash_release(a, bind);
+-			goto err_mod;
++			goto err_out;
+ 		}
+ 	}
+ 
+-	/* module count goes up only when brand new policy is created
+-	 * if it exists and is only bound to in a_o->init() then
+-	 * ACT_P_CREATED is not returned (a zero is).
+-	 */
+-	if (err != ACT_P_CREATED)
+-		module_put(a_o->owner);
+ 
+ 	return a;
+ 
+-- 
+2.1.4
+

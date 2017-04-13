@@ -264,6 +264,8 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-2596-kvm-page-reference-leakage-in-handle_vmon.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../openvswitch-Set-internal-device-max-mtu-to-ETH_MAX_M.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../0001-net-sched-actions-fix-access-to-uninitialized-data.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../0002-net-sched-actions-decrement-module-refcount-earlier.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
