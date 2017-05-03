@@ -34,47 +34,12 @@ IGBSRC=${IGBDIR}.tar.gz
 IXGBEDIR=ixgbe-5.0.4
 IXGBESRC=${IXGBEDIR}.tar.gz
 
-# does not compile with kernel 3.19.8
-#I40EDIR=i40e-1.2.38
-#I40ESRC=${I40EDIR}.tar.gz
-
-# looks up to date with kernel 3.19.8
-#BNX2DIR=netxtreme2-7.11.05
-#BNX2SRC=${BNX2DIR}.tar.gz
-
-# does not compile with kernel 3.19.8
-#AACRAIDVER=1.2.1-40700
-#AACRAIDDIR=aacraid-${AACRAIDVER}.src
-#AACRAIDSRC=aacraid-linux-src-${AACRAIDVER}.tgz
-
-# does not compile with kernel 3.19.8
-HPSAVER=3.4.8
-HPSADIR=hpsa-${HPSAVER}
-HPSASRC=${HPSADIR}-140.tar.bz2
-
-# driver does not compile
-#MEGARAID_DIR=megaraid_sas-06.703.11.00
-#MEGARAID_SRC=${MEGARAID_DIR}-src.tar.gz
-
-#ARECADIR=arcmsr-1.30.0X.19-140509
-#ARECASRC=${ARECADIR}.zip
-
-# this one does not compile with newer 3.10 kernels!
-#RR272XSRC=RR272x_1x-Linux-Src-v1.5-130325-0732.tar.gz
-#RR272XDIR=rr272x_1x-linux-src-v1.5
-
 SPLDIR=pkg-spl
 SPLSRC=submodules/zfs/pkg-spl.tar.gz
 ZFSDIR=pkg-zfs
 ZFSSRC=submodules/zfs/pkg-zfs.tar.gz
 ZFS_MODULES=zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko
 SPL_MODULES=spl.ko splat.ko
-
-# DRBD9
-#DRBDVER=9.0.6-1
-#DRBDDIR=drbd-${DRBDVER}
-#DRBDSRC=${DRBDDIR}.tar.gz
-#DRBD_MODULES=drbd.ko drbd_transport_tcp.ko
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
@@ -189,13 +154,9 @@ data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
 	install -m 644 ixgbe.ko tmp/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/ixgbe/
 	# install latest e1000e driver
 	install -m 644 e1000e.ko tmp/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/e1000e/
-	## install hpsa driver
-	#install -m 644 hpsa.ko tmp/lib/modules/${KVNAME}/kernel/drivers/scsi/
 	# install zfs drivers
 	install -d -m 0755 tmp/lib/modules/${KVNAME}/zfs
 	install -m 644 ${SPL_MODULES} ${ZFS_MODULES} tmp/lib/modules/${KVNAME}/zfs
-	# install drbd9
-	#install -m 644 ${DRBD_MODULES} tmp/lib/modules/${KVNAME}/kernel/drivers/block/drbd
 	# remove firmware
 	rm -rf tmp/lib/firmware
 	# strip debug info
@@ -269,24 +230,6 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
-aacraid.ko: .compile_mark ${AACRAIDSRC}
-	rm -rf ${AACRAIDDIR}
-	mkdir ${AACRAIDDIR}
-	cd ${AACRAIDDIR};tar xzf ../${AACRAIDSRC}
-	cd ${AACRAIDDIR};rpm2cpio aacraid-${AACRAIDVER}.src.rpm|cpio -i
-	cd ${AACRAIDDIR};tar xf aacraid_source.tgz
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
-	make -C ${TOP}/${KERNEL_SRC} M=${TOP}/${AACRAIDDIR} KSRC=${TOP}/${KERNEL_SRC} modules
-	cp ${AACRAIDDIR}/aacraid.ko .
-
-hpsa.ko hpsa: .compile_mark ${HPSASRC}
-	rm -rf ${HPSADIR}
-	tar xf ${HPSASRC}
-#	sed -i ${HPSADIR}/drivers/scsi/hpsa_kernel_compat.h -e 's/^\/\* #define RHEL7.*/#define RHEL7/'
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
-	make -C ${TOP}/${KERNEL_SRC} M=${TOP}/${HPSADIR}/drivers/scsi KSRC=${TOP}/${KERNEL_SRC} modules
-	cp ${HPSADIR}/drivers/scsi/hpsa.ko hpsa.ko
-
 e1000e.ko e1000e: .compile_mark ${E1000ESRC}
 	rm -rf ${E1000EDIR}
 	tar xf ${E1000ESRC}
@@ -317,28 +260,6 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IXGBEDIR}/src/ixgbe.ko ixgbe.ko
 
-i40e.ko i40e: .compile_mark ${I40ESRC}
-	rm -rf ${I40EDIR}
-	tar xf ${I40ESRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
-	cd ${I40EDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
-	cp ${I40EDIR}/src/i40e.ko i40e.ko
-
-bnx2.ko cnic.ko bnx2x.ko: ${BNX2SRC}
-	rm -rf ${BNX2DIR}
-	tar xf ${BNX2SRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
-	cd ${BNX2DIR}; make -C bnx2/src KVER=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
-	cd ${BNX2DIR}; make -C bnx2x/src KVER=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
-	cp `find ${BNX2DIR} -name bnx2.ko -o -name cnic.ko -o -name bnx2x.ko` .
-
-arcmsr.ko: .compile_mark ${ARECASRC}
-	rm -rf ${ARECADIR}
-	mkdir ${ARECADIR}; cd ${ARECADIR}; unzip ../${ARECASRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
-	cd ${ARECADIR}; make -C ${TOP}/${KERNEL_SRC} SUBDIRS=${TOP}/${ARECADIR} KSRC=${TOP}/${KERNEL_SRC} modules
-	cp ${ARECADIR}/arcmsr.ko arcmsr.ko
-
 ${SPL_MODULES}: .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
 	tar xf ${SPLSRC}
@@ -360,28 +281,6 @@ ${ZFS_MODULES}: .compile_mark ${ZFSSRC}
 	cp ${ZFSDIR}/module/unicode/zunicode.ko zunicode.ko
 	cp ${ZFSDIR}/module/zcommon/zcommon.ko zcommon.ko
 	cp ${ZFSDIR}/module/zpios/zpios.ko zpios.ko
-
-#.PHONY: update-drbd
-#update-drbd:
-#	rm -rf ${DRBDDIR} ${DRBDSRC} drbd-9.0
-#	git clone --recursive git://git.drbd.org/drbd-9.0
-#	cd drbd-9.0; make tarball
-#	mv drbd-9.0/${DRBDSRC} ${DRBDSRC} 
-#
-#.PHONY: drbd
-#drbd ${DRBD_MODULES}: .compile_mark ${DRBDSRC}
-#	rm -rf ${DRBDDIR}
-#	tar xzf ${DRBDSRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
-#	cd ${DRBDDIR}; make KVER=${KVNAME} KDIR=${TOP}/${KERNEL_SRC}
-#	mv ${DRBDDIR}/drbd/drbd.ko drbd.ko
-#	mv ${DRBDDIR}/drbd/drbd_transport_tcp.ko drbd_transport_tcp.ko
-
-#iscsi_trgt.ko: .compile_mark ${ISCSITARGETSRC}
-#	rm -rf ${ISCSITARGETDIR}
-#	tar xf ${ISCSITARGETSRC}
-#	cd ${ISCSITARGETDIR}; make KSRC=${TOP}/${KERNEL_SRC}
-#	cp ${ISCSITARGETDIR}/kernel/iscsi_trgt.ko iscsi_trgt.ko
 
 headers_tmp := $(CURDIR)/tmp-headers
 headers_dir := $(headers_tmp)/usr/src/linux-headers-${KVNAME}
