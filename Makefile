@@ -203,6 +203,7 @@ PVE_CONFIG_OPTS= \
 --set-str CONFIG_DEFAULT_SECURITY apparmor
 
 .compile_mark: ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}
+	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cp ${KERNEL_CFG_ORG} ${KERNEL_SRC}/.config
 	cd ${KERNEL_SRC}; ./scripts/config ${PVE_CONFIG_OPTS}
 	cd ${KERNEL_SRC}; make oldconfig
@@ -233,7 +234,7 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 e1000e.ko e1000e: .compile_mark ${E1000ESRC}
 	rm -rf ${E1000EDIR}
 	tar xf ${E1000ESRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${E1000EDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
 	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_compat.patch
 	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_max-mtu.patch
@@ -243,7 +244,7 @@ e1000e.ko e1000e: .compile_mark ${E1000ESRC}
 igb.ko igb: .compile_mark ${IGBSRC}
 	rm -rf ${IGBDIR}
 	tar xf ${IGBSRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${IGBDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
 	cd ${IGBDIR}; patch -p1 < ../igb_4.9_compat.patch
 	cd ${IGBDIR}; patch -p1 < ../igb_4.10_compat.patch
@@ -254,7 +255,7 @@ igb.ko igb: .compile_mark ${IGBSRC}
 ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 	rm -rf ${IXGBEDIR}
 	tar xf ${IXGBESRC}
-#	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
+	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_compat.patch
 	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_max-mtu.patch
 	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
@@ -263,6 +264,7 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 ${SPL_MODULES}: .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
 	tar xf ${SPLSRC}
+	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${SPLDIR}; ./autogen.sh
 	cd ${SPLDIR}; ./configure --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
 	cd ${SPLDIR}; make
@@ -272,6 +274,7 @@ ${SPL_MODULES}: .compile_mark ${SPLSRC}
 ${ZFS_MODULES}: .compile_mark ${ZFSSRC}
 	rm -rf ${ZFSDIR}
 	tar xf ${ZFSSRC}
+	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${ZFSDIR}; ./autogen.sh
 	cd ${ZFSDIR}; ./configure --with-spl=${TOP}/${SPLDIR} --with-spl-obj=${TOP}/${SPLDIR} --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
 	cd ${ZFSDIR}; make
