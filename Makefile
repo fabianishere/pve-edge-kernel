@@ -293,6 +293,7 @@ e1000e.ko e1000e: .compile_mark ${E1000ESRC}
 #	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${E1000EDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
 	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_compat.patch
+	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_max-mtu.patch
 	cd ${E1000EDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${E1000EDIR}/src/e1000e.ko e1000e.ko
 
@@ -303,6 +304,7 @@ igb.ko igb: .compile_mark ${IGBSRC}
 	cd ${IGBDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
 	cd ${IGBDIR}; patch -p1 < ../igb_4.9_compat.patch
 	cd ${IGBDIR}; patch -p1 < ../igb_4.10_compat.patch
+	cd ${IGBDIR}; patch -p1 < ../igb_4.10_max-mtu.patch
 	cd ${IGBDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IGBDIR}/src/igb.ko igb.ko
 
@@ -311,6 +313,7 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 	tar xf ${IXGBESRC}
 #	[ ! -e /lib/modules/${KVNAME}/build ] || rm /lib/modules/${KVNAME}/build
 	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_compat.patch
+	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_max-mtu.patch
 	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IXGBEDIR}/src/ixgbe.ko ixgbe.ko
 
