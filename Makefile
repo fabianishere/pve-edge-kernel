@@ -18,6 +18,7 @@ HDRPACKAGE=pve-headers-${KVNAME}
 ARCH=amd64
 GITVERSION:=$(shell cat .git/refs/heads/master)
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate -lchangelog.Debian)
+export SOURCE_DATE_EPOCH ?= $(shell dpkg-parsechangelog -STimestamp -lchangelog.Debian)
 
 SKIPABI=0
 
