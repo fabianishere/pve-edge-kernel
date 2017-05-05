@@ -1,3 +1,13 @@
+pve-kernel (4.10.8-7) unstable; urgency=medium
+
+  * update CVE-2017-7979 fix (#1351) to final version
+
+  * add fix for swapops.h BUG_ON
+
+  * fix #1343: jumbo frame support for intel e1000e, igb and ixgbe modules
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 5 May 2017 09:18:09 +0200
+
 pve-kernel (4.10.8-6) unstable; urgency=medium
 
   * update to Ubuntu-4.10.0-19.21
