@@ -229,6 +229,10 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../openvswitch-Set-internal-device-max-mtu-to-ETH_MAX_M.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-7979-0001-net_sched-nla_memdup_cookie-can-be-static.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-7979-0002-net-sched-actions-allocate-act-cookie-early.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0001-Revert-mm-ksm-handle-protnone-saved-writes-when-maki.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0002-Revert-mm-ksm-convert-write_protect_page-to-use-page.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0003-Revert-mm-introduce-page_vma_mapped_walk.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0004-mm-ksm-handle-protnone-saved-writes-when-making-page.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
