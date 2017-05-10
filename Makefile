@@ -16,6 +16,14 @@ PACKAGE=pve-kernel-${KVNAME}
 HDRPACKAGE=pve-headers-${KVNAME}
 
 ARCH=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
+
+# amd64/x86_64/x86 share the arch subdirectory in the kernel, 'x86' so we need
+# a mapping
+KERNEL_ARCH=x86
+ifneq (${ARCH}, amd64)
+KERNEL_ARCH=${ARCH}
+endif
+
 GITVERSION:=$(shell cat .git/refs/heads/master)
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate -lchangelog.Debian)
 export SOURCE_DATE_EPOCH ?= $(shell dpkg-parsechangelog -STimestamp -lchangelog.Debian)
@@ -147,7 +155,7 @@ data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
 	mkdir tmp/boot
 	install -m 644 ${KERNEL_SRC}/.config tmp/boot/config-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/System.map tmp/boot/System.map-${KVNAME}
-	install -m 644 ${KERNEL_SRC}/arch/x86_64/boot/bzImage tmp/boot/vmlinuz-${KVNAME}
+	install -m 644 ${KERNEL_SRC}/arch/${KERNEL_ARCH}/boot/bzImage tmp/boot/vmlinuz-${KVNAME}
 	cd ${KERNEL_SRC}; make INSTALL_MOD_PATH=../tmp/ modules_install
 	## install latest ibg driver
 	install -m 644 igb.ko tmp/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/igb/
@@ -311,7 +319,7 @@ ${HDR_DEB} hdr: .compile_mark headers-control.in headers-postinst.in
 	     -name '*.sh' -o -name '*.pl' \) \
 	  -print | cpio -pd --preserve-modification-time $(headers_dir)
 	cd ${KERNEL_SRC}; cp -a include scripts $(headers_dir)
-	cd ${KERNEL_SRC}; (find arch/x86 -name include -type d -print | \
+	cd ${KERNEL_SRC}; (find arch/${KERNEL_ARCH} -name include -type d -print | \
 		xargs -n1 -i: find : -type f) | \
 		cpio -pd --preserve-modification-time $(headers_dir)
 	mkdir -p ${headers_tmp}/lib/modules/${KVNAME}
