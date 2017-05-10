@@ -2,7 +2,7 @@ Source: pve-kernel
 Maintainer: Proxmox Support Team <support@proxmox.com>
 
 Package: linux-tools-4.10
-Architecture: amd64
+Architecture: any
 Section: devel
 Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}, linux-base

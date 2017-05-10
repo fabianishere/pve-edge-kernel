@@ -2,7 +2,7 @@ Package: pve-headers-@KVNAME@
 Version: @KERNEL_VER@-@PKGREL@
 Section: devel
 Priority: optional
-Architecture: amd64
+Architecture: @ARCH@
 Provides: linux-headers, linux-headers-2.6
 Depends: coreutils | fileutils (>= 4.0)
 Maintainer: Proxmox Support Team <support@proxmox.com>

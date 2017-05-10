@@ -15,7 +15,7 @@ KVNAME=${KERNEL_VER}${EXTRAVERSION}
 PACKAGE=pve-kernel-${KVNAME}
 HDRPACKAGE=pve-headers-${KVNAME}
 
-ARCH=amd64
+ARCH=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
 GITVERSION:=$(shell cat .git/refs/heads/master)
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate -lchangelog.Debian)
 export SOURCE_DATE_EPOCH ?= $(shell dpkg-parsechangelog -STimestamp -lchangelog.Debian)
@@ -50,7 +50,7 @@ VIRTUALHDRPACKAGE=pve-headers
 VIRTUAL_HDR_DEB=${VIRTUALHDRPACKAGE}_${RELEASE}-${PKGREL}_all.deb
 
 LINUX_TOOLS_PKG=linux-tools-4.10
-LINUX_TOOLS_DEB=${LINUX_TOOLS_PKG}_${KERNEL_VER}-${PKGREL}_amd64.deb
+LINUX_TOOLS_DEB=${LINUX_TOOLS_PKG}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${PVE_DEB} ${VIRTUAL_HDR_DEB} ${LINUX_TOOLS_DEB}
 
@@ -92,7 +92,7 @@ endif
 
 ${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian | fwcheck abicheck
 	mkdir -p data/DEBIAN
-	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' <control.in >data/DEBIAN/control
+	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' -e 's/@ARCH@/${ARCH}/' <control.in >data/DEBIAN/control
 	sed -e 's/@@KVNAME@@/${KVNAME}/g'  <prerm.in >data/DEBIAN/prerm
 	chmod 0755 data/DEBIAN/prerm
 	sed -e 's/@@KVNAME@@/${KVNAME}/g'  <postinst.in >data/DEBIAN/postinst
@@ -216,7 +216,7 @@ PVE_CONFIG_OPTS= \
 ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	rm -rf ${KERNEL_SRC}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${KERNEL_SRC}
-	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/amd64/config.common.amd64 ${KERNEL_SRC}/debian.master/config/amd64/config.flavour.generic > ${KERNEL_CFG_ORG}
+	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cd ${KERNEL_SRC}; patch -p1 < ../uname-version-timestamp.patch
 	cd ${KERNEL_SRC}; patch -p1 <../bridge-patch.diff
 	#cd ${KERNEL_SRC}; patch -p1 <../bridge-forward-ipv6-neighbor-solicitation.patch
@@ -296,7 +296,7 @@ headers_dir := $(headers_tmp)/usr/src/linux-headers-${KVNAME}
 ${HDR_DEB} hdr: .compile_mark headers-control.in headers-postinst.in
 	rm -rf $(headers_tmp)
 	install -d $(headers_tmp)/DEBIAN $(headers_dir)/include/
-	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' <headers-control.in >$(headers_tmp)/DEBIAN/control
+	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' -e 's/@ARCH@/${ARCH}/' <headers-control.in >$(headers_tmp)/DEBIAN/control
 	sed -e 's/@@KVNAME@@/${KVNAME}/g'  <headers-postinst.in >$(headers_tmp)/DEBIAN/postinst
 	chmod 0755 $(headers_tmp)/DEBIAN/postinst
 	install -D -m 644 copyright $(headers_tmp)/usr/share/doc/${HDRPACKAGE}/copyright

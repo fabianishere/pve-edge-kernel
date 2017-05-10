@@ -2,7 +2,7 @@ Package: pve-kernel-@KVNAME@
 Version: @KERNEL_VER@-@PKGREL@
 Section: admin
 Priority: optional
-Architecture: amd64
+Architecture: @ARCH@
 Provides: linux-image, linux-image-2.6
 Suggests: pve-firmware
 Depends: grub-pc | grub-efi-amd64 | grub-efi-ia32, initramfs-tools, busybox
