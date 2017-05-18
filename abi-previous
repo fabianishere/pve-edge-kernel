@@ -683,7 +683,6 @@ EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x35a7bf3b	ttm_fbdev_mmap
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x37abdaae	ttm_bo_evict_mm
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x3a179f03	ttm_bo_del_sub_from_lru
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x401892bf	ttm_bo_manager_func
-EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x485a5bc0	ttm_ref_object_add
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x4bc86430	ttm_bo_validate
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x4e8dd264	ttm_bo_global_release
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x4f6304af	ttm_bo_acc_size
@@ -711,6 +710,7 @@ EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x946d9ea3	ttm_write_unlock
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x94894449	ttm_base_object_init
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x99515a26	ttm_bo_synccpu_write_grab
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x998e45c0	ttm_ref_object_base_unref
+EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0x99d0eb91	ttm_ref_object_add
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0xa0895974	ttm_bo_kmap
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0xa3e8b005	ttm_eu_fence_buffer_objects
 EXPORT_SYMBOL drivers/gpu/drm/ttm/ttm 0xa55a4aef	ttm_bo_clean_mm
@@ -5130,7 +5130,7 @@ EXPORT_SYMBOL_GPL drivers/cpufreq/speedstep-lib 0x2b67f096	speedstep_get_frequen
 EXPORT_SYMBOL_GPL drivers/cpufreq/speedstep-lib 0xd7ab2c0c	speedstep_detect_processor
 EXPORT_SYMBOL_GPL drivers/crypto/ccp/ccp 0x04773b60	ccp_present
 EXPORT_SYMBOL_GPL drivers/crypto/ccp/ccp 0x3a1a3979	ccp_version
-EXPORT_SYMBOL_GPL drivers/crypto/ccp/ccp 0x9a5bbb37	ccp_enqueue_cmd
+EXPORT_SYMBOL_GPL drivers/crypto/ccp/ccp 0x640fc05c	ccp_enqueue_cmd
 EXPORT_SYMBOL_GPL drivers/crypto/qat/qat_common/intel_qat 0x009bda57	adf_cfg_section_add
 EXPORT_SYMBOL_GPL drivers/crypto/qat/qat_common/intel_qat 0x05a9ebc7	adf_vf_isr_resource_free
 EXPORT_SYMBOL_GPL drivers/crypto/qat/qat_common/intel_qat 0x08fa3486	adf_enable_vf2pf_comms
