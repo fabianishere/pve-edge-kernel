@@ -1,0 +1,54 @@
+From 6fa9fc0ce1032710ce017c444b0c66eaf9e77782 Mon Sep 17 00:00:00 2001
+From: Pablo Neira Ayuso <pablo@netfilter.org>
+Date: Mon, 22 May 2017 00:17:30 +0200
+Subject: [PATCH linux] netfilter: nft_set_rbtree: handle re-addition element
+ after deletion
+
+The existing code selects no next branch to be inspected when
+re-inserting an inactive element into the rb-tree, looping endlessly.
+This patch restricts the check for active elements to the EEXIST case
+only.
+
+Fixes: e701001e7cbe ("netfilter: nft_rbtree: allow adjacent intervals with dynamic updates")
+Reported-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+---
+ net/netfilter/nft_set_rbtree.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/net/netfilter/nft_set_rbtree.c b/net/netfilter/nft_set_rbtree.c
+index f06f55e..51ff879 100644
+--- a/net/netfilter/nft_set_rbtree.c
++++ b/net/netfilter/nft_set_rbtree.c
+@@ -118,17 +118,17 @@ static int __nft_rbtree_insert(const struct net *net, const struct nft_set *set,
+ 		else if (d > 0)
+ 			p = &parent->rb_right;
+ 		else {
+-			if (nft_set_elem_active(&rbe->ext, genmask)) {
+-				if (nft_rbtree_interval_end(rbe) &&
+-				    !nft_rbtree_interval_end(new))
+-					p = &parent->rb_left;
+-				else if (!nft_rbtree_interval_end(rbe) &&
+-					 nft_rbtree_interval_end(new))
+-					p = &parent->rb_right;
+-				else {
+-					*ext = &rbe->ext;
+-					return -EEXIST;
+-				}
++			if (nft_rbtree_interval_end(rbe) &&
++			    !nft_rbtree_interval_end(new)) {
++				p = &parent->rb_left;
++			} else if (!nft_rbtree_interval_end(rbe) &&
++				   nft_rbtree_interval_end(new)) {
++				p = &parent->rb_right;
++			} else if (nft_set_elem_active(&rbe->ext, genmask)) {
++				*ext = &rbe->ext;
++				return -EEXIST;
++			} else {
++				p = &parent->rb_left;
+ 			}
+ 		}
+ 	}
+-- 
+2.1.4
+

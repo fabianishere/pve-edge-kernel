@@ -240,6 +240,7 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0002-Revert-mm-ksm-convert-write_protect_page-to-use-page.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0003-Revert-mm-introduce-page_vma_mapped_walk.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../swapops-0004-mm-ksm-handle-protnone-saved-writes-when-making-page.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../0001-netfilter-nft_set_rbtree-handle-re-addition-element-.patch # DoS from within (unpriv) containers
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
