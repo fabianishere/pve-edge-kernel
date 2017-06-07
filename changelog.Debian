@@ -1,3 +1,14 @@
+pve-kernel (4.10.15-10) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-22.24
+
+  * bump ABI to 4.10.15-1-pve
+
+  * fix CVE-2017-8890, CVE-2017-9074, CVE-2017-9075, CVE-2017-9076,
+    CVE-2017-9077, CVE-2017-9242
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 7 Jun 2017 10:36:18 +0200
+
 pve-kernel (4.10.11-9) unstable; urgency=medium
 
   * fix DoS bug exploitable via nftables
