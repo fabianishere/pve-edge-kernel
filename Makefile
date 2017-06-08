@@ -235,6 +235,11 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../openvswitch-Set-internal-device-max-mtu-to-ETH_MAX_M.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../0001-netfilter-nft_set_rbtree-handle-re-addition-element-.patch # DoS from within (unpriv) containers
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-8890-dccp-tcp-do-not-inherit-mc_list-from-parent.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9074-ipv6-Prevent-overrun-when-parsing-v6-header-options.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9075-sctp-do-not-inherit-ipv6_-mc-ac-fl-_list-from-parent.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9076_9077-ipv6-dccp-do-not-inherit-ipv6_mc_list-from-parent.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9242-ipv6-fix-out-of-bound-writes-in-__ip6_append_data.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
