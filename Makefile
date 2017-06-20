@@ -24,7 +24,7 @@ ifneq (${ARCH}, amd64)
 KERNEL_ARCH=${ARCH}
 endif
 
-GITVERSION:=$(shell cat .git/refs/heads/master)
+GITVERSION:=$(shell git rev-parse HEAD)
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate -lchangelog.Debian)
 export SOURCE_DATE_EPOCH ?= $(shell dpkg-parsechangelog -STimestamp -lchangelog.Debian)
 
