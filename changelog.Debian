@@ -1,3 +1,11 @@
+pve-kernel (4.10.15-13) unstable; urgency=medium
+
+  * update to Ubuntu 4.10.0-24.28
+
+  * fix CVE-2017-1000364 - "The Stack Clash"
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 20 Jun 2017 09:57:09 +0200
+
 pve-kernel (4.10.15-12) unstable; urgency=medium
 
   * fix #1366: cherry-pick pinctl fix for AMD Ryzen on certain Gigabyte mainboards
