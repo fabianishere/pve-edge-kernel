@@ -1,3 +1,9 @@
+pve-kernel (4.10.15-14) unstable; urgency=medium
+
+  * add follow-up fix for  CVE-2017-100364 fix
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 22 Jun 2017 09:23:39 +0200
+
 pve-kernel (4.10.15-13) unstable; urgency=medium
 
   * update to Ubuntu 4.10.0-24.28
