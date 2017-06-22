@@ -243,6 +243,7 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9242-ipv6-fix-out-of-bound-writes-in-__ip6_append_data.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../pinctl-amd-ryzen-01-make-use-of-raw_spinlock-variants.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../pinctl-amd-ryzen-02-Use-regular-interrupt-instead-of-chained.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../mm-fix-new-crash-in-unmapped_area_topdown.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
