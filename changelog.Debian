@@ -1,3 +1,13 @@
+pve-kernel (4.10.17-16) unstable; urgency=medium
+
+  * update to Ubuntu 4.10.0-26.30 (based on stable kernel 4.10.17)
+
+  * use e1000e, igb, ixgbe NIC drivers form upstream kernel
+
+  * bump ABI to 4.10.17-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 11 Jul 2017 09:55:44 +0200
+
 pve-kernel (4.10.15-15) unstable; urgency=medium
 
   * replace CVE-2017-100364 fix and follow-up with upstream version
