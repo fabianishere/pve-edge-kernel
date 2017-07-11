@@ -233,20 +233,7 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	#cd ${KERNEL_SRC}; patch -p1 <../vhost-net-extend-device-allocation-to-vmalloc.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../kvm-dynamic-halt-polling-disable-default.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../openvswitch-Set-internal-device-max-mtu-to-ETH_MAX_M.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../0001-netfilter-nft_set_rbtree-handle-re-addition-element-.patch # DoS from within (unpriv) containers
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-8890-dccp-tcp-do-not-inherit-mc_list-from-parent.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9074-ipv6-Prevent-overrun-when-parsing-v6-header-options.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9074-2-ipv6-Check-ip6_find_1stfragopt-return-value-properly.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9075-sctp-do-not-inherit-ipv6_-mc-ac-fl-_list-from-parent.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9076_9077-ipv6-dccp-do-not-inherit-ipv6_mc_list-from-parent.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-9242-ipv6-fix-out-of-bound-writes-in-__ip6_append_data.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../pinctl-amd-ryzen-01-make-use-of-raw_spinlock-variants.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../pinctl-amd-ryzen-02-Use-regular-interrupt-instead-of-chained.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-100364-0001-Revert-mm-enlarge-stack-guard-gap.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-100364-0002-Revert-mm-do-not-collapse-stack-gap-into-THP.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-100364-0003-mm-larger-stack-guard-gap-between-vmas.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-100364-0004-mm-fix-new-crash-in-unmapped_area_topdown.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
