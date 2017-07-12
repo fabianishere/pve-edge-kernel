@@ -234,6 +234,11 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../kvm-dynamic-halt-polling-disable-default.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../0001-netfilter-nft_set_rbtree-handle-re-addition-element-.patch # DoS from within (unpriv) containers
+	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2014-9900-net-Zeroing-the-structure-ethtool_wolinfo-in-ethtool.patch
+	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-1000380-ALSA-timer-Fix-missing-queue-indices-reset-at-SNDRV_.patch
+	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-1000380-ALSA-timer-Fix-race-between-read-and-ioctl.patch
+	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-7346-drm-vmwgfx-limit-the-number-of-mip-levels-in-vmw_gb_.patch
+	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-9605-drm-vmwgfx-Make-sure-backup_handle-is-always-valid.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
