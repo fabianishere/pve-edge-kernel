@@ -34,15 +34,6 @@ TOP=$(shell pwd)
 
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-E1000EDIR=e1000e-3.3.5.3
-E1000ESRC=${E1000EDIR}.tar.gz
-
-IGBDIR=igb-5.3.5.4
-IGBSRC=${IGBDIR}.tar.gz
-
-IXGBEDIR=ixgbe-5.0.4
-IXGBESRC=${IXGBEDIR}.tar.gz
-
 SPLDIR=pkg-spl
 SPLSRC=submodules/zfs/pkg-spl.tar.gz
 ZFSDIR=pkg-zfs
@@ -150,19 +141,13 @@ abi-${KVNAME}: .compile_mark
 abicheck: abi-${KVNAME} abi-previous abi-blacklist
 	./abi-check abi-${KVNAME} abi-previous ${SKIPABI}
 
-data: .compile_mark igb.ko ixgbe.ko e1000e.ko ${SPL_MODULES} ${ZFS_MODULES}
+data: .compile_mark ${SPL_MODULES} ${ZFS_MODULES}
 	rm -rf data tmp; mkdir -p tmp/lib/modules/${KVNAME}
 	mkdir tmp/boot
 	install -m 644 ${KERNEL_SRC}/.config tmp/boot/config-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/System.map tmp/boot/System.map-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/arch/${KERNEL_ARCH}/boot/bzImage tmp/boot/vmlinuz-${KVNAME}
 	cd ${KERNEL_SRC}; make INSTALL_MOD_PATH=../tmp/ modules_install
-	## install latest ibg driver
-	install -m 644 igb.ko tmp/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/igb/
-	# install latest ixgbe driver
-	install -m 644 ixgbe.ko tmp/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/ixgbe/
-	# install latest e1000e driver
-	install -m 644 e1000e.ko tmp/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/e1000e/
 	# install zfs drivers
 	install -d -m 0755 tmp/lib/modules/${KVNAME}/zfs
 	install -m 644 ${SPL_MODULES} ${ZFS_MODULES} tmp/lib/modules/${KVNAME}/zfs
@@ -241,36 +226,6 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-9605-drm-vmwgfx-Make-sure-backup_handle-is-always-valid.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
-
-e1000e.ko e1000e: .compile_mark ${E1000ESRC}
-	rm -rf ${E1000EDIR}
-	tar xf ${E1000ESRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${E1000EDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
-	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_compat.patch
-	cd ${E1000EDIR}; patch -p1 < ../e1000e_4.10_max-mtu.patch
-	cd ${E1000EDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
-	cp ${E1000EDIR}/src/e1000e.ko e1000e.ko
-
-igb.ko igb: .compile_mark ${IGBSRC}
-	rm -rf ${IGBDIR}
-	tar xf ${IGBSRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${IGBDIR}; patch -p1 < ../intel-module-gcc6-compat.patch
-	cd ${IGBDIR}; patch -p1 < ../igb_4.9_compat.patch
-	cd ${IGBDIR}; patch -p1 < ../igb_4.10_compat.patch
-	cd ${IGBDIR}; patch -p1 < ../igb_4.10_max-mtu.patch
-	cd ${IGBDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
-	cp ${IGBDIR}/src/igb.ko igb.ko
-
-ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
-	rm -rf ${IXGBEDIR}
-	tar xf ${IXGBESRC}
-	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_compat.patch
-	cd ${IXGBEDIR}; patch -p1 < ../ixgbe_4.10_max-mtu.patch
-	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
-	cp ${IXGBEDIR}/src/ixgbe.ko ixgbe.ko
 
 ${SPL_MODULES}: .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
