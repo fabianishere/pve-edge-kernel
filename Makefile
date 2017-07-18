@@ -224,6 +224,11 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-1000380-ALSA-timer-Fix-race-between-read-and-ioctl.patch
 	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-7346-drm-vmwgfx-limit-the-number-of-mip-levels-in-vmw_gb_.patch
 	cd ${KERNEL_SRC}; patch -p1 <  ../CVE-2017-9605-drm-vmwgfx-Make-sure-backup_handle-is-always-valid.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000364-mm-mmap.c-do-not-blow-on-PROT_NONE-MAP_FIXED-holes-i.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000364-mm-mmap.c-expand_downwards-don-t-require-the-gap-if-.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000365-fs-exec.c-account-for-argv-envp-pointers.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-10810-drm-virtio-don-t-leak-bo-on-drm_gem_object_init-fail.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-7482-rxrpc-Fix-several-cases-where-a-padded-len-isn-t-che.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
