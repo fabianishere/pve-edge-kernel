@@ -38,8 +38,12 @@ SPLDIR=pkg-spl
 SPLSRC=submodules/zfs/pkg-spl.tar.gz
 ZFSDIR=pkg-zfs
 ZFSSRC=submodules/zfs/pkg-zfs.tar.gz
-ZFS_MODULES=zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko
-SPL_MODULES=spl.ko splat.ko
+ZFS_KO=zfs.ko
+ZFS_KO_REST=zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko
+ZFS_MODULES=$(ZFS_KO) $(ZFS_KO_REST)
+SPL_KO=spl.ko
+SPL_KO_REST=splat.ko
+SPL_MODULES=$(SPL_KO) $(SPL_KO_REST)
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
@@ -55,7 +59,8 @@ DEBS=${DST_DEB} ${HDR_DEB} ${PVE_DEB} ${VIRTUAL_HDR_DEB} ${LINUX_TOOLS_DEB}
 
 all: check_gcc ${DEBS}
 
-${PVE_DEB} pve: proxmox-ve/control proxmox-ve/postinst ${PVE_RELEASE_KEYS}
+pve: $(PVE_DEB)
+${PVE_DEB}: proxmox-ve/control proxmox-ve/postinst ${PVE_RELEASE_KEYS}
 	rm -rf proxmox-ve/data
 	mkdir -p proxmox-ve/data/DEBIAN
 	mkdir -p proxmox-ve/data/usr/share/doc/${PVEPKG}/
@@ -71,16 +76,17 @@ ${PVE_DEB} pve: proxmox-ve/control proxmox-ve/postinst ${PVE_RELEASE_KEYS}
 	gzip -n --best proxmox-ve/data/usr/share/doc/${PVEPKG}/changelog.Debian
 	dpkg-deb --build proxmox-ve/data ${PVE_DEB}
 
-${VIRTUAL_HDR_DEB} pve-headers: proxmox-ve/pve-headers.control
-	rm -rf proxmox-ve/data
-	mkdir -p proxmox-ve/data/DEBIAN
-	mkdir -p proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/
-	sed -e 's/@KVNAME@/${KVNAME}/' -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@RELEASE@/${RELEASE}/' -e 's/@PKGREL@/${PKGREL}/' <proxmox-ve/pve-headers.control >proxmox-ve/data/DEBIAN/control
-	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" > proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/SOURCE
-	install -m 0644 proxmox-ve/copyright proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}
-	install -m 0644 proxmox-ve/changelog.Debian proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}
-	gzip -n --best proxmox-ve/data/usr/share/doc/${VIRTUALHDRPACKAGE}/changelog.Debian
-	dpkg-deb --build proxmox-ve/data ${VIRTUAL_HDR_DEB}
+pve-headers: $(VIRTUAL_HDR_DEB)
+${VIRTUAL_HDR_DEB}: proxmox-ve/pve-headers.control
+	rm -rf pve-headers/data
+	mkdir -p pve-headers/data/DEBIAN
+	mkdir -p pve-headers/data/usr/share/doc/${VIRTUALHDRPACKAGE}/
+	sed -e 's/@KVNAME@/${KVNAME}/' -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@RELEASE@/${RELEASE}/' -e 's/@PKGREL@/${PKGREL}/' <proxmox-ve/pve-headers.control >pve-headers/data/DEBIAN/control
+	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" > pve-headers/data/usr/share/doc/${VIRTUALHDRPACKAGE}/SOURCE
+	install -m 0644 proxmox-ve/copyright pve-headers/data/usr/share/doc/${VIRTUALHDRPACKAGE}
+	install -m 0644 proxmox-ve/changelog.Debian pve-headers/data/usr/share/doc/${VIRTUALHDRPACKAGE}
+	gzip -n --best pve-headers/data/usr/share/doc/${VIRTUALHDRPACKAGE}/changelog.Debian
+	dpkg-deb --build pve-headers/data ${VIRTUAL_HDR_DEB}
 
 check_gcc: 
 ifeq    ($(CC), cc)
@@ -206,7 +212,8 @@ PVE_CONFIG_OPTS= \
 	make -C ${KERNEL_SRC}/tools/perf man
 	touch $@
 
-${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
+${KERNEL_CFG_ORG}: ${KERNEL_SRC}/README
+${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
 	rm -rf ${KERNEL_SRC}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${KERNEL_SRC}
 	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
@@ -232,7 +239,8 @@ ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}: ${KERNEL_SRC_SUBMODULE} | submodules
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
-${SPL_MODULES}: .compile_mark ${SPLSRC}
+$(SPL_KO_REST): $(SPL_KO)
+$(SPL_KO): .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
 	tar xf ${SPLSRC}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
@@ -242,7 +250,8 @@ ${SPL_MODULES}: .compile_mark ${SPLSRC}
 	cp ${SPLDIR}/module/spl/spl.ko spl.ko
 	cp ${SPLDIR}/module/splat/splat.ko splat.ko
 
-${ZFS_MODULES}: .compile_mark ${ZFSSRC}
+$(ZFS_KO_REST): $(ZFS_KO)
+$(ZFS_KO): .compile_mark ${ZFSSRC}
 	rm -rf ${ZFSDIR}
 	tar xf ${ZFSSRC}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
@@ -259,7 +268,8 @@ ${ZFS_MODULES}: .compile_mark ${ZFSSRC}
 headers_tmp := $(CURDIR)/tmp-headers
 headers_dir := $(headers_tmp)/usr/src/linux-headers-${KVNAME}
 
-${HDR_DEB} hdr: .compile_mark headers-control.in headers-postinst.in
+hdr: $(HDR_DEB)
+${HDR_DEB}: .compile_mark headers-control.in headers-postinst.in
 	rm -rf $(headers_tmp)
 	install -d $(headers_tmp)/DEBIAN $(headers_dir)/include/
 	sed -e 's/@KERNEL_VER@/${KERNEL_VER}/' -e 's/@KVNAME@/${KVNAME}/' -e 's/@PKGREL@/${PKGREL}/' -e 's/@ARCH@/${ARCH}/' <headers-control.in >$(headers_tmp)/DEBIAN/control
