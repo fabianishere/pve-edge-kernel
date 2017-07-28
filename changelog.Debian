@@ -1,3 +1,11 @@
+pve-kernel (4.10.17-18) unstable; urgency=medium
+
+  * switch back to the external e1000e, igb and ixgbe drivers
+
+  * update to Ubuntu-4.10.0-28.32
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 28 Jul 2017 14:09:00 +0200
+
 pve-kernel (4.10.17-17) unstable; urgency=medium
 
   * update CVE-2017-1000364 fix
