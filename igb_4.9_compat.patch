@@ -1,0 +1,95 @@
+From 6445198f802d993c73f4b246353b2ceb2dfafc32 Mon Sep 17 00:00:00 2001
+From: Ferruh Yigit <ferruh.yigit@intel.com>
+Date: Mon, 17 Oct 2016 11:23:14 +0100
+Subject: kni: fix build with kernel 4.9
+
+compile error:
+  CC [M]  .../lib/librte_eal/linuxapp/kni/igb_main.o
+.../lib/librte_eal/linuxapp/kni/igb_main.c:2317:21:
+error: initialization from incompatible pointer type
+	[-Werror=incompatible-pointer-types]
+  .ndo_set_vf_vlan = igb_ndo_set_vf_vlan,
+                     ^~~~~~~~~~~~~~~~~~~
+
+Linux kernel 4.9 updates API for ndo_set_vf_vlan:
+Linux: 79aab093a0b5 ("net: Update API for VF vlan protocol 802.1ad support")
+
+Use new API for Linux kernels >= 4.9
+
+Signed-off-by: Ferruh Yigit <ferruh.yigit@intel.com>
+Tested-by: Pablo de Lara <pablo.de.lara.guarch@intel.com>
+---
+ src/igb_main.c | 19 +++++++++++++++++++
+ src/kcompat.h  |  4 ++++
+ 2 files changed, 23 insertions(+)
+
+diff --git a/src/igb_main.c b/src/igb_main.c
+index 23e2d64..f4dca5a 100644
+--- a/src/igb_main.c
++++ b/src/igb_main.c
+@@ -195,7 +195,11 @@ static void igb_process_mdd_event(struct igb_adapter *);
+ #ifdef IFLA_VF_MAX
+ static int igb_ndo_set_vf_mac( struct net_device *netdev, int vf, u8 *mac);
+ static int igb_ndo_set_vf_vlan(struct net_device *netdev,
++#ifdef HAVE_VF_VLAN_PROTO
++			       int vf, u16 vlan, u8 qos, __be16 vlan_proto);
++#else
+ 			       int vf, u16 vlan, u8 qos);
++#endif
+ #ifdef HAVE_VF_SPOOFCHK_CONFIGURE
+ static int igb_ndo_set_vf_spoofchk(struct net_device *netdev, int vf,
+ 				bool setting);
+@@ -6412,7 +6416,11 @@ static void igb_set_vmvir(struct igb_adapter *adapter, u32 vid, u32 vf)
+ }
+ 
+ static int igb_ndo_set_vf_vlan(struct net_device *netdev,
++#ifdef HAVE_VF_VLAN_PROTO
++			       int vf, u16 vlan, u8 qos, __be16 vlan_proto)
++#else
+ 			       int vf, u16 vlan, u8 qos)
++#endif
+ {
+ 	int err = 0;
+ 	struct igb_adapter *adapter = netdev_priv(netdev);
+@@ -6420,6 +6428,12 @@ static int igb_ndo_set_vf_vlan(struct net_device *netdev,
+ 	/* VLAN IDs accepted range 0-4094 */
+ 	if ((vf >= adapter->vfs_allocated_count) || (vlan > VLAN_VID_MASK-1) || (qos > 7))
+ 		return -EINVAL;
++
++#ifdef HAVE_VF_VLAN_PROTO
++	if (vlan_proto != htons(ETH_P_8021Q))
++		return -EPROTONOSUPPORT;
++#endif
++
+ 	if (vlan || qos) {
+ 		err = igb_vlvf_set(adapter, vlan, !!vlan, vf);
+ 		if (err)
+@@ -6580,7 +6594,12 @@ static inline void igb_vf_reset(struct igb_adapter *adapter, u32 vf)
+ 	if (adapter->vf_data[vf].pf_vlan)
+ 		igb_ndo_set_vf_vlan(adapter->netdev, vf,
+ 				    adapter->vf_data[vf].pf_vlan,
++#ifdef HAVE_VF_VLAN_PROTO
++				    adapter->vf_data[vf].pf_qos,
++				    htons(ETH_P_8021Q));
++#else
+ 				    adapter->vf_data[vf].pf_qos);
++#endif
+ 	else
+ 		igb_clear_vf_vfta(adapter, vf);
+ #endif
+diff --git a/src/kcompat.h b/src/kcompat.h
+index 69e0e7a..84826b2 100644
+--- a/src/kcompat.h
++++ b/src/kcompat.h
+@@ -3929,4 +3929,8 @@ skb_set_hash(struct sk_buff *skb, __u32 hash, __always_unused int type)
+ #define vlan_tx_tag_present skb_vlan_tag_present
+ #endif
+ 
++#if ( LINUX_VERSION_CODE >= KERNEL_VERSION(4,9,0) )
++#define HAVE_VF_VLAN_PROTO
++#endif /* >= 4.9.0 */
++
+ #endif /* _KCOMPAT_H_ */
+-- 
+cgit v1.0
+

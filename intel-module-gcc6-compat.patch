@@ -1,0 +1,18 @@
+diff --git a/src/Makefile.orig b/src/Makefile
+index 8e962f7..50bcdcc 100644
+--- a/src/Makefile.orig
++++ b/src/Makefile
+@@ -123,6 +123,13 @@ ifeq (,$(CC))
+   $(error Compiler not found)
+ endif
+ 
++# workaround for GCC6's default PIE
++ifeq ($(CC),gcc)
++  PIE_TEST = [ -z "`$(CC) -fno-PIE -no-pie -x c -c /dev/null -o /dev/null 2>&1`" ]
++  PIE_FLAGS := $(shell $(PIE_TEST) && echo '-fno-PIE -no-pie')
++  EXTRA_CFLAGS += $(PIE_FLAGS)
++endif
++
+ # we need to know what platform the driver is being built on
+ # some additional features are only built on Intel platforms
+ ARCH := $(shell uname -m | sed 's/i.86/i386/')

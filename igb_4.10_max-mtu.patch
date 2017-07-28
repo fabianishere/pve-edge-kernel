@@ -1,0 +1,47 @@
+diff --git a/src/e1000_defines.h b/src/e1000_defines.h
+index 6de3988..d58e12f 100644
+--- a/src/e1000_defines.h
++++ b/src/e1000_defines.h
+@@ -423,7 +423,8 @@
+ #define ETHERNET_IEEE_VLAN_TYPE		0x8100  /* 802.3ac packet */
+ 
+ #define ETHERNET_FCS_SIZE		4
+-#define MAX_JUMBO_FRAME_SIZE		0x3F00
++#define MAX_JUMBO_FRAME_SIZE		0x2600
++#define MAX_STD_JUMBO_FRAME_SIZE	9216
+ /* The datasheet maximum supported RX size is 9.5KB (9728 bytes) */
+ #define MAX_RX_JUMBO_FRAME_SIZE		0x2600
+ #define E1000_TX_PTR_GAP		0x1F
+diff --git a/src/igb_main.c b/src/igb_main.c
+index 2dff0f4..bbfe87e 100644
+--- a/src/igb_main.c
++++ b/src/igb_main.c
+@@ -2852,6 +2852,10 @@ static int igb_probe(struct pci_dev *pdev,
+ 	if (pci_using_dac)
+ 		netdev->features |= NETIF_F_HIGHDMA;
+ 
++	/* MTU range: 68 - 9216 */
++	netdev->min_mtu = ETH_MIN_MTU;
++	netdev->max_mtu = MAX_STD_JUMBO_FRAME_SIZE;
++
+ 	adapter->en_mng_pt = e1000_enable_mng_pass_thru(hw);
+ #ifdef DEBUG
+ 	if (adapter->dmac != IGB_DMAC_DISABLE)
+@@ -5832,17 +5836,6 @@ static int igb_change_mtu(struct net_device *netdev, int new_mtu)
+ 	struct pci_dev *pdev = adapter->pdev;
+ 	int max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
+ 
+-	if ((new_mtu < 68) || (max_frame > MAX_JUMBO_FRAME_SIZE)) {
+-		dev_err(pci_dev_to_dev(pdev), "Invalid MTU setting\n");
+-		return -EINVAL;
+-	}
+-
+-#define MAX_STD_JUMBO_FRAME_SIZE 9238
+-	if (max_frame > MAX_STD_JUMBO_FRAME_SIZE) {
+-		dev_err(pci_dev_to_dev(pdev), "MTU > 9216 not supported.\n");
+-		return -EINVAL;
+-	}
+-
+ 	/* adjust max frame to be at least the size of a standard frame */
+ 	if (max_frame < (ETH_FRAME_LEN + ETH_FCS_LEN))
+ 		max_frame = ETH_FRAME_LEN + ETH_FCS_LEN;
