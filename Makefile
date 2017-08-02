@@ -16,6 +16,7 @@ PACKAGE=pve-kernel-${KVNAME}
 HDRPACKAGE=pve-headers-${KVNAME}
 
 ARCH=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
+NPROCS=$(shell nproc)
 
 # amd64/x86_64/x86 share the arch subdirectory in the kernel, 'x86' so we need
 # a mapping
@@ -222,7 +223,7 @@ PVE_CONFIG_OPTS= \
 	cp ${KERNEL_CFG_ORG} ${KERNEL_SRC}/.config
 	cd ${KERNEL_SRC}; ./scripts/config ${PVE_CONFIG_OPTS}
 	cd ${KERNEL_SRC}; make oldconfig
-	cd ${KERNEL_SRC}; make KBUILD_BUILD_VERSION_TIMESTAMP="PVE ${KERNEL_VER}-${PKGREL} ($(CHANGELOG_DATE))" -j 8
+	cd ${KERNEL_SRC}; make KBUILD_BUILD_VERSION_TIMESTAMP="PVE ${KERNEL_VER}-${PKGREL} (${CHANGELOG_DATE})" -j ${NPROCS}
 	make -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_CPLUS_DEMANGLE=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
 	make -C ${KERNEL_SRC}/tools/perf man
 	touch $@
