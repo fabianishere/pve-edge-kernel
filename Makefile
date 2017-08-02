@@ -146,8 +146,10 @@ fwlist-${KVNAME}: data
 fwcheck: fwlist-${KVNAME} fwlist-previous
 	@echo "checking fwlist for changes since last built firmware package.."
 	@echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
-	bash -c "diff -up -N <(sort fwlist-previous | uniq) <(sort fwlist-${KVNAME} | uniq) > fwlist.diff"
-	rm fwlist.diff
+	sort fwlist-previous | uniq > fwlist-previous.sorted
+	sort fwlist-${KVNAME} | uniq > fwlist-${KVNAME}.sorted
+	diff -up -N fwlist-previous.sorted fwlist-${KVNAME}.sorted > fwlist.diff
+	rm fwlist.diff fwlist-previous.sorted fwlist-${KVNAME}.sorted
 	@echo "done, no need to rebuild pve-firmware"
 
 
