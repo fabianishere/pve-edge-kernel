@@ -250,6 +250,7 @@ ${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000365-fs-exec.c-account-for-argv-envp-pointers.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-10810-drm-virtio-don-t-leak-bo-on-drm_gem_object_init-fail.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-7482-rxrpc-Fix-several-cases-where-a-padded-len-isn-t-che.patch
+	cd ${KERNEL_SRC}; patch -p1 < ../0001-block-fix-bio_will_gap-for-first-bvec-with-offset.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
