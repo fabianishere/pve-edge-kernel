@@ -67,7 +67,8 @@ LINUX_TOOLS_DEB=${LINUX_TOOLS_PKG}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${PVE_DEB} ${VIRTUAL_HDR_DEB} ${LINUX_TOOLS_DEB}
 
-all: check_gcc ${DEBS}
+all: check_gcc deb
+deb: ${DEBS}
 
 pve: $(PVE_DEB)
 ${PVE_DEB}: proxmox-ve/control proxmox-ve/postinst ${PVE_RELEASE_KEYS}
