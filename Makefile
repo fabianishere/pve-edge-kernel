@@ -245,11 +245,6 @@ ${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 < ../kvm-dynamic-halt-polling-disable-default.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../0001-netfilter-nft_set_rbtree-handle-re-addition-element-.patch # DoS from within (unpriv) containers
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000364-mm-mmap.c-do-not-blow-on-PROT_NONE-MAP_FIXED-holes-i.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000364-mm-mmap.c-expand_downwards-don-t-require-the-gap-if-.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-1000365-fs-exec.c-account-for-argv-envp-pointers.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-10810-drm-virtio-don-t-leak-bo-on-drm_gem_object_init-fail.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../CVE-2017-7482-rxrpc-Fix-several-cases-where-a-padded-len-isn-t-che.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../0001-block-fix-bio_will_gap-for-first-bvec-with-offset.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
