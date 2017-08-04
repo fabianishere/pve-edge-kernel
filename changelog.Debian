@@ -1,3 +1,13 @@
+pve-kernel (4.10.17-19) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-30.34
+
+  * cherry-pick upstream NVME bug fix (BUG_ON with Samsung SM960 Pro)
+
+  * bump ABI to 4.10.17-2-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 4 Aug 2017 13:34:37 +0200
+
 pve-kernel (4.10.17-18) unstable; urgency=medium
 
   * switch back to the external e1000e, igb and ixgbe drivers
