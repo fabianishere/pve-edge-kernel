@@ -45,9 +45,9 @@ IXGBEDIR=ixgbe-5.0.4
 IXGBESRC=${IXGBEDIR}.tar.gz
 
 SPLDIR=pkg-spl
-SPLSRC=submodules/zfs/pkg-spl.tar.gz
+SPLSRC=submodules/spl-module
 ZFSDIR=pkg-zfs
-ZFSSRC=submodules/zfs/pkg-zfs.tar.gz
+ZFSSRC=submodules/zfs-module
 ZFS_KO=zfs.ko
 ZFS_KO_REST=zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko
 ZFS_MODULES=$(ZFS_KO) $(ZFS_KO_REST)
@@ -282,7 +282,7 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 $(SPL_KO_REST): $(SPL_KO)
 $(SPL_KO): .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
-	tar xf ${SPLSRC}
+	rsync -ra ${SPLSRC}/ ${SPLDIR}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${SPLDIR}; ./autogen.sh
 	cd ${SPLDIR}; ./configure --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
@@ -293,7 +293,7 @@ $(SPL_KO): .compile_mark ${SPLSRC}
 $(ZFS_KO_REST): $(ZFS_KO)
 $(ZFS_KO): .compile_mark ${ZFSSRC}
 	rm -rf ${ZFSDIR}
-	tar xf ${ZFSSRC}
+	rsync -ra ${ZFSSRC}/ ${ZFSDIR}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${ZFSDIR}; ./autogen.sh
 	cd ${ZFSDIR}; ./configure --with-spl=${TOP}/${SPLDIR} --with-spl-obj=${TOP}/${SPLDIR} --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
@@ -350,8 +350,10 @@ update_modules: submodules
 
 # make sure submodules were initialized
 .PHONY: submodules
-submodules ${SPLSRC} ${ZFSSRC}:
+submodules:
 	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init
+	test -f "${ZFSSRC}/debian/changelog" || git submodule update --init
+	test -f "${SPLSRC}/debian/changelog" || git submodule update --init
 
 
 .PHONY: clean

@@ -1,6 +1,9 @@
 [submodule "submodules/ubuntu-zesty"]
 	path = submodules/ubuntu-zesty
 	url = ../mirror_ubuntu-zesty-kernel
-[submodule "submodules/zfs"]
-	path = submodules/zfs
-	url = ../zfsonlinux
+[submodule "submodules/zfs-module"]
+	path = submodules/zfs-module
+	url = ../mirror_zfs-debian
+[submodule "submodules/spl-module"]
+	path = submodules/spl-module
+	url = ../mirror_spl-debian
