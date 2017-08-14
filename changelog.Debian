@@ -1,3 +1,11 @@
+pve-kernel (4.10.17-20) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-32.36
+
+  * update to ZFS/SPL 0.6.5.11
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 14 Aug 2017 11:23:37 +0200
+
 pve-kernel (4.10.17-19) unstable; urgency=medium
 
   * update to Ubuntu-4.10.0-30.34
