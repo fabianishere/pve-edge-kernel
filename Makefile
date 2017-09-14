@@ -41,7 +41,7 @@ E1000ESRC=${E1000EDIR}.tar.gz
 IGBDIR=igb-5.3.5.4
 IGBSRC=${IGBDIR}.tar.gz
 
-IXGBEDIR=ixgbe-5.0.4
+IXGBEDIR=ixgbe-5.2.3
 IXGBESRC=${IXGBEDIR}.tar.gz
 
 SPLDIR=pkg-spl
