@@ -1,7 +1,10 @@
+From 3e7aff6b22287eb04b8b5c4966b886b0ac1e8b06 Mon Sep 17 00:00:00 2001
 From: Ben Hutchings <ben@decadent.org.uk>
-Subject: Make mkcompile_h accept an alternate timestamp string
 Date: Tue, 12 May 2015 19:29:22 +0100
-Forwarded: not-needed
+Subject: [PATCH 1/4] Make mkcompile_h accept an alternate timestamp string
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 We want to include the Debian version in the utsname::version string
 instead of a full timestamp string.  However, we still need to provide
@@ -11,6 +14,13 @@ kernel image reproducible.
 Make mkcompile_h use $KBUILD_BUILD_VERSION_TIMESTAMP in preference to
 $KBUILD_BUILD_TIMESTAMP.
 
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ scripts/mkcompile_h | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/scripts/mkcompile_h b/scripts/mkcompile_h
+index fd8fdb91581d..1e35ac9fc810 100755
 --- a/scripts/mkcompile_h
 +++ b/scripts/mkcompile_h
 @@ -37,10 +37,14 @@ else
@@ -31,3 +41,6 @@ $KBUILD_BUILD_TIMESTAMP.
  fi
  if test -z "$KBUILD_BUILD_USER"; then
  	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
+-- 
+2.11.0
+

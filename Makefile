@@ -236,13 +236,7 @@ ${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
 	rm -rf ${KERNEL_SRC}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${KERNEL_SRC}
 	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
-	cd ${KERNEL_SRC}; patch -p1 < ../uname-version-timestamp.patch
-	cd ${KERNEL_SRC}; patch -p1 <../bridge-patch.diff
-	#cd ${KERNEL_SRC}; patch -p1 <../bridge-forward-ipv6-neighbor-solicitation.patch
-	#cd ${KERNEL_SRC}; patch -p1 <../add-empty-ndo_poll_controller-to-veth.patch
-	cd ${KERNEL_SRC}; patch -p1 <../override_for_missing_acs_capabilities.patch
-	#cd ${KERNEL_SRC}; patch -p1 <../vhost-net-extend-device-allocation-to-vmalloc.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../kvm-dynamic-halt-polling-disable-default.patch
+	cd ${KERNEL_SRC}; for patch in ../patches/kernel/*.patch; do patch --verbose -p1 < $${patch}; done
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
