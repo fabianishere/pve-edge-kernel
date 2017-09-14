@@ -262,6 +262,7 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 	rm -rf ${IXGBEDIR}
 	tar xf ${IXGBESRC}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
+	cd ${IXGBEDIR}; patch -p1 < ../patches/intel/ixgbe/ixgbe_4.13_compat.patch
 	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IXGBEDIR}/src/ixgbe.ko ixgbe.ko
 

@@ -1,0 +1,14 @@
+diff --git a/src/ixgbe_main.c.orig b/src/ixgbe_main.c
+index 68bead6..bb3a100 100644
+--- a/src/ixgbe_main.c.orig
++++ b/src/ixgbe_main.c
+@@ -9809,7 +9809,8 @@ static void ixgbe_set_prio_tc_map(struct ixgbe_adapter __maybe_unused *adapter)
+ #ifdef NETIF_F_HW_TC
+ static int
+ __ixgbe_setup_tc(struct net_device *dev, __always_unused u32 handle,
+-		 __always_unused __be16 proto, struct tc_to_netdev *tc)
++		 __always_unused u32 chain_index, __always_unused __be16 proto,
++		 struct tc_to_netdev *tc)
+ {
+ 	if (tc->type != TC_SETUP_MQPRIO)
+ 		return -EINVAL;
