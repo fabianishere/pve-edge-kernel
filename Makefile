@@ -7,8 +7,8 @@ PKGREL=23
 # the fw package:  fwlist-2.6.32-PREV-pve
 KREL=3
 
-KERNEL_SRC=ubuntu-zesty
-KERNEL_SRC_SUBMODULE=submodules/ubuntu-zesty
+KERNEL_SRC=ubuntu-artful
+KERNEL_SRC_SUBMODULE=submodules/ubuntu-artful
 
 EXTRAVERSION=-${KREL}-pve
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
@@ -62,7 +62,7 @@ PVE_DEB=${PVEPKG}_${RELEASE}-${PKGREL}_all.deb
 VIRTUALHDRPACKAGE=pve-headers
 VIRTUAL_HDR_DEB=${VIRTUALHDRPACKAGE}_${RELEASE}-${PKGREL}_all.deb
 
-LINUX_TOOLS_PKG=linux-tools-4.10
+LINUX_TOOLS_PKG=linux-tools-4.13
 LINUX_TOOLS_DEB=${LINUX_TOOLS_PKG}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${PVE_DEB} ${VIRTUAL_HDR_DEB} ${LINUX_TOOLS_DEB}
@@ -133,8 +133,8 @@ ${LINUX_TOOLS_DEB}: .compile_mark control.tools changelog.Debian copyright
 	echo 9 > linux-tools/debian/compat
 	cp changelog.Debian linux-tools/debian/changelog
 	cp copyright linux-tools/debian
-	mkdir -p linux-tools/debian/linux-tools-4.10/usr/bin
-	install -m 0755 ${KERNEL_SRC}/tools/perf/perf linux-tools/debian/linux-tools-4.10/usr/bin/perf_4.10
+	mkdir -p linux-tools/debian/linux-tools-4.13/usr/bin
+	install -m 0755 ${KERNEL_SRC}/tools/perf/perf linux-tools/debian/linux-tools-4.13/usr/bin/perf_4.13
 	cd linux-tools; for i in ${LINUX_TOOLS_DH_LIST}; do dh_$$i; done
 	lintian ${LINUX_TOOLS_DEB}
 

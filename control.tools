@@ -1,7 +1,7 @@
 Source: pve-kernel
 Maintainer: Proxmox Support Team <support@proxmox.com>
 
-Package: linux-tools-4.10
+Package: linux-tools-4.13
 Architecture: any
 Section: devel
 Priority: optional
