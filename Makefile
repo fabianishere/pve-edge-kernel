@@ -35,7 +35,7 @@ TOP=$(shell pwd)
 
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-E1000EDIR=e1000e-3.3.5.3
+E1000EDIR=e1000e-3.3.5.10
 E1000ESRC=${E1000EDIR}.tar.gz
 
 IGBDIR=igb-5.3.5.4
