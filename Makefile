@@ -244,9 +244,6 @@ ${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
 	#cd ${KERNEL_SRC}; patch -p1 <../vhost-net-extend-device-allocation-to-vmalloc.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../kvm-dynamic-halt-polling-disable-default.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../0001-netfilter-nft_set_rbtree-handle-re-addition-element-.patch # DoS from within (unpriv) containers
-	cd ${KERNEL_SRC}; patch -p1 < ../0001-tcp-reset-sk_rx_dst-in-tcp_disconnect.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../0001-Revert-net-reduce-skb_warn_bad_offload-noise.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
