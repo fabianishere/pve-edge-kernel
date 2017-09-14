@@ -243,7 +243,6 @@ ${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
 	cd ${KERNEL_SRC}; patch -p1 <../override_for_missing_acs_capabilities.patch
 	#cd ${KERNEL_SRC}; patch -p1 <../vhost-net-extend-device-allocation-to-vmalloc.patch
 	cd ${KERNEL_SRC}; patch -p1 < ../kvm-dynamic-halt-polling-disable-default.patch
-	cd ${KERNEL_SRC}; patch -p1 < ../cgroup-cpuset-add-cpuset.remap_cpus.patch
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
