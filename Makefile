@@ -254,6 +254,7 @@ igb.ko igb: .compile_mark ${IGBSRC}
 	tar xf ${IGBSRC}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
 	cd ${IGBDIR}; patch -p1 < ../patches/intel/igb/igb_4.10_max-mtu.patch
+	cd ${IGBDIR}; patch -p1 < ../patches/intel/igb/igb_4.12_compat.patch
 	cd ${IGBDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IGBDIR}/src/igb.ko igb.ko
 
