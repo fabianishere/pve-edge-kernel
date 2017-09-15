@@ -1,0 +1,66 @@
+From 014fff8b14ccd85d8e9604bbf4e812784bcfc29b Mon Sep 17 00:00:00 2001
+From: Waiman Long <longman@redhat.com>
+Date: Thu, 17 Aug 2017 15:33:09 -0400
+Subject: [PATCH 5/6] cgroup: Add mount flag to enable cpuset to use v2
+ behavior in v1 cgroup
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+A new mount option "cpuset_v2_mode" is added to the v1 cgroupfs
+filesystem to enable cpuset controller to use v2 behavior in a v1
+cgroup. This mount option applies only to cpuset controller and have
+no effect on other controllers.
+
+Signed-off-by: Waiman Long <longman@redhat.com>
+Signed-off-by: Tejun Heo <tj@kernel.org>
+(cherry-picked from e1cba4b85daa71b710384d451ff6238d5e4d1ff6)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/cgroup-defs.h | 5 +++++
+ kernel/cgroup/cgroup-v1.c   | 6 ++++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/include/linux/cgroup-defs.h b/include/linux/cgroup-defs.h
+index 09f4c7df1478..c344e77707a5 100644
+--- a/include/linux/cgroup-defs.h
++++ b/include/linux/cgroup-defs.h
+@@ -74,6 +74,11 @@ enum {
+ 	 * aren't writeable from inside the namespace.
+ 	 */
+ 	CGRP_ROOT_NS_DELEGATE	= (1 << 3),
++
++	/*
++	 * Enable cpuset controller in v1 cgroup to use v2 behavior.
++	 */
++	CGRP_ROOT_CPUSET_V2_MODE = (1 << 4),
+ };
+ 
+ /* cftype->flags */
+diff --git a/kernel/cgroup/cgroup-v1.c b/kernel/cgroup/cgroup-v1.c
+index 7bf4b1533f34..ce7426b875f5 100644
+--- a/kernel/cgroup/cgroup-v1.c
++++ b/kernel/cgroup/cgroup-v1.c
+@@ -846,6 +846,8 @@ static int cgroup1_show_options(struct seq_file *seq, struct kernfs_root *kf_roo
+ 		seq_puts(seq, ",noprefix");
+ 	if (root->flags & CGRP_ROOT_XATTR)
+ 		seq_puts(seq, ",xattr");
++	if (root->flags & CGRP_ROOT_CPUSET_V2_MODE)
++		seq_puts(seq, ",cpuset_v2_mode");
+ 
+ 	spin_lock(&release_agent_path_lock);
+ 	if (strlen(root->release_agent_path))
+@@ -900,6 +902,10 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
+ 			opts->cpuset_clone_children = true;
+ 			continue;
+ 		}
++		if (!strcmp(token, "cpuset_v2_mode")) {
++			opts->flags |= CGRP_ROOT_CPUSET_V2_MODE;
++			continue;
++		}
+ 		if (!strcmp(token, "xattr")) {
+ 			opts->flags |= CGRP_ROOT_XATTR;
+ 			continue;
+-- 
+2.11.0
+
