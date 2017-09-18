@@ -1,3 +1,9 @@
+pve-kernel (4.10.17-22) unstable; urgency=medium
+
+  * fix loopback device refcount leak
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 18 Sep 2017 10:39:10 +0200
+
 pve-kernel (4.10.17-21) unstable; urgency=medium
 
   * update to Ubuntu-4.10.0-33.37
