@@ -1,0 +1,43 @@
+From d747a7a51b00984127a88113cdbbc26f91e9d815 Mon Sep 17 00:00:00 2001
+From: WANG Cong <xiyou.wangcong@gmail.com>
+Date: Sat, 24 Jun 2017 23:50:30 -0700
+Subject: [PATCH] tcp: reset sk_rx_dst in tcp_disconnect()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+We have to reset the sk->sk_rx_dst when we disconnect a TCP
+connection, because otherwise when we re-connect it this
+dst reference is simply overridden in tcp_finish_connect().
+
+This fixes a dst leak which leads to a loopback dev refcnt
+leak. It is a long-standing bug, Kevin reported a very similar
+(if not same) bug before. Thanks to Andrei for providing such
+a reliable reproducer which greatly narrows down the problem.
+
+Fixes: 41063e9dd119 ("ipv4: Early TCP socket demux.")
+Reported-by: Andrei Vagin <avagin@gmail.com>
+Reported-by: Kevin Xu <kaiwen.xu@hulu.com>
+Signed-off-by: Cong Wang <xiyou.wangcong@gmail.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ net/ipv4/tcp.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+index b5ea036ca781..40aca7803cf2 100644
+--- a/net/ipv4/tcp.c
++++ b/net/ipv4/tcp.c
+@@ -2330,6 +2330,8 @@ int tcp_disconnect(struct sock *sk, int flags)
+ 	tcp_init_send_head(sk);
+ 	memset(&tp->rx_opt, 0, sizeof(tp->rx_opt));
+ 	__sk_dst_reset(sk);
++	dst_release(sk->sk_rx_dst);
++	sk->sk_rx_dst = NULL;
+ 	tcp_saved_syn_free(tp);
+ 
+ 	/* Clean up fastopen related fields */
+-- 
+2.11.0
+
