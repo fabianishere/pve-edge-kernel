@@ -1,3 +1,11 @@
+pve-kernel (4.10.17-23) unstable; urgency=medium
+
+  * update to Ubuntu-4.10.0-35.39
+
+  * revert buggy skb offload bug fix
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 19 Sep 2017 09:43:50 +0200
+
 pve-kernel (4.10.17-22) unstable; urgency=medium
 
   * fix loopback device refcount leak
