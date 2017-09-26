@@ -271,6 +271,7 @@ $(SPL_KO): .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
 	rsync -ra ${SPLSRC}/ ${SPLDIR}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
+	cd ${SPLDIR}; patch -p1 < ../patches/spl/0001-4.13-compat.patch
 	cd ${SPLDIR}; ./autogen.sh
 	cd ${SPLDIR}; ./configure --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
 	cd ${SPLDIR}; make
@@ -282,6 +283,7 @@ $(ZFS_KO): .compile_mark ${ZFSSRC}
 	rm -rf ${ZFSDIR}
 	rsync -ra ${ZFSSRC}/ ${ZFSDIR}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
+	cd ${ZFSDIR}; patch -p1 < ../patches/zfs/0001-4.13-compat.patch
 	cd ${ZFSDIR}; ./autogen.sh
 	cd ${ZFSDIR}; ./configure --with-spl=${TOP}/${SPLDIR} --with-spl-obj=${TOP}/${SPLDIR} --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
 	cd ${ZFSDIR}; make

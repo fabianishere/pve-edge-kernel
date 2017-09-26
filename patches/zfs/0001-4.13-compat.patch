@@ -1,0 +1,388 @@
+From 307e735e4cc6806f476deb983d6ffa42dcb69f1c Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.king@canonical.com>
+Date: Wed, 9 Aug 2017 17:16:31 +0100
+Subject: [PATCH] UBUNTU: SAUCE: (noup) Update spl to 0.6.5.11-ubuntu1, zfs to
+ 0.6.5.11-1ubuntu3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This includes backports of upstream 4.13 compat fixes from ZFS and SPL
+
+SPL:
+  120faefed90a ("Update struct member intializers to C89")
+  944117514d2a ("Linux 4.13 compat: wait queues")
+
+ZFS:
+  36ba27e9e07b ("Linux 4.13 compat: bio->bi_status and blk_status_t")
+
+Signed-off-by: Colin Ian King <colin.king@canonical.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/blkdev_compat.h      |  92 +++++++++++++++++++++-
+ zfs_config.h.in                    |   3 +
+ module/zfs/vdev_disk.c             |  11 +--
+ config/kernel-bio-end-io-t-args.m4 |  22 ++++++
+ config/kernel.m4                   |   1 +
+ configure                          | 136 +++++++++++++++++++++++++++++++++
+ 6 files changed, 259 insertions(+), 6 deletions(-)
+
+diff --git a/include/linux/blkdev_compat.h b/include/linux/blkdev_compat.h
+index 871506d7c924..f3054a375e0d 100644
+--- a/include/linux/blkdev_compat.h
++++ b/include/linux/blkdev_compat.h
+@@ -208,14 +208,104 @@ bio_set_flags_failfast(struct block_device *bdev, int *flags)
+ #define	DISK_NAME_LEN	32
+ #endif /* DISK_NAME_LEN */
+ 
++#ifdef HAVE_BIO_BI_STATUS
++static inline int
++bi_status_to_errno(blk_status_t status)
++{
++	switch (status)	{
++	case BLK_STS_OK:
++		return (0);
++	case BLK_STS_NOTSUPP:
++		return (EOPNOTSUPP);
++	case BLK_STS_TIMEOUT:
++		return (ETIMEDOUT);
++	case BLK_STS_NOSPC:
++		return (ENOSPC);
++	case BLK_STS_TRANSPORT:
++		return (ENOLINK);
++	case BLK_STS_TARGET:
++		return (EREMOTEIO);
++	case BLK_STS_NEXUS:
++		return (EBADE);
++	case BLK_STS_MEDIUM:
++		return (ENODATA);
++	case BLK_STS_PROTECTION:
++		return (EILSEQ);
++	case BLK_STS_RESOURCE:
++		return (ENOMEM);
++	case BLK_STS_AGAIN:
++		return (EAGAIN);
++	case BLK_STS_IOERR:
++		return (EIO);
++	default:
++		return (EIO);
++	}
++}
++
++static inline blk_status_t
++errno_to_bi_status(int error)
++{
++	switch (error) {
++	case 0:
++		return (BLK_STS_OK);
++	case EOPNOTSUPP:
++		return (BLK_STS_NOTSUPP);
++	case ETIMEDOUT:
++		return (BLK_STS_TIMEOUT);
++	case ENOSPC:
++		return (BLK_STS_NOSPC);
++	case ENOLINK:
++		return (BLK_STS_TRANSPORT);
++	case EREMOTEIO:
++		return (BLK_STS_TARGET);
++	case EBADE:
++		return (BLK_STS_NEXUS);
++	case ENODATA:
++		return (BLK_STS_MEDIUM);
++	case EILSEQ:
++		return (BLK_STS_PROTECTION);
++	case ENOMEM:
++		return (BLK_STS_RESOURCE);
++	case EAGAIN:
++		return (BLK_STS_AGAIN);
++	case EIO:
++		return (BLK_STS_IOERR);
++	default:
++		return (BLK_STS_IOERR);
++	}
++}
++#endif /* HAVE_BIO_BI_STATUS */
++
+ /*
+  * 4.3 API change
+  * The bio_endio() prototype changed slightly.  These are helper
+  * macro's to ensure the prototype and invocation are handled.
+  */
+ #ifdef HAVE_1ARG_BIO_END_IO_T
++#ifdef HAVE_BIO_BI_STATUS
++#define	BIO_END_IO_ERROR(bio)		bi_status_to_errno(bio->bi_status)
++#define	BIO_END_IO_PROTO(fn, x, z)	static void fn(struct bio *x)
++#define	BIO_END_IO(bio, error)		bio_set_bi_status(bio, error)
++static inline void
++bio_set_bi_status(struct bio *bio, int error)
++{
++	ASSERT3S(error, <=, 0);
++	bio->bi_status = errno_to_bi_status(-error);
++	bio_endio(bio);
++}
++#else
++#define	BIO_END_IO_ERROR(bio)		(-(bio->bi_error))
+ #define	BIO_END_IO_PROTO(fn, x, z)	static void fn(struct bio *x)
+-#define	BIO_END_IO(bio, error)		bio->bi_error = error; bio_endio(bio);
++#define	BIO_END_IO(bio, error)		bio_set_bi_error(bio, error)
++static inline void
++bio_set_bi_error(struct bio *bio, int error)
++{
++	ASSERT3S(error, <=, 0);
++	bio->bi_error = error;
++	bio_endio(bio);
++}
++#endif /* HAVE_BIO_BI_STATUS */
++
+ #else
+ #define	BIO_END_IO_PROTO(fn, x, z)	static void fn(struct bio *x, int z)
+ #define	BIO_END_IO(bio, error)		bio_endio(bio, error);
+diff --git a/zfs_config.h.in b/zfs_config.h.in
+index 11d946b6bc7d..94bbeb9e6216 100644
+--- a/zfs_config.h.in
++++ b/zfs_config.h.in
+@@ -51,6 +51,9 @@
+ /* bio->bi_opf is defined */
+ #undef HAVE_BIO_BI_OPF
+ 
++/* bio->bi_status exists */
++#undef HAVE_BIO_BI_STATUS
++
+ /* bio has bi_iter */
+ #undef HAVE_BIO_BVEC_ITER
+ 
+diff --git a/module/zfs/vdev_disk.c b/module/zfs/vdev_disk.c
+index 5697f68671a8..33eba20a4a15 100644
+--- a/module/zfs/vdev_disk.c
++++ b/module/zfs/vdev_disk.c
+@@ -426,7 +426,7 @@ BIO_END_IO_PROTO(vdev_disk_physio_completion, bio, error)
+ 
+ 	if (dr->dr_error == 0) {
+ #ifdef HAVE_1ARG_BIO_END_IO_T
+-		dr->dr_error = -(bio->bi_error);
++		dr->dr_error = BIO_END_IO_ERROR(bio);
+ #else
+ 		if (error)
+ 			dr->dr_error = -(error);
+@@ -613,16 +613,17 @@ __vdev_disk_physio(struct block_device *bdev, zio_t *zio, caddr_t kbuf_ptr,
+ 	return (error);
+ }
+ 
+-BIO_END_IO_PROTO(vdev_disk_io_flush_completion, bio, rc)
++BIO_END_IO_PROTO(vdev_disk_io_flush_completion, bio, error)
+ {
+ 	zio_t *zio = bio->bi_private;
+ #ifdef HAVE_1ARG_BIO_END_IO_T
+-	int rc = bio->bi_error;
++	zio->io_error = BIO_END_IO_ERROR(bio);
++#else
++	zio->io_error = -error;
+ #endif
+ 
+ 	zio->io_delay = jiffies_64 - zio->io_delay;
+-	zio->io_error = -rc;
+-	if (rc && (rc == -EOPNOTSUPP))
++	if (zio->io_error && (zio->io_error == EOPNOTSUPP))
+ 		zio->io_vd->vdev_nowritecache = B_TRUE;
+ 
+ 	bio_put(bio);
+diff --git a/config/kernel-bio-end-io-t-args.m4 b/config/kernel-bio-end-io-t-args.m4
+index c8c520f1ba82..3c420cc0c305 100644
+--- a/config/kernel-bio-end-io-t-args.m4
++++ b/config/kernel-bio-end-io-t-args.m4
+@@ -22,3 +22,25 @@ AC_DEFUN([ZFS_AC_KERNEL_BIO_END_IO_T_ARGS], [
+ 		AC_MSG_RESULT(no)
+ 	])
+ ])
++
++dnl #
++dnl # 4.13 API change
++dnl # The bio->bi_error field was replaced with bio->bi_status which is an
++dnl # enum which describes all possible error types.
++dnl #
++AC_DEFUN([ZFS_AC_KERNEL_BIO_BI_STATUS], [
++	AC_MSG_CHECKING([whether bio->bi_status exists])
++	ZFS_LINUX_TRY_COMPILE([
++		#include <linux/bio.h>
++	],[
++		struct bio bio __attribute__ ((unused));
++		blk_status_t status __attribute__ ((unused)) = BLK_STS_OK;
++
++		bio.bi_status = status;
++	],[
++		AC_MSG_RESULT(yes)
++		AC_DEFINE(HAVE_BIO_BI_STATUS, 1, [bio->bi_status exists])
++	],[
++		AC_MSG_RESULT(no)
++	])
++])
+diff --git a/config/kernel.m4 b/config/kernel.m4
+index 4a8eeab2ae10..9c6802a6c20b 100644
+--- a/config/kernel.m4
++++ b/config/kernel.m4
+@@ -28,6 +28,7 @@ AC_DEFUN([ZFS_AC_CONFIG_KERNEL], [
+ 	ZFS_AC_KERNEL_REQ_OP_FLUSH
+ 	ZFS_AC_KERNEL_BIO_BI_OPF
+ 	ZFS_AC_KERNEL_BIO_END_IO_T_ARGS
++	ZFS_AC_KERNEL_BIO_BI_STATUS
+ 	ZFS_AC_KERNEL_BIO_RW_BARRIER
+ 	ZFS_AC_KERNEL_BIO_RW_DISCARD
+ 	ZFS_AC_KERNEL_BLK_QUEUE_FLUSH
+diff --git a/configure b/configure
+index 8e386e6a8c44..9634569bb611 100755
+--- a/configure
++++ b/configure
+@@ -29519,6 +29519,74 @@ fi
+ 
+ 
+ 
++	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether bio->bi_status exists" >&5
++$as_echo_n "checking whether bio->bi_status exists... " >&6; }
++
++
++cat confdefs.h - <<_ACEOF >conftest.c
++
++
++		#include <linux/bio.h>
++
++int
++main (void)
++{
++
++		struct bio bio __attribute__ ((unused));
++		blk_status_t status __attribute__ ((unused)) = BLK_STS_OK;
++
++		bio.bi_status = status;
++
++  ;
++  return 0;
++}
++
++_ACEOF
++
++
++
++cat - <<_ACEOF >conftest.h
++
++_ACEOF
++
++
++	rm -Rf build && mkdir -p build && touch build/conftest.mod.c
++	echo "obj-m := conftest.o" >build/Makefile
++	modpost_flag=''
++	test "x$enable_linux_builtin" = xyes && modpost_flag='modpost=true' # fake modpost stage
++	if { ac_try='cp conftest.c conftest.h build && make modules -C $LINUX_OBJ EXTRA_CFLAGS="-Werror $EXTRA_KCFLAGS" $ARCH_UM M=$PWD/build $modpost_flag'
++  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; } >/dev/null && { ac_try='test -s build/conftest.o'
++  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; }; then :
++
++		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
++$as_echo "yes" >&6; }
++
++$as_echo "#define HAVE_BIO_BI_STATUS 1" >>confdefs.h
++
++
++else
++  $as_echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++
++
++
++fi
++	rm -Rf build
++
++
++
++
+ 	{ $as_echo "$as_me:$LINENO: checking whether BIO_RW_BARRIER is defined" >&5
+ $as_echo_n "checking whether BIO_RW_BARRIER is defined... " >&6; }
+ 
+@@ -29919,6 +29987,74 @@ fi
+ 
+ 
+ 
++	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether bio->bi_status exists" >&5
++$as_echo_n "checking whether bio->bi_status exists... " >&6; }
++
++
++cat confdefs.h - <<_ACEOF >conftest.c
++
++
++		#include <linux/bio.h>
++
++int
++main (void)
++{
++
++		struct bio bio __attribute__ ((unused));
++		blk_status_t status __attribute__ ((unused)) = BLK_STS_OK;
++
++		bio.bi_status = status;
++
++  ;
++  return 0;
++}
++
++_ACEOF
++
++
++
++cat - <<_ACEOF >conftest.h
++
++_ACEOF
++
++
++	rm -Rf build && mkdir -p build && touch build/conftest.mod.c
++	echo "obj-m := conftest.o" >build/Makefile
++	modpost_flag=''
++	test "x$enable_linux_builtin" = xyes && modpost_flag='modpost=true' # fake modpost stage
++	if { ac_try='cp conftest.c conftest.h build && make modules -C $LINUX_OBJ EXTRA_CFLAGS="-Werror $EXTRA_KCFLAGS" $ARCH_UM M=$PWD/build $modpost_flag'
++  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; } >/dev/null && { ac_try='test -s build/conftest.o'
++  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; }; then :
++
++		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
++$as_echo "yes" >&6; }
++
++$as_echo "#define HAVE_BIO_BI_STATUS 1" >>confdefs.h
++
++
++else
++  $as_echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++
++
++
++fi
++	rm -Rf build
++
++
++
++
+ 	{ $as_echo "$as_me:$LINENO: checking whether BIO_RW_BARRIER is defined" >&5
+ $as_echo_n "checking whether BIO_RW_BARRIER is defined... " >&6; }
+ 
+-- 
+2.14.1
+
