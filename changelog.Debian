@@ -1,3 +1,17 @@
+pve-kernel (4.13.1-1) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-11.12
+
+  * bump ABI to 4.13.1-1-pve
+
+  * update ACS override patch for 4.12+
+
+  * drop cpuset remap patch, add cpuset cherry-picks instead
+
+  * update e1000e/igb/ixgbe to current upstream versions
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 27 Sep 2017 10:08:41 +0200
+
 pve-kernel (4.10.17-23) unstable; urgency=medium
 
   * update to Ubuntu-4.10.0-35.39
