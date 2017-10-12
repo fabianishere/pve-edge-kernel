@@ -1,3 +1,15 @@
+pve-kernel (4.13.4-25) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-16.19
+
+  * update to ZFS/SPL 0.7.2
+
+  * fix CVE-2017-12188: nested KVM stack overflow
+
+  * bump ABI to 4.13.4-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 13 Oct 2017 08:59:53 +0200
+
 pve-kernel (4.13.3-2) unstable; urgency=medium
 
   * update to Ubuntu-4.13.0-12.13
