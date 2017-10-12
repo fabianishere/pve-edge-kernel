@@ -44,12 +44,13 @@ IGBSRC=${IGBDIR}.tar.gz
 IXGBEDIR=ixgbe-5.2.3
 IXGBESRC=${IXGBEDIR}.tar.gz
 
+ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
 SPLDIR=pkg-spl
-SPLSRC=submodules/spl-module
+SPLSRC=${ZFSONLINUX_SUBMODULE}/spl-debian
 ZFSDIR=pkg-zfs
-ZFSSRC=submodules/zfs-module
+ZFSSRC=${ZFSONLINUX_SUBMODULE}/zfs-debian
 ZFS_KO=zfs.ko
-ZFS_KO_REST=zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko
+ZFS_KO_REST=zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko icp.ko
 ZFS_MODULES=$(ZFS_KO) $(ZFS_KO_REST)
 SPL_KO=spl.ko
 SPL_KO_REST=splat.ko
@@ -271,7 +272,7 @@ $(SPL_KO): .compile_mark ${SPLSRC}
 	rm -rf ${SPLDIR}
 	rsync -ra ${SPLSRC}/ ${SPLDIR}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${SPLDIR}; patch -p1 < ../patches/spl/0001-4.13-compat.patch
+	cd ${SPLDIR}; for patch in ../${SPLSRC}/../spl-patches/*.patch; do patch --verbose -p1 < $${patch}; done
 	cd ${SPLDIR}; ./autogen.sh
 	cd ${SPLDIR}; ./configure --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
 	cd ${SPLDIR}; make
@@ -283,7 +284,7 @@ $(ZFS_KO): .compile_mark ${ZFSSRC}
 	rm -rf ${ZFSDIR}
 	rsync -ra ${ZFSSRC}/ ${ZFSDIR}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${ZFSDIR}; patch -p1 < ../patches/zfs/0001-4.13-compat.patch
+	cd ${ZFSDIR}; for patch in ../${ZFSSRC}/../zfs-patches/*.patch; do patch --verbose -p1 < $${patch}; done
 	cd ${ZFSDIR}; ./autogen.sh
 	cd ${ZFSDIR}; ./configure --with-spl=${TOP}/${SPLDIR} --with-spl-obj=${TOP}/${SPLDIR} --with-config=kernel --with-linux=${TOP}/${KERNEL_SRC} --with-linux-obj=${TOP}/${KERNEL_SRC}
 	cd ${ZFSDIR}; make
@@ -293,6 +294,7 @@ $(ZFS_KO): .compile_mark ${ZFSSRC}
 	cp ${ZFSDIR}/module/unicode/zunicode.ko zunicode.ko
 	cp ${ZFSDIR}/module/zcommon/zcommon.ko zcommon.ko
 	cp ${ZFSDIR}/module/zpios/zpios.ko zpios.ko
+	cp ${ZFSDIR}/module/icp/icp.ko icp.ko
 
 headers_tmp := $(CURDIR)/tmp-headers
 headers_dir := $(headers_tmp)/usr/src/linux-headers-${KVNAME}
@@ -336,13 +338,15 @@ distclean: clean
 .PHONY: update_modules
 update_modules: submodule
 	git submodule foreach 'git pull --ff-only origin master'
+	cd ${ZFSSRC}; git pull --ff-only origin master
+	cd ${SPLSRC}; git pull --ff-only origin master
 
 # make sure submodules were initialized
 .PHONY: submodule
 submodule:
-	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init
-	test -f "${ZFSSRC}/debian/changelog" || git submodule update --init
-	test -f "${SPLSRC}/debian/changelog" || git submodule update --init
+	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init ${KERNEL_SRC_SUBMODULE}
+	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init ${ZFSONLINUX_SUBMODULE}
+	(test -f "${ZFSSRC}/debian/changelog" && test -f "${SPLZRC}/debian/changelog") || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
 
 
 .PHONY: clean

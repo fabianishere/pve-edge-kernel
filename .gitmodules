@@ -1,9 +1,6 @@
-[submodule "submodules/zfs-module"]
-	path = submodules/zfs-module
-	url = ../mirror_zfs-debian
-[submodule "submodules/spl-module"]
-	path = submodules/spl-module
-	url = ../mirror_spl-debian
 [submodule "submodules/ubuntu-artful"]
 	path = submodules/ubuntu-artful
 	url = ../mirror_ubuntu-artful-kernel
+[submodule "submodules/zfsonlinux"]
+	path = submodules/zfsonlinux
+	url = ../zfsonlinux
