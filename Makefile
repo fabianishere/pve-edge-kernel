@@ -232,7 +232,7 @@ PVE_CONFIG_OPTS= \
 	touch $@
 
 ${KERNEL_CFG_ORG}: ${KERNEL_SRC}/README
-${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodules
+${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodule
 	rm -rf ${KERNEL_SRC}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${KERNEL_SRC}
 	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
@@ -334,12 +334,12 @@ distclean: clean
 
 # upgrade to current master
 .PHONY: update_modules
-update_modules: submodules
+update_modules: submodule
 	git submodule foreach 'git pull --ff-only origin master'
 
 # make sure submodules were initialized
-.PHONY: submodules
-submodules:
+.PHONY: submodule
+submodule:
 	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init
 	test -f "${ZFSSRC}/debian/changelog" || git submodule update --init
 	test -f "${SPLSRC}/debian/changelog" || git submodule update --init
