@@ -1,3 +1,9 @@
+proxmox-ve (5.1-25) unstable; urgency=medium
+
+  * bump for 5.1 release
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 23 Oct 2017 09:32:53 +0200
+
 proxmox-ve (5.0-25) unstable; urgency=medium
 
   * switch over to 4.13 based kernel series
