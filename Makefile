@@ -238,7 +238,6 @@ ${KERNEL_SRC}/README: ${KERNEL_SRC_SUBMODULE} | submodule
 	cp -a ${KERNEL_SRC_SUBMODULE} ${KERNEL_SRC}
 	cat ${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cd ${KERNEL_SRC}; for patch in ../patches/kernel/*.patch; do patch --verbose -p1 < $${patch}; done
-	cd ${KERNEL_SRC}; for patch in ../patches/kernel-cves/*.patch; do patch --verbose -p1 < $${patch}; done
 	sed -i ${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	touch $@
 
