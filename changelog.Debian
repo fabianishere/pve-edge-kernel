@@ -1,3 +1,17 @@
+pve-kernel (4.13.8-27) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-17.20
+
+  * bump ABI to 4.13.8-1-pve
+
+  * update e1000e to 3.3.6
+
+  * update igb to 5.3.5.12
+
+  * update ixgbe to 5.3.3
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 17 Nov 2017 11:41:10 +0100
+
 pve-kernel (4.13.4-26) unstable; urgency=medium
 
   * update to ZFS/SPL 0.7.3

@@ -1,8 +1,8 @@
 RELEASE=5.1
 
 # also update proxmox-ve/changelog if you change KERNEL_VER or KREL
-KERNEL_VER=4.13.4
-PKGREL=26
+KERNEL_VER=4.13.8
+PKGREL=27
 # also include firmware of previous version into
 # the fw package:  fwlist-2.6.32-PREV-pve
 KREL=1

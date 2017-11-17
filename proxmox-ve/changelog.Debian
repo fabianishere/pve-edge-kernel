@@ -1,5 +1,11 @@
 proxmox-ve (5.1-25) unstable; urgency=medium
 
+  * depend on newest 4.13.8-1-pve kernel
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 17 Nov 2017 11:41:10 +0100
+
+proxmox-ve (5.1-25) unstable; urgency=medium
+
   * bump for 5.1 release
 
  -- Proxmox Support Team <support@proxmox.com>  Mon, 23 Oct 2017 09:32:53 +0200
