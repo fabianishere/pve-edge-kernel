@@ -35,13 +35,13 @@ TOP=$(shell pwd)
 
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-E1000EDIR=e1000e-3.3.5.10
+E1000EDIR=e1000e-3.3.6
 E1000ESRC=${E1000EDIR}.tar.gz
 
-IGBDIR=igb-5.3.5.10
+IGBDIR=igb-5.3.5.12
 IGBSRC=${IGBDIR}.tar.gz
 
-IXGBEDIR=ixgbe-5.2.3
+IXGBEDIR=ixgbe-5.3.3
 IXGBESRC=${IXGBEDIR}.tar.gz
 
 ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
@@ -254,8 +254,6 @@ igb.ko igb: .compile_mark ${IGBSRC}
 	rm -rf ${IGBDIR}
 	tar xf ${IGBSRC}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${IGBDIR}; patch -p1 < ../patches/intel/igb/igb_4.10_max-mtu.patch
-	cd ${IGBDIR}; patch -p1 < ../patches/intel/igb/igb_4.12_compat.patch
 	cd ${IGBDIR}/src; make BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IGBDIR}/src/igb.ko igb.ko
 
@@ -263,7 +261,6 @@ ixgbe.ko ixgbe: .compile_mark ${IXGBESRC}
 	rm -rf ${IXGBEDIR}
 	tar xf ${IXGBESRC}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
-	cd ${IXGBEDIR}; patch -p1 < ../patches/intel/ixgbe/ixgbe_4.13_compat.patch
 	cd ${IXGBEDIR}/src; make CFLAGS_EXTRA="-DIXGBE_NO_LRO" BUILD_KERNEL=${KVNAME} KSRC=${TOP}/${KERNEL_SRC}
 	cp ${IXGBEDIR}/src/ixgbe.ko ixgbe.ko
 
