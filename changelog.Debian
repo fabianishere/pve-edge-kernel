@@ -1,3 +1,11 @@
+pve-kernel (4.13.8-28) unstable; urgency=medium
+
+  * revert MMU changeset which caused bluescreens in Windows VMs
+
+  * bump ABI to 4.13.8-2-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 29 Nov 2017 09:49:35 +0100
+
 pve-kernel (4.13.8-27) unstable; urgency=medium
 
   * update to Ubuntu-4.13.0-17.20
