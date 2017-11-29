@@ -1,7 +1,7 @@
-From 400ed0a6a0992f685b547e12f0fd5d35176e1275 Mon Sep 17 00:00:00 2001
+From a940827b3da8eeb851fc6a6e620f1867a55900d1 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
 Date: Thu, 14 Sep 2017 11:02:18 +0200
-Subject: [PATCH 2/6] bridge: keep MAC of first assigned port
+Subject: [PATCH 2/7] bridge: keep MAC of first assigned port
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -34,5 +34,5 @@ index 89110319ef0f..5e73fff65f47 100644
  
  	if (ether_addr_equal(br->bridge_id.addr, addr))
 -- 
-2.11.0
+2.14.2
 

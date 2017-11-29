@@ -1,7 +1,7 @@
-From 014fff8b14ccd85d8e9604bbf4e812784bcfc29b Mon Sep 17 00:00:00 2001
+From c3827fb6d1d80856ca9107758e07ba677bc0d43b Mon Sep 17 00:00:00 2001
 From: Waiman Long <longman@redhat.com>
 Date: Thu, 17 Aug 2017 15:33:09 -0400
-Subject: [PATCH 5/6] cgroup: Add mount flag to enable cpuset to use v2
+Subject: [PATCH 5/7] cgroup: Add mount flag to enable cpuset to use v2
  behavior in v1 cgroup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -62,5 +62,5 @@ index 7bf4b1533f34..ce7426b875f5 100644
  			opts->flags |= CGRP_ROOT_XATTR;
  			continue;
 -- 
-2.11.0
+2.14.2
 
