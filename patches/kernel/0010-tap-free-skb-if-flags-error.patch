@@ -1,0 +1,58 @@
+From 68783aa6989756cda8e9e305292afbb9f4f5677c Mon Sep 17 00:00:00 2001
+From: Wei Xu <wexu@redhat.com>
+Date: Fri, 1 Dec 2017 05:10:38 -0500
+Subject: [PATCH 10/13] tap: free skb if flags error
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+tap_recvmsg() supports accepting skb by msg_control after
+commit 3b4ba04acca8 ("tap: support receiving skb from msg_control"),
+the skb if presented should be freed within the function, otherwise
+it would be leaked.
+
+Signed-off-by: Wei Xu <wexu@redhat.com>
+Reported-by: Matthew Rosato <mjrosato@linux.vnet.ibm.com>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/net/tap.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/tap.c b/drivers/net/tap.c
+index 3570c7576993..4e04b6094f3c 100644
+--- a/drivers/net/tap.c
++++ b/drivers/net/tap.c
+@@ -829,8 +829,11 @@ static ssize_t tap_do_read(struct tap_queue *q,
+ 	DEFINE_WAIT(wait);
+ 	ssize_t ret = 0;
+ 
+-	if (!iov_iter_count(to))
++	if (!iov_iter_count(to)) {
++		if (skb)
++			kfree_skb(skb);
+ 		return 0;
++	}
+ 
+ 	if (skb)
+ 		goto put;
+@@ -1155,11 +1158,14 @@ static int tap_recvmsg(struct socket *sock, struct msghdr *m,
+ 		       size_t total_len, int flags)
+ {
+ 	struct tap_queue *q = container_of(sock, struct tap_queue, sock);
++	struct sk_buff *skb = m->msg_control;
+ 	int ret;
+-	if (flags & ~(MSG_DONTWAIT|MSG_TRUNC))
++	if (flags & ~(MSG_DONTWAIT|MSG_TRUNC)) {
++		if (skb)
++			kfree_skb(skb);
+ 		return -EINVAL;
+-	ret = tap_do_read(q, &m->msg_iter, flags & MSG_DONTWAIT,
+-			  m->msg_control);
++	}
++	ret = tap_do_read(q, &m->msg_iter, flags & MSG_DONTWAIT, skb);
+ 	if (ret > total_len) {
+ 		m->msg_flags |= MSG_TRUNC;
+ 		ret = flags & MSG_TRUNC ? ret : total_len;
+-- 
+2.14.2
+
