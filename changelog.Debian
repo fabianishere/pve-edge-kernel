@@ -1,3 +1,17 @@
+pve-kernel (4.13.8-29) unstable; urgency=medium
+
+  * cherry-pick KVM fix for old CPUs
+
+  * cherry-pick / backport IB fixes
+
+  * cherry-pick vhost perf regression and mem-leak fix
+
+  * cherry-pick final Windows BSOD fix
+
+  * bump version to 4.13-29, bump ABI to 4.13.8-3-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 4 Dec 2017 09:15:03 +0100
+
 pve-kernel (4.13.8-28) unstable; urgency=medium
 
   * revert MMU changeset which caused bluescreens in Windows VMs
