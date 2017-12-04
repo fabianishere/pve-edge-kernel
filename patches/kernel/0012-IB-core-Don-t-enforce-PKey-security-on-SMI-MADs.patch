@@ -1,0 +1,47 @@
+From c7da6e780b87220187630411bcda8049072ecbf2 Mon Sep 17 00:00:00 2001
+From: Daniel Jurgens <danielj@mellanox.com>
+Date: Mon, 20 Nov 2017 16:47:45 -0600
+Subject: [PATCH 12/13] IB/core: Don't enforce PKey security on SMI MADs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Per the infiniband spec an SMI MAD can have any PKey. Checking the pkey
+on SMI MADs is not necessary, and it seems that some older adapters
+using the mthca driver don't follow the convention of using the default
+PKey, resulting in false denials, or errors querying the PKey cache.
+
+SMI MAD security is still enforced, only agents allowed to manage the
+subnet are able to receive or send SMI MADs.
+
+Reported-by: Chris Blake <chrisrblake93@gmail.com>
+Fixes: 47a2b338fe63("IB/core: Enforce security on management datagrams")
+Signed-off-by: Daniel Jurgens <danielj@mellanox.com>
+Reviewed-by: Parav Pandit <parav@mellanox.com>
+Signed-off-by: Leon Romanovsky <leon@kernel.org>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/infiniband/core/security.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/infiniband/core/security.c b/drivers/infiniband/core/security.c
+index 70ad19c4c73e..8f9fd3b757db 100644
+--- a/drivers/infiniband/core/security.c
++++ b/drivers/infiniband/core/security.c
+@@ -692,8 +692,11 @@ int ib_mad_enforce_security(struct ib_mad_agent_private *map, u16 pkey_index)
+ {
+ 	int ret;
+ 
+-	if (map->agent.qp->qp_type == IB_QPT_SMI && !map->agent.smp_allowed)
+-		return -EACCES;
++	if (map->agent.qp->qp_type == IB_QPT_SMI) {
++		if (!map->agent.smp_allowed)
++			return -EACCES;
++		return 0;
++	}
+ 
+ 	ret = ib_security_pkey_access(map->agent.device,
+ 				      map->agent.port_num,
+-- 
+2.14.2
+

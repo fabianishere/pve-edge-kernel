@@ -1,0 +1,87 @@
+From: Parav Pandit <parav@mellanox.com>
+Subject: [PATCH] IB/core: Avoid crash on pkey enforcement failed in received MADs
+
+commit 89548bcafec7ecfeea58c553f0834b5d575a66eb upstream.
+
+Below kernel crash is observed when Pkey security enforcement fails on
+received MADs. This issue is reported in [1].
+
+ib_free_recv_mad() accesses the rmpp_list, whose initialization is
+needed before accessing it.
+When security enformcent fails on received MADs, MAD processing avoided
+due to security checks failed.
+
+OpenSM[3770]: SM port is down
+kernel: BUG: unable to handle kernel NULL pointer dereference at 0000000000000008
+kernel: IP: ib_free_recv_mad+0x44/0xa0 [ib_core]
+kernel: PGD 0
+kernel: P4D 0
+kernel:
+kernel: Oops: 0002 [#1] SMP
+kernel: CPU: 0 PID: 2833 Comm: kworker/0:1H Tainted: P          IO    4.13.4-1-pve #1
+kernel: Hardware name: Dell       XS23-TY3        /9CMP63, BIOS 1.71 09/17/2013
+kernel: Workqueue: ib-comp-wq ib_cq_poll_work [ib_core]
+kernel: task: ffffa069c6541600 task.stack: ffffb9a729054000
+kernel: RIP: 0010:ib_free_recv_mad+0x44/0xa0 [ib_core]
+kernel: RSP: 0018:ffffb9a729057d38 EFLAGS: 00010286
+kernel: RAX: ffffa069cb138a48 RBX: ffffa069cb138a10 RCX: 0000000000000000
+kernel: RDX: ffffb9a729057d38 RSI: 0000000000000000 RDI: ffffa069cb138a20
+kernel: RBP: ffffb9a729057d60 R08: ffffa072d2d49800 R09: ffffa069cb138ae0
+kernel: R10: ffffa069cb138ae0 R11: ffffa072b3994e00 R12: ffffb9a729057d38
+kernel: R13: ffffa069d1c90000 R14: 0000000000000000 R15: ffffa069d1c90880
+kernel: FS:  0000000000000000(0000) GS:ffffa069dba00000(0000) knlGS:0000000000000000
+kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+kernel: CR2: 0000000000000008 CR3: 00000011f51f2000 CR4: 00000000000006f0
+kernel: Call Trace:
+kernel:  ib_mad_recv_done+0x5cc/0xb50 [ib_core]
+kernel:  __ib_process_cq+0x5c/0xb0 [ib_core]
+kernel:  ib_cq_poll_work+0x20/0x60 [ib_core]
+kernel:  process_one_work+0x1e9/0x410
+kernel:  worker_thread+0x4b/0x410
+kernel:  kthread+0x109/0x140
+kernel:  ? process_one_work+0x410/0x410
+kernel:  ? kthread_create_on_node+0x70/0x70
+kernel:  ? SyS_exit_group+0x14/0x20
+kernel:  ret_from_fork+0x25/0x30
+kernel: RIP: ib_free_recv_mad+0x44/0xa0 [ib_core] RSP: ffffb9a729057d38
+kernel: CR2: 0000000000000008
+
+[1] : https://www.spinics.net/lists/linux-rdma/msg56190.html
+
+Fixes: 47a2b338fe63 ("IB/core: Enforce security on management datagrams")
+Signed-off-by: Parav Pandit <parav@mellanox.com>
+Reported-by: Chris Blake <chrisrblake93@gmail.com>
+Reviewed-by: Daniel Jurgens <danielj@mellanox.com>
+Reviewed-by: Hal Rosenstock <hal@mellanox.com>
+Signed-off-by: Doug Ledford <dledford@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/infiniband/core/mad.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/infiniband/core/mad.c b/drivers/infiniband/core/mad.c
+index f8f53bb90837..cb91245e9163 100644
+--- a/drivers/infiniband/core/mad.c
++++ b/drivers/infiniband/core/mad.c
+@@ -1974,14 +1974,15 @@ static void ib_mad_complete_recv(struct ib_mad_agent_private *mad_agent_priv,
+ 	unsigned long flags;
+ 	int ret;
+ 
++	INIT_LIST_HEAD(&mad_recv_wc->rmpp_list);
+ 	ret = ib_mad_enforce_security(mad_agent_priv,
+ 				      mad_recv_wc->wc->pkey_index);
+ 	if (ret) {
+ 		ib_free_recv_mad(mad_recv_wc);
+ 		deref_mad_agent(mad_agent_priv);
++		return;
+ 	}
+ 
+-	INIT_LIST_HEAD(&mad_recv_wc->rmpp_list);
+ 	list_add(&mad_recv_wc->recv_buf.list, &mad_recv_wc->rmpp_list);
+ 	if (ib_mad_kernel_rmpp_agent(&mad_agent_priv->agent)) {
+ 		mad_recv_wc = ib_process_rmpp_recv_wc(mad_agent_priv,
+-- 
+2.14.2
+
