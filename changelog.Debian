@@ -1,3 +1,9 @@
+pve-kernel (4.13.8-30) unstable; urgency=medium
+
+  * revert igb to 5.3.5.10 (5.3.5.12 broke JUMBO_FRAMES)
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 5 Dec 2017 13:06:48 +0100
+
 pve-kernel (4.13.8-29) unstable; urgency=medium
 
   * cherry-pick KVM fix for old CPUs
