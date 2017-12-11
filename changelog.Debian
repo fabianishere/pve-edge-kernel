@@ -1,3 +1,11 @@
+pve-kernel (4.13.13-31) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-19.22
+
+  * bump ABI to 4.13.13-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 11 Dec 2017 10:00:13 +0100
+
 pve-kernel (4.13.8-30) unstable; urgency=medium
 
   * revert igb to 5.3.5.10 (5.3.5.12 broke JUMBO_FRAMES)
