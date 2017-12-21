@@ -13384,8 +13384,6 @@ EXPORT_SYMBOL_GPL drivers/mtd/nand/nand 0xf5b48b08	nand_release
 EXPORT_SYMBOL_GPL drivers/mtd/nand/sm_common 0xf6fd92e5	sm_register_device
 EXPORT_SYMBOL_GPL drivers/mtd/onenand/onenand 0x7c984073	onenand_scan
 EXPORT_SYMBOL_GPL drivers/mtd/onenand/onenand 0xd43740ec	onenand_release
-EXPORT_SYMBOL_GPL drivers/mtd/spi-nor/intel-spi 0xb1e9a450	intel_spi_probe
-EXPORT_SYMBOL_GPL drivers/mtd/spi-nor/intel-spi 0xb8a78e6f	intel_spi_remove
 EXPORT_SYMBOL_GPL drivers/mtd/spi-nor/spi-nor 0x1cc14612	spi_nor_scan
 EXPORT_SYMBOL_GPL drivers/mtd/ubi/ubi 0x187d2184	ubi_open_volume_path
 EXPORT_SYMBOL_GPL drivers/mtd/ubi/ubi 0x2721b036	ubi_open_volume_nm
