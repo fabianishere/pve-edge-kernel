@@ -1,7 +1,7 @@
-From ccc0b8662620d562798183b77bcd30125d2d14f3 Mon Sep 17 00:00:00 2001
+From afa7a3bd434708e76f9cc82ab84194fb85e86570 Mon Sep 17 00:00:00 2001
 From: Wei Xu <wexu@redhat.com>
 Date: Fri, 1 Dec 2017 05:10:37 -0500
-Subject: [PATCH 09/13] tun: free skb in early errors
+Subject: [PATCH 09/10] tun: free skb in early errors
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

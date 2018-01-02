@@ -1,7 +1,7 @@
-From 271e69f077ebaa56dc8953e679de08a7005d3ea9 Mon Sep 17 00:00:00 2001
+From 71d47f9926c851d3ab2671a4af360073a5c42092 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
 Date: Thu, 14 Sep 2017 11:09:58 +0200
-Subject: [PATCH 4/7] kvm: disable default dynamic halt polling growth
+Subject: [PATCH 04/10] kvm: disable default dynamic halt polling growth
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

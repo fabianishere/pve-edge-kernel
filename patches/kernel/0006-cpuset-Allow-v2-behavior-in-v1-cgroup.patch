@@ -1,7 +1,7 @@
-From 464d0b2e2601e16236e25bfc3113ce717f7a5d02 Mon Sep 17 00:00:00 2001
+From 7bc70a1a94ea2c9fe9db6b33bd1fac100290b94f Mon Sep 17 00:00:00 2001
 From: Waiman Long <longman@redhat.com>
 Date: Thu, 17 Aug 2017 15:33:10 -0400
-Subject: [PATCH 6/7] cpuset: Allow v2 behavior in v1 cgroup
+Subject: [PATCH 06/10] cpuset: Allow v2 behavior in v1 cgroup
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

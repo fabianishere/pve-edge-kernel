@@ -1,0 +1,56 @@
+From 08d71587b34c95d5461a6bdd946dc1dd46888bf3 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Thu, 26 Oct 2017 09:13:27 +0200
+Subject: [PATCH 10/10] KVM: SVM: obey guest PAT
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+For many years some users of assigned devices have reported worse
+performance on AMD processors with NPT than on AMD without NPT,
+Intel or bare metal.
+
+The reason turned out to be that SVM is discarding the guest PAT
+setting and uses the default (PA0=PA4=WB, PA1=PA5=WT, PA2=PA6=UC-,
+PA3=UC).  The guest might be using a different setting, and
+especially might want write combining but isn't getting it
+(instead getting slow UC or UC- accesses).
+
+Thanks a lot to geoff@hostfission.com for noticing the relation
+to the g_pat setting.  The patch has been tested also by a bunch
+of people on VFIO users forums.
+
+Fixes: 709ddebf81cb40e3c36c6109a7892e8b93a09464
+Fixes: https://bugzilla.kernel.org/show_bug.cgi?id=196409
+Cc: stable@vger.kernel.org
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Reviewed-by: David Hildenbrand <david@redhat.com>
+Tested-by: Nick Sarnie <commendsarnex@gmail.com>
+Signed-off-by: Radim Krčmář <rkrcmar@redhat.com>
+(cherry picked from commit 15038e14724799b8c205beb5f20f9e54896013c3)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kvm/svm.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index af256b786a70..af09baa3d736 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -3626,6 +3626,13 @@ static int svm_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr)
+ 	u32 ecx = msr->index;
+ 	u64 data = msr->data;
+ 	switch (ecx) {
++	case MSR_IA32_CR_PAT:
++		if (!kvm_mtrr_valid(vcpu, MSR_IA32_CR_PAT, data))
++			return 1;
++		vcpu->arch.pat = data;
++		svm->vmcb->save.g_pat = data;
++		mark_dirty(svm->vmcb, VMCB_NPT);
++		break;
+ 	case MSR_IA32_TSC:
+ 		kvm_write_tsc(vcpu, msr);
+ 		break;
+-- 
+2.14.2
+
