@@ -1,3 +1,11 @@
+pve-kernel (4.13.13-33) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-22.25
+
+  * fix #1537: cherry-pick AMD NPT / IOMMU fix
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 2 Jan 2018 10:03:58 +0100
+
 pve-kernel (4.13.13-32) unstable; urgency=medium
 
   * update to Ubuntu-4.13.0-21.24
