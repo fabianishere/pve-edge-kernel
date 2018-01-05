@@ -1,3 +1,14 @@
+pve-kernel (4.13.13-34) unstable; urgency=medium
+
+  * cherry-pick / backport of KPTI / Meltdown fixes
+    (from Ubuntu-4.13.0-23.25)
+
+  * add Google Spectre PoC fix for KVM
+
+  * fix objtool build regression
+
+ -- Proxmox Support Team <support@proxmox.com>  Sun, 7 Jan 2018 13:19:58 +0100
+
 pve-kernel (4.13.13-33) unstable; urgency=medium
 
   * update to Ubuntu-4.13.0-22.25

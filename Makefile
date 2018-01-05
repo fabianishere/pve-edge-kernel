@@ -2,10 +2,10 @@ RELEASE=5.1
 
 # also update proxmox-ve/changelog if you change KERNEL_VER or KREL
 KERNEL_VER=4.13.13
-PKGREL=33
+PKGREL=34
 # also include firmware of previous version into
 # the fw package:  fwlist-2.6.32-PREV-pve
-KREL=2
+KREL=3
 
 KERNEL_SRC=ubuntu-artful
 KERNEL_SRC_SUBMODULE=submodules/ubuntu-artful
