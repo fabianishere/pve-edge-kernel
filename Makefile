@@ -220,7 +220,10 @@ PVE_CONFIG_OPTS= \
 -e CONFIG_MODVERSIONS \
 -d CONFIG_DEFAULT_SECURITY_DAC \
 -e CONFIG_DEFAULT_SECURITY_APPARMOR \
---set-str CONFIG_DEFAULT_SECURITY apparmor
+--set-str CONFIG_DEFAULT_SECURITY apparmor \
+-d CONFIG_UNWINDER_ORC \
+-d CONFIG_UNWINDER_GUESS \
+-e CONFIG_UNWINDER_FRAME_POINTER
 
 .compile_mark: ${KERNEL_SRC}/README ${KERNEL_CFG_ORG}
 	[ ! -e /lib/modules/${KVNAME}/build ] || (echo "please remove /lib/modules/${KVNAME}/build" && false)
