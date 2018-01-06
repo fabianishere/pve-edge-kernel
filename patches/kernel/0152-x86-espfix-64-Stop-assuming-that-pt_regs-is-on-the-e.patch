@@ -1,7 +1,7 @@
 From 9715c46ae2c6d48c0e34409efad8d260a67ca6d6 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:22 +0100
-Subject: [PATCH 152/231] x86/espfix/64: Stop assuming that pt_regs is on the
+Subject: [PATCH 152/232] x86/espfix/64: Stop assuming that pt_regs is on the
  entry stack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

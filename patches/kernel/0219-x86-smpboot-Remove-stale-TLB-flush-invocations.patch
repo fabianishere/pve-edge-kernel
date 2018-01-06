@@ -1,7 +1,7 @@
 From 079b59f4b5c810ea51534a8d7bcee4860589b5c1 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sat, 30 Dec 2017 22:13:53 +0100
-Subject: [PATCH 219/231] x86/smpboot: Remove stale TLB flush invocations
+Subject: [PATCH 219/232] x86/smpboot: Remove stale TLB flush invocations
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

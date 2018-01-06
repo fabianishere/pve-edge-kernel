@@ -1,7 +1,7 @@
 From 2527d40adb84012c90cab350bd5ebbce65daaff7 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:33 -0500
-Subject: [PATCH 055/231] x86/head: Fix head ELF function annotations
+Subject: [PATCH 055/232] x86/head: Fix head ELF function annotations
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

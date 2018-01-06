@@ -1,7 +1,7 @@
 From 958fcb45b64535b87e3cfaef15a5cb41595e4187 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:01 -0700
-Subject: [PATCH 089/231] x86/entry/64: Simplify reg restore code in the
+Subject: [PATCH 089/232] x86/entry/64: Simplify reg restore code in the
  standard IRET paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

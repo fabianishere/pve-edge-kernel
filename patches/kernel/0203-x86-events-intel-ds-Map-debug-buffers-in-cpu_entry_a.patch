@@ -1,7 +1,7 @@
 From 68338a3b7267b4fc346630b2d82a3599b5fbf54e Mon Sep 17 00:00:00 2001
 From: Hugh Dickins <hughd@google.com>
 Date: Mon, 4 Dec 2017 15:07:50 +0100
-Subject: [PATCH 203/231] x86/events/intel/ds: Map debug buffers in
+Subject: [PATCH 203/232] x86/events/intel/ds: Map debug buffers in
  cpu_entry_area
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

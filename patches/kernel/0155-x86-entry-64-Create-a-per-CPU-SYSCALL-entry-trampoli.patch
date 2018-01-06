@@ -1,7 +1,7 @@
 From 2ae2b7902084742e84eac3e32409f0d9ff4811d8 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:25 +0100
-Subject: [PATCH 155/231] x86/entry/64: Create a per-CPU SYSCALL entry
+Subject: [PATCH 155/232] x86/entry/64: Create a per-CPU SYSCALL entry
  trampoline
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 3437c6490b62ab15493658a4b9b19786e270bcb2 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 17:25:07 -0800
-Subject: [PATCH 173/231] x86/entry: Rename SYSENTER_stack to
+Subject: [PATCH 173/232] x86/entry: Rename SYSENTER_stack to
  CPU_ENTRY_AREA_entry_stack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

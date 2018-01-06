@@ -1,7 +1,7 @@
 From 475d437587dd1de2d6a53f7fbbb9bc88c7700fc3 Mon Sep 17 00:00:00 2001
 From: Mikulas Patocka <mpatocka@redhat.com>
 Date: Sat, 2 Dec 2017 16:17:44 -0600
-Subject: [PATCH 133/231] objtool: Fix 64-bit build on 32-bit host
+Subject: [PATCH 133/232] objtool: Fix 64-bit build on 32-bit host
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

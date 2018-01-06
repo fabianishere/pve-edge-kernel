@@ -1,7 +1,7 @@
 From 9327cee21ebe7ca7a82c27c209e1fa3ac3d23232 Mon Sep 17 00:00:00 2001
 From: Ben Hutchings <ben@decadent.org.uk>
 Date: Thu, 4 Jan 2018 08:01:23 -0600
-Subject: [PATCH 228/231] UBUNTU: SAUCE: bpf/verifier: Fix states_equal()
+Subject: [PATCH 228/232] UBUNTU: SAUCE: bpf/verifier: Fix states_equal()
  comparison of pointer and UNKNOWN
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

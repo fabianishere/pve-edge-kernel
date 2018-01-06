@@ -1,7 +1,7 @@
 From 35ef33d8c7a31a246e499588a28717ef0bfa2a91 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sun, 31 Dec 2017 16:52:15 +0100
-Subject: [PATCH 222/231] x86/ldt: Make LDT pgtable free conditional
+Subject: [PATCH 222/232] x86/ldt: Make LDT pgtable free conditional
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

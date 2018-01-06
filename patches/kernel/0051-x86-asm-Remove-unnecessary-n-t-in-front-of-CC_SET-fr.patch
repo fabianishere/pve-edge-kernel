@@ -1,7 +1,7 @@
 From 7d7ea8398b5f0cf22b8faec46c95543031c5fe94 Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Wed, 6 Sep 2017 17:18:08 +0200
-Subject: [PATCH 051/231] x86/asm: Remove unnecessary \n\t in front of CC_SET()
+Subject: [PATCH 051/232] x86/asm: Remove unnecessary \n\t in front of CC_SET()
  from asm templates
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 271bc7d0577bef9f344187eb45ba8682eed242f9 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:00 -0700
-Subject: [PATCH 088/231] x86/entry/64: Move SWAPGS into the common
+Subject: [PATCH 088/232] x86/entry/64: Move SWAPGS into the common
  IRET-to-usermode path
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

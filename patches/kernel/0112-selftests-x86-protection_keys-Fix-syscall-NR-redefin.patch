@@ -1,7 +1,7 @@
 From 6be390fe5b1a7e9480e9cf0f85777a8eb205ad08 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sat, 4 Nov 2017 04:19:48 -0700
-Subject: [PATCH 112/231] selftests/x86/protection_keys: Fix syscall NR
+Subject: [PATCH 112/232] selftests/x86/protection_keys: Fix syscall NR
  redefinition warnings
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

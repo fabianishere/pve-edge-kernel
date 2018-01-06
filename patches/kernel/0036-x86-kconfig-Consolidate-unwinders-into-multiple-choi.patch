@@ -1,7 +1,7 @@
 From 73cf1dd35105d9cf270caf4a72b400b0a3ab4bb2 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Tue, 25 Jul 2017 08:54:24 -0500
-Subject: [PATCH 036/231] x86/kconfig: Consolidate unwinders into multiple
+Subject: [PATCH 036/232] x86/kconfig: Consolidate unwinders into multiple
  choice selection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

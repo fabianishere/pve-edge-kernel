@@ -1,7 +1,7 @@
 From 3e535e66c0bd546a1891c3a8ad6bf6aae7a0829e Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Thu, 2 Nov 2017 13:22:35 +0100
-Subject: [PATCH 107/231] x86/cpuid: Replace set/clear_bit32()
+Subject: [PATCH 107/232] x86/cpuid: Replace set/clear_bit32()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

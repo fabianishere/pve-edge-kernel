@@ -1,7 +1,7 @@
 From ee46485b45de9c2008e3ef5f847041fc18743052 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Wed, 3 Jan 2018 19:52:04 +0100
-Subject: [PATCH 225/231] x86/pti: Switch to kernel CR3 at early in
+Subject: [PATCH 225/232] x86/pti: Switch to kernel CR3 at early in
  entry_SYSCALL_compat()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

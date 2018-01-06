@@ -1,7 +1,7 @@
 From c03a5cb44d69723a8a2aa0b3b4808d28ea749431 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Wed, 20 Dec 2017 18:28:54 +0100
-Subject: [PATCH 183/231] x86/cpu_entry_area: Move it to a separate unit
+Subject: [PATCH 183/232] x86/cpu_entry_area: Move it to a separate unit
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

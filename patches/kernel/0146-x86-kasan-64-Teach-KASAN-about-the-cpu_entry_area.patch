@@ -1,7 +1,7 @@
 From 37fa97179211b36e3b5d3eb2dae94ad420ea9732 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:16 +0100
-Subject: [PATCH 146/231] x86/kasan/64: Teach KASAN about the cpu_entry_area
+Subject: [PATCH 146/232] x86/kasan/64: Teach KASAN about the cpu_entry_area
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

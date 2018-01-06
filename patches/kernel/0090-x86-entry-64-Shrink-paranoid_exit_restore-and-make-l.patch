@@ -1,7 +1,7 @@
 From d8fdea47d7fc1177aa0843a49dc89422ac6f4fea Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:02 -0700
-Subject: [PATCH 090/231] x86/entry/64: Shrink paranoid_exit_restore and make
+Subject: [PATCH 090/232] x86/entry/64: Shrink paranoid_exit_restore and make
  labels local
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

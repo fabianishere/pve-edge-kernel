@@ -1,7 +1,7 @@
 From 9e6bc95ae1c4b92d9838ee8d2ee8b0e65f4e4469 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 27 Oct 2017 13:25:28 -0700
-Subject: [PATCH 083/231] x86/mm: Relocate page fault error codes to traps.h
+Subject: [PATCH 083/232] x86/mm: Relocate page fault error codes to traps.h
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 8edefc098e2ff088d8c22d034bf8a5adf76b7295 Mon Sep 17 00:00:00 2001
 From: Dongjiu Geng <gengdongjiu@huawei.com>
 Date: Tue, 17 Oct 2017 16:02:20 +0800
-Subject: [PATCH 078/231] ACPI / APEI: remove the unused dead-code for SEA/NMI
+Subject: [PATCH 078/232] ACPI / APEI: remove the unused dead-code for SEA/NMI
  notification type
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

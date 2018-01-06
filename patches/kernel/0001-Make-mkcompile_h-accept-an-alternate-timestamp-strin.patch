@@ -1,7 +1,7 @@
 From 8e8e48c6f1ec020ff47f50aa49acab6c850cc70e Mon Sep 17 00:00:00 2001
 From: Ben Hutchings <ben@decadent.org.uk>
 Date: Tue, 12 May 2015 19:29:22 +0100
-Subject: [PATCH 001/231] Make mkcompile_h accept an alternate timestamp string
+Subject: [PATCH 001/232] Make mkcompile_h accept an alternate timestamp string
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

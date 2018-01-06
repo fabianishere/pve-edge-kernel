@@ -1,7 +1,7 @@
 From 1b9783c7335f17e3f5bdb8776dd06de62dcfba81 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:34 -0500
-Subject: [PATCH 056/231] x86/boot: Annotate verify_cpu() as a callable
+Subject: [PATCH 056/232] x86/boot: Annotate verify_cpu() as a callable
  function
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

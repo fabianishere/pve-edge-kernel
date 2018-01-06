@@ -1,7 +1,7 @@
 From c801c4e1ba695ba230e97f626abaeb0c16393b09 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:05 -0700
-Subject: [PATCH 093/231] x86/entry/64: Use POP instead of MOV to restore regs
+Subject: [PATCH 093/232] x86/entry/64: Use POP instead of MOV to restore regs
  on NMI return
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

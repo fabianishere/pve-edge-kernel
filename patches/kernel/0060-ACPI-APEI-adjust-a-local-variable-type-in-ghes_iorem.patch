@@ -1,7 +1,7 @@
 From 012bd636105426b93026d594261663e8a728dcc1 Mon Sep 17 00:00:00 2001
 From: Jan Beulich <JBeulich@suse.com>
 Date: Mon, 25 Sep 2017 02:06:19 -0600
-Subject: [PATCH 060/231] ACPI / APEI: adjust a local variable type in
+Subject: [PATCH 060/232] ACPI / APEI: adjust a local variable type in
  ghes_ioremap_pfn_irq()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

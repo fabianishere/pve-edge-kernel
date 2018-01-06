@@ -1,7 +1,7 @@
 From b46c055fd71f53c0a80cf592805943193438104c Mon Sep 17 00:00:00 2001
 From: Ingo Molnar <mingo@kernel.org>
 Date: Tue, 5 Dec 2017 14:14:47 +0100
-Subject: [PATCH 120/231] drivers/misc/intel/pti: Rename the header file to
+Subject: [PATCH 120/232] drivers/misc/intel/pti: Rename the header file to
  free up the namespace
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 32cae4ea1b3927843b18c32e8e1cdfab8a0b2c19 Mon Sep 17 00:00:00 2001
 From: Baoquan He <bhe@redhat.com>
 Date: Sat, 28 Oct 2017 09:30:38 +0800
-Subject: [PATCH 081/231] x86/mm/64: Rename the register_page_bootmem_memmap()
+Subject: [PATCH 081/232] x86/mm/64: Rename the register_page_bootmem_memmap()
  'size' parameter to 'nr_pages'
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

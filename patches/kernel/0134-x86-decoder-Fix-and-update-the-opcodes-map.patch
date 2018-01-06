@@ -1,7 +1,7 @@
 From 6c80693ba5d8d09e509a5613aa6e51b59a28585c Mon Sep 17 00:00:00 2001
 From: Randy Dunlap <rdunlap@infradead.org>
 Date: Mon, 11 Dec 2017 10:38:36 -0800
-Subject: [PATCH 134/231] x86/decoder: Fix and update the opcodes map
+Subject: [PATCH 134/232] x86/decoder: Fix and update the opcodes map
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

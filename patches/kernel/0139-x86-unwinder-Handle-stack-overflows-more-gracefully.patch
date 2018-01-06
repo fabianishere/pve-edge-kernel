@@ -1,7 +1,7 @@
 From 77f0942d5c0f9adc2a6cdd1f0f17c1c6e631b5a6 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 4 Dec 2017 15:07:09 +0100
-Subject: [PATCH 139/231] x86/unwinder: Handle stack overflows more gracefully
+Subject: [PATCH 139/232] x86/unwinder: Handle stack overflows more gracefully
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

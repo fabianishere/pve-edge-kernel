@@ -1,7 +1,7 @@
 From 05be4302d695b8676c90b26abe0495df58602685 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:33 +0100
-Subject: [PATCH 187/231] x86/cpufeatures: Add X86_BUG_CPU_INSECURE
+Subject: [PATCH 187/232] x86/cpufeatures: Add X86_BUG_CPU_INSECURE
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

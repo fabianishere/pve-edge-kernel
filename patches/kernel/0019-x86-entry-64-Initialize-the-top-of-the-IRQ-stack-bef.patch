@@ -1,7 +1,7 @@
 From 63463bcffe420067411ad3d4d01b79c872fffc3a Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Tue, 11 Jul 2017 10:33:39 -0500
-Subject: [PATCH 019/231] x86/entry/64: Initialize the top of the IRQ stack
+Subject: [PATCH 019/232] x86/entry/64: Initialize the top of the IRQ stack
  before switching stacks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

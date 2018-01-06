@@ -1,7 +1,7 @@
 From bcb5ffbfba8c6c557ad536eb9084040b8e52923e Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:42 +0100
-Subject: [PATCH 196/231] x86/mm/pti: Add functions to clone kernel PMDs
+Subject: [PATCH 196/232] x86/mm/pti: Add functions to clone kernel PMDs
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

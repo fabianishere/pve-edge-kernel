@@ -1,7 +1,7 @@
 From 6ef121f444bab6ac294e1eda62eb727ee639c6d7 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:37 -0500
-Subject: [PATCH 059/231] x86/head: Add unwind hint annotations
+Subject: [PATCH 059/232] x86/head: Add unwind hint annotations
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From a1ccda197e7a758c8e9b7be299e9beaf3ca3ed51 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:49 +0100
-Subject: [PATCH 202/231] x86/cpu_entry_area: Add debugstore entries to
+Subject: [PATCH 202/232] x86/cpu_entry_area: Add debugstore entries to
  cpu_entry_area
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

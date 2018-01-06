@@ -1,7 +1,7 @@
 From cc87e9d44044fb3ae4145d6ad9574697439b03bf Mon Sep 17 00:00:00 2001
 From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 Date: Fri, 29 Sep 2017 17:08:16 +0300
-Subject: [PATCH 074/231] mm/sparsemem: Allocate mem_section at runtime for
+Subject: [PATCH 074/232] mm/sparsemem: Allocate mem_section at runtime for
  CONFIG_SPARSEMEM_EXTREME=y
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
