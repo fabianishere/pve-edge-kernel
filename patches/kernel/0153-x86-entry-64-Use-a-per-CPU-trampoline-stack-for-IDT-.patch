@@ -1,0 +1,296 @@
+From 98a0f7841c6cdd3f882548ed3975df7b22cfa482 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:23 +0100
+Subject: [PATCH 153/231] x86/entry/64: Use a per-CPU trampoline stack for IDT
+ entries
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Historically, IDT entries from usermode have always gone directly
+to the running task's kernel stack.  Rearrange it so that we enter on
+a per-CPU trampoline stack and then manually switch to the task's stack.
+This touches a couple of extra cachelines, but it gives us a chance
+to run some code before we touch the kernel stack.
+
+The asm isn't exactly beautiful, but I think that fully refactoring
+it can wait.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.225330557@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 7f2590a110b837af5679d08fc25c6227c5a8c497)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit bfb2d0ede023853fb8c24d3dae8974cb2f7117c3)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/switch_to.h |  4 ++-
+ arch/x86/include/asm/traps.h     |  1 -
+ arch/x86/kernel/cpu/common.c     |  6 ++--
+ arch/x86/kernel/traps.c          | 21 +++++++------
+ arch/x86/entry/entry_64.S        | 67 ++++++++++++++++++++++++++++++----------
+ arch/x86/entry/entry_64_compat.S |  5 ++-
+ 6 files changed, 72 insertions(+), 32 deletions(-)
+
+diff --git a/arch/x86/include/asm/switch_to.h b/arch/x86/include/asm/switch_to.h
+index 010cd6e4eafc..ca2fc84ad278 100644
+--- a/arch/x86/include/asm/switch_to.h
++++ b/arch/x86/include/asm/switch_to.h
+@@ -89,10 +89,12 @@ static inline void refresh_sysenter_cs(struct thread_struct *thread)
+ /* This is used when switching tasks or entering/exiting vm86 mode. */
+ static inline void update_sp0(struct task_struct *task)
+ {
++	/* On x86_64, sp0 always points to the entry trampoline stack, which is constant: */
+ #ifdef CONFIG_X86_32
+ 	load_sp0(task->thread.sp0);
+ #else
+-	load_sp0(task_top_of_stack(task));
++	if (static_cpu_has(X86_FEATURE_XENPV))
++		load_sp0(task_top_of_stack(task));
+ #endif
+ }
+ 
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index b052a7621ca1..c3b652672d6f 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -92,7 +92,6 @@ dotraplinkage void do_segment_not_present(struct pt_regs *, long);
+ dotraplinkage void do_stack_segment(struct pt_regs *, long);
+ #ifdef CONFIG_X86_64
+ dotraplinkage void do_double_fault(struct pt_regs *, long);
+-asmlinkage struct pt_regs *sync_regs(struct pt_regs *);
+ #endif
+ dotraplinkage void do_general_protection(struct pt_regs *, long);
+ dotraplinkage void do_page_fault(struct pt_regs *, unsigned long);
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 4a38de4c6ede..404e4b75db6e 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -1623,11 +1623,13 @@ void cpu_init(void)
+ 	setup_cpu_entry_area(cpu);
+ 
+ 	/*
+-	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
+-	 * task never enters user mode.
++	 * Initialize the TSS.  sp0 points to the entry trampoline stack
++	 * regardless of what task is running.
+ 	 */
+ 	set_tss_desc(cpu, &get_cpu_entry_area(cpu)->tss.x86_tss);
+ 	load_TR_desc();
++	load_sp0((unsigned long)&get_cpu_entry_area(cpu)->tss +
++		 offsetofend(struct tss_struct, SYSENTER_stack));
+ 
+ 	load_mm_ldt(&init_mm);
+ 
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index b69db1ee8733..d9debdafe7a6 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -631,14 +631,15 @@ NOKPROBE_SYMBOL(do_int3);
+ 
+ #ifdef CONFIG_X86_64
+ /*
+- * Help handler running on IST stack to switch off the IST stack if the
+- * interrupted code was in user mode. The actual stack switch is done in
+- * entry_64.S
++ * Help handler running on a per-cpu (IST or entry trampoline) stack
++ * to switch to the normal thread stack if the interrupted code was in
++ * user mode. The actual stack switch is done in entry_64.S
+  */
+ asmlinkage __visible notrace struct pt_regs *sync_regs(struct pt_regs *eregs)
+ {
+-	struct pt_regs *regs = task_pt_regs(current);
+-	*regs = *eregs;
++	struct pt_regs *regs = (struct pt_regs *)this_cpu_read(cpu_current_top_of_stack) - 1;
++	if (regs != eregs)
++		*regs = *eregs;
+ 	return regs;
+ }
+ NOKPROBE_SYMBOL(sync_regs);
+@@ -654,13 +655,13 @@ struct bad_iret_stack *fixup_bad_iret(struct bad_iret_stack *s)
+ 	/*
+ 	 * This is called from entry_64.S early in handling a fault
+ 	 * caused by a bad iret to user mode.  To handle the fault
+-	 * correctly, we want move our stack frame to task_pt_regs
+-	 * and we want to pretend that the exception came from the
+-	 * iret target.
++	 * correctly, we want to move our stack frame to where it would
++	 * be had we entered directly on the entry stack (rather than
++	 * just below the IRET frame) and we want to pretend that the
++	 * exception came from the IRET target.
+ 	 */
+ 	struct bad_iret_stack *new_stack =
+-		container_of(task_pt_regs(current),
+-			     struct bad_iret_stack, regs);
++		(struct bad_iret_stack *)this_cpu_read(cpu_tss.x86_tss.sp0) - 1;
+ 
+ 	/* Copy the IRET target to the new stack. */
+ 	memmove(&new_stack->regs.ip, (void *)s->regs.sp, 5*8);
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 6c73e96daf78..f70fedc58bac 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -559,6 +559,13 @@ END(irq_entries_start)
+ /* 0(%rsp): ~(interrupt number) */
+ 	.macro interrupt func
+ 	cld
++
++	testb	$3, CS-ORIG_RAX(%rsp)
++	jz	1f
++	SWAPGS
++	call	switch_to_thread_stack
++1:
++
+ 	ALLOC_PT_GPREGS_ON_STACK
+ 	SAVE_C_REGS
+ 	SAVE_EXTRA_REGS
+@@ -568,12 +575,8 @@ END(irq_entries_start)
+ 	jz	1f
+ 
+ 	/*
+-	 * IRQ from user mode.  Switch to kernel gsbase and inform context
+-	 * tracking that we're in kernel mode.
+-	 */
+-	SWAPGS
+-
+-	/*
++	 * IRQ from user mode.
++	 *
+ 	 * We need to tell lockdep that IRQs are off.  We can't do this until
+ 	 * we fix gsbase, and we should do it before enter_from_user_mode
+ 	 * (which can take locks).  Since TRACE_IRQS_OFF idempotent,
+@@ -840,6 +843,32 @@ apicinterrupt IRQ_WORK_VECTOR			irq_work_interrupt		smp_irq_work_interrupt
+  */
+ #define CPU_TSS_IST(x) PER_CPU_VAR(cpu_tss) + (TSS_ist + ((x) - 1) * 8)
+ 
++/*
++ * Switch to the thread stack.  This is called with the IRET frame and
++ * orig_ax on the stack.  (That is, RDI..R12 are not on the stack and
++ * space has not been allocated for them.)
++ */
++ENTRY(switch_to_thread_stack)
++	UNWIND_HINT_FUNC
++
++	pushq	%rdi
++	movq	%rsp, %rdi
++	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
++	UNWIND_HINT sp_offset=16 sp_reg=ORC_REG_DI
++
++	pushq	7*8(%rdi)		/* regs->ss */
++	pushq	6*8(%rdi)		/* regs->rsp */
++	pushq	5*8(%rdi)		/* regs->eflags */
++	pushq	4*8(%rdi)		/* regs->cs */
++	pushq	3*8(%rdi)		/* regs->ip */
++	pushq	2*8(%rdi)		/* regs->orig_ax */
++	pushq	8(%rdi)			/* return address */
++	UNWIND_HINT_FUNC
++
++	movq	(%rdi), %rdi
++	ret
++END(switch_to_thread_stack)
++
+ .macro idtentry sym do_sym has_error_code:req paranoid=0 shift_ist=-1
+ ENTRY(\sym)
+ 	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
+@@ -857,11 +886,12 @@ ENTRY(\sym)
+ 
+ 	ALLOC_PT_GPREGS_ON_STACK
+ 
+-	.if \paranoid
+-	.if \paranoid == 1
++	.if \paranoid < 2
+ 	testb	$3, CS(%rsp)			/* If coming from userspace, switch stacks */
+-	jnz	1f
++	jnz	.Lfrom_usermode_switch_stack_\@
+ 	.endif
++
++	.if \paranoid
+ 	call	paranoid_entry
+ 	.else
+ 	call	error_entry
+@@ -903,20 +933,15 @@ ENTRY(\sym)
+ 	jmp	error_exit
+ 	.endif
+ 
+-	.if \paranoid == 1
++	.if \paranoid < 2
+ 	/*
+-	 * Paranoid entry from userspace.  Switch stacks and treat it
++	 * Entry from userspace.  Switch stacks and treat it
+ 	 * as a normal entry.  This means that paranoid handlers
+ 	 * run in real process context if user_mode(regs).
+ 	 */
+-1:
++.Lfrom_usermode_switch_stack_\@:
+ 	call	error_entry
+ 
+-
+-	movq	%rsp, %rdi			/* pt_regs pointer */
+-	call	sync_regs
+-	movq	%rax, %rsp			/* switch stack */
+-
+ 	movq	%rsp, %rdi			/* pt_regs pointer */
+ 
+ 	.if \has_error_code
+@@ -1177,6 +1202,14 @@ ENTRY(error_entry)
+ 	SWAPGS
+ 
+ .Lerror_entry_from_usermode_after_swapgs:
++	/* Put us onto the real thread stack. */
++	popq	%r12				/* save return addr in %12 */
++	movq	%rsp, %rdi			/* arg0 = pt_regs pointer */
++	call	sync_regs
++	movq	%rax, %rsp			/* switch stack */
++	ENCODE_FRAME_POINTER
++	pushq	%r12
++
+ 	/*
+ 	 * We need to tell lockdep that IRQs are off.  We can't do this until
+ 	 * we fix gsbase, and we should do it before enter_from_user_mode
+diff --git a/arch/x86/entry/entry_64_compat.S b/arch/x86/entry/entry_64_compat.S
+index 1f76b66518ee..2270601b6218 100644
+--- a/arch/x86/entry/entry_64_compat.S
++++ b/arch/x86/entry/entry_64_compat.S
+@@ -305,8 +305,11 @@ ENTRY(entry_INT80_compat)
+ 	 */
+ 	movl	%eax, %eax
+ 
+-	/* Construct struct pt_regs on stack (iret frame is already on stack) */
+ 	pushq	%rax			/* pt_regs->orig_ax */
++
++	/* switch to thread stack expects orig_ax to be pushed */
++	call	switch_to_thread_stack
++
+ 	pushq	%rdi			/* pt_regs->di */
+ 	pushq	%rsi			/* pt_regs->si */
+ 	pushq	%rdx			/* pt_regs->dx */
+-- 
+2.14.2
+

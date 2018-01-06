@@ -1,0 +1,130 @@
+From fd5a4c6a4fbf0025ebf77092af09530d708a1264 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:19 +0100
+Subject: [PATCH 149/231] x86/entry: Move SYSENTER_stack to the beginning of
+ struct tss_struct
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+SYSENTER_stack should have reliable overflow detection, which
+means that it needs to be at the bottom of a page, not the top.
+Move it to the beginning of struct tss_struct and page-align it.
+
+Also add an assertion to make sure that the fixed hardware TSS
+doesn't cross a page boundary.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150605.881827433@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 1a935bc3d4ea61556461a9e92a68ca3556232efd)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 57d6cfd9e7d015aabbed6d0b50e7d2525b3c86c2)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/processor.h | 21 ++++++++++++---------
+ arch/x86/kernel/cpu/common.c     | 21 +++++++++++++++++++++
+ 2 files changed, 33 insertions(+), 9 deletions(-)
+
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 78123abdb046..55885465c3a7 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -326,7 +326,16 @@ struct x86_hw_tss {
+ 
+ struct tss_struct {
+ 	/*
+-	 * The hardware state:
++	 * Space for the temporary SYSENTER stack, used for SYSENTER
++	 * and the entry trampoline as well.
++	 */
++	unsigned long		SYSENTER_stack_canary;
++	unsigned long		SYSENTER_stack[64];
++
++	/*
++	 * The fixed hardware portion.  This must not cross a page boundary
++	 * at risk of violating the SDM's advice and potentially triggering
++	 * errata.
+ 	 */
+ 	struct x86_hw_tss	x86_tss;
+ 
+@@ -337,15 +346,9 @@ struct tss_struct {
+ 	 * be within the limit.
+ 	 */
+ 	unsigned long		io_bitmap[IO_BITMAP_LONGS + 1];
++} __aligned(PAGE_SIZE);
+ 
+-	/*
+-	 * Space for the temporary SYSENTER stack.
+-	 */
+-	unsigned long		SYSENTER_stack_canary;
+-	unsigned long		SYSENTER_stack[64];
+-} ____cacheline_aligned;
+-
+-DECLARE_PER_CPU_SHARED_ALIGNED(struct tss_struct, cpu_tss);
++DECLARE_PER_CPU_PAGE_ALIGNED(struct tss_struct, cpu_tss);
+ 
+ /*
+  * sizeof(unsigned long) coming from an extra "long" at the end
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index e526d82b546c..e61eff11f562 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -487,6 +487,27 @@ static inline void setup_cpu_entry_area(int cpu)
+ #endif
+ 
+ 	__set_fixmap(get_cpu_entry_area_index(cpu, gdt), get_cpu_gdt_paddr(cpu), gdt_prot);
++
++	/*
++	 * The Intel SDM says (Volume 3, 7.2.1):
++	 *
++	 *  Avoid placing a page boundary in the part of the TSS that the
++	 *  processor reads during a task switch (the first 104 bytes). The
++	 *  processor may not correctly perform address translations if a
++	 *  boundary occurs in this area. During a task switch, the processor
++	 *  reads and writes into the first 104 bytes of each TSS (using
++	 *  contiguous physical addresses beginning with the physical address
++	 *  of the first byte of the TSS). So, after TSS access begins, if
++	 *  part of the 104 bytes is not physically contiguous, the processor
++	 *  will access incorrect information without generating a page-fault
++	 *  exception.
++	 *
++	 * There are also a lot of errata involving the TSS spanning a page
++	 * boundary.  Assert that we're not doing that.
++	 */
++	BUILD_BUG_ON((offsetof(struct tss_struct, x86_tss) ^
++		      offsetofend(struct tss_struct, x86_tss)) & PAGE_MASK);
++
+ }
+ 
+ /* Load the original GDT from the per-cpu structure */
+-- 
+2.14.2
+

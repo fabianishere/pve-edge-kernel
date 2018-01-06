@@ -1,0 +1,75 @@
+From befef5ef70f959cd51694298c4370557e5d846cf Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 2 Nov 2017 00:58:58 -0700
+Subject: [PATCH 086/231] x86/entry/64: Remove the restore_c_regs_and_iret
+ label
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The only user was the 64-bit opportunistic SYSRET failure path, and
+that path didn't really need it.  This change makes the
+opportunistic SYSRET code a bit more straightforward and gets rid of
+the label.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/be3006a7ad3326e3458cf1cc55d416252cbe1986.1509609304.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 9da78ba6b47b46428cfdfc0851511ab29c869798)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 629c8b858cbe72e88e7f44a8f10e1b434ab80721)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/entry_64.S | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 34adfe0221d2..fac354ddf056 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -245,7 +245,6 @@ entry_SYSCALL64_slow_path:
+ 	call	do_syscall_64		/* returns with IRQs disabled */
+ 
+ return_from_SYSCALL_64:
+-	RESTORE_EXTRA_REGS
+ 	TRACE_IRQS_IRETQ		/* we're about to change IF */
+ 
+ 	/*
+@@ -314,6 +313,7 @@ return_from_SYSCALL_64:
+ 	 */
+ syscall_return_via_sysret:
+ 	/* rcx and r11 are already restored (see code above) */
++	RESTORE_EXTRA_REGS
+ 	RESTORE_C_REGS_EXCEPT_RCX_R11
+ 	movq	RSP(%rsp), %rsp
+ 	UNWIND_HINT_EMPTY
+@@ -321,7 +321,7 @@ syscall_return_via_sysret:
+ 
+ opportunistic_sysret_failed:
+ 	SWAPGS
+-	jmp	restore_c_regs_and_iret
++	jmp	restore_regs_and_iret
+ END(entry_SYSCALL_64)
+ 
+ ENTRY(stub_ptregs_64)
+@@ -638,7 +638,6 @@ retint_kernel:
+  */
+ GLOBAL(restore_regs_and_iret)
+ 	RESTORE_EXTRA_REGS
+-restore_c_regs_and_iret:
+ 	RESTORE_C_REGS
+ 	REMOVE_PT_GPREGS_FROM_STACK 8
+ 	INTERRUPT_RETURN
+-- 
+2.14.2
+

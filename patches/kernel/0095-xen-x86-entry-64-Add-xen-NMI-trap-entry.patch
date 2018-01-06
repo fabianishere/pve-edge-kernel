@@ -1,0 +1,105 @@
+From 47b64e9de8bba4e6ccd0976bce6cf99446daf82e Mon Sep 17 00:00:00 2001
+From: Juergen Gross <jgross@suse.com>
+Date: Thu, 2 Nov 2017 00:59:07 -0700
+Subject: [PATCH 095/231] xen, x86/entry/64: Add xen NMI trap entry
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Instead of trying to execute any NMI via the bare metal's NMI trap
+handler use a Xen specific one for PV domains, like we do for e.g.
+debug traps. As in a PV domain the NMI is handled via the normal
+kernel stack this is the correct thing to do.
+
+This will enable us to get rid of the very fragile and questionable
+dependencies between the bare metal NMI handler and Xen assumptions
+believed to be broken anyway.
+
+Signed-off-by: Juergen Gross <jgross@suse.com>
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/5baf5c0528d58402441550c5770b98e7961e7680.1509609304.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 43e4111086a70c78bedb6ad990bee97f17b27a6e)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 20c970e03b42141abf6c45938ce6d4fdc3555921)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/traps.h | 2 +-
+ arch/x86/xen/enlighten_pv.c  | 2 +-
+ arch/x86/entry/entry_64.S    | 2 +-
+ arch/x86/xen/xen-asm_64.S    | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index 8e5bf86f87e5..b052a7621ca1 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -55,9 +55,9 @@ asmlinkage void simd_coprocessor_error(void);
+ 
+ #if defined(CONFIG_X86_64) && defined(CONFIG_XEN_PV)
+ asmlinkage void xen_divide_error(void);
++asmlinkage void xen_xennmi(void);
+ asmlinkage void xen_xendebug(void);
+ asmlinkage void xen_xenint3(void);
+-asmlinkage void xen_nmi(void);
+ asmlinkage void xen_overflow(void);
+ asmlinkage void xen_bounds(void);
+ asmlinkage void xen_invalid_op(void);
+diff --git a/arch/x86/xen/enlighten_pv.c b/arch/x86/xen/enlighten_pv.c
+index 69b9deff7e5c..8da4eff19c2a 100644
+--- a/arch/x86/xen/enlighten_pv.c
++++ b/arch/x86/xen/enlighten_pv.c
+@@ -600,7 +600,7 @@ static struct trap_array_entry trap_array[] = {
+ #ifdef CONFIG_X86_MCE
+ 	{ machine_check,               xen_machine_check,               true },
+ #endif
+-	{ nmi,                         xen_nmi,                         true },
++	{ nmi,                         xen_xennmi,                      true },
+ 	{ overflow,                    xen_overflow,                    false },
+ #ifdef CONFIG_IA32_EMULATION
+ 	{ entry_INT80_compat,          xen_entry_INT80_compat,          false },
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 4eff3aca54ed..5a6aba7cf3bd 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -1091,6 +1091,7 @@ idtentry int3			do_int3			has_error_code=0	paranoid=1 shift_ist=DEBUG_STACK
+ idtentry stack_segment		do_stack_segment	has_error_code=1
+ 
+ #ifdef CONFIG_XEN
++idtentry xennmi			do_nmi			has_error_code=0
+ idtentry xendebug		do_debug		has_error_code=0
+ idtentry xenint3		do_int3			has_error_code=0
+ #endif
+@@ -1253,7 +1254,6 @@ ENTRY(error_exit)
+ END(error_exit)
+ 
+ /* Runs on exception stack */
+-/* XXX: broken on Xen PV */
+ ENTRY(nmi)
+ 	UNWIND_HINT_IRET_REGS
+ 	/*
+diff --git a/arch/x86/xen/xen-asm_64.S b/arch/x86/xen/xen-asm_64.S
+index dae2cc33afb5..286ecc198562 100644
+--- a/arch/x86/xen/xen-asm_64.S
++++ b/arch/x86/xen/xen-asm_64.S
+@@ -29,7 +29,7 @@ xen_pv_trap debug
+ xen_pv_trap xendebug
+ xen_pv_trap int3
+ xen_pv_trap xenint3
+-xen_pv_trap nmi
++xen_pv_trap xennmi
+ xen_pv_trap overflow
+ xen_pv_trap bounds
+ xen_pv_trap invalid_op
+-- 
+2.14.2
+

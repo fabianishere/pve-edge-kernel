@@ -1,0 +1,346 @@
+From 3437c6490b62ab15493658a4b9b19786e270bcb2 Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Mon, 4 Dec 2017 17:25:07 -0800
+Subject: [PATCH 173/231] x86/entry: Rename SYSENTER_stack to
+ CPU_ENTRY_AREA_entry_stack
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+If the kernel oopses while on the trampoline stack, it will print
+"<SYSENTER>" even if SYSENTER is not involved.  That is rather confusing.
+
+The "SYSENTER" stack is used for a lot more than SYSENTER now.  Give it a
+better string to display in stack dumps, and rename the kernel code to
+match.
+
+Also move the 32-bit code over to the new naming even though it still uses
+the entry stack only for SYSENTER.
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bp@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 4fe2d8b11a370af286287a2661de9d4e6c9a145a)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit e0437c473463f208c2b4952f0826e43ce1335a53)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/fixmap.h     |  8 ++++----
+ arch/x86/include/asm/processor.h  |  6 +++---
+ arch/x86/include/asm/stacktrace.h |  4 ++--
+ arch/x86/kernel/asm-offsets.c     |  4 ++--
+ arch/x86/kernel/asm-offsets_32.c  |  2 +-
+ arch/x86/kernel/cpu/common.c      | 14 +++++++-------
+ arch/x86/kernel/dumpstack.c       | 10 +++++-----
+ arch/x86/kernel/dumpstack_32.c    |  6 +++---
+ arch/x86/kernel/dumpstack_64.c    | 12 +++++++++---
+ arch/x86/entry/entry_32.S         | 12 ++++++------
+ arch/x86/entry/entry_64.S         |  4 ++--
+ 11 files changed, 44 insertions(+), 38 deletions(-)
+
+diff --git a/arch/x86/include/asm/fixmap.h b/arch/x86/include/asm/fixmap.h
+index 5dc269ff4085..a7fb137ad964 100644
+--- a/arch/x86/include/asm/fixmap.h
++++ b/arch/x86/include/asm/fixmap.h
+@@ -56,10 +56,10 @@ struct cpu_entry_area {
+ 	char gdt[PAGE_SIZE];
+ 
+ 	/*
+-	 * The GDT is just below SYSENTER_stack and thus serves (on x86_64) as
++	 * The GDT is just below entry_stack and thus serves (on x86_64) as
+ 	 * a a read-only guard page.
+ 	 */
+-	struct SYSENTER_stack_page SYSENTER_stack_page;
++	struct entry_stack_page entry_stack_page;
+ 
+ 	/*
+ 	 * On x86_64, the TSS is mapped RO.  On x86_32, it's mapped RW because
+@@ -230,9 +230,9 @@ static inline struct cpu_entry_area *get_cpu_entry_area(int cpu)
+ 	return (struct cpu_entry_area *)__fix_to_virt(__get_cpu_entry_area_page_index(cpu, 0));
+ }
+ 
+-static inline struct SYSENTER_stack *cpu_SYSENTER_stack(int cpu)
++static inline struct entry_stack *cpu_entry_stack(int cpu)
+ {
+-	return &get_cpu_entry_area(cpu)->SYSENTER_stack_page.stack;
++	return &get_cpu_entry_area(cpu)->entry_stack_page.stack;
+ }
+ 
+ #endif /* !__ASSEMBLY__ */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 59a317f8e0ec..935d68609922 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -330,12 +330,12 @@ struct x86_hw_tss {
+ #define IO_BITMAP_OFFSET		(offsetof(struct tss_struct, io_bitmap) - offsetof(struct tss_struct, x86_tss))
+ #define INVALID_IO_BITMAP_OFFSET	0x8000
+ 
+-struct SYSENTER_stack {
++struct entry_stack {
+ 	unsigned long		words[64];
+ };
+ 
+-struct SYSENTER_stack_page {
+-	struct SYSENTER_stack stack;
++struct entry_stack_page {
++	struct entry_stack stack;
+ } __aligned(PAGE_SIZE);
+ 
+ struct tss_struct {
+diff --git a/arch/x86/include/asm/stacktrace.h b/arch/x86/include/asm/stacktrace.h
+index 95f999576131..3b3cc5ba579a 100644
+--- a/arch/x86/include/asm/stacktrace.h
++++ b/arch/x86/include/asm/stacktrace.h
+@@ -15,7 +15,7 @@ enum stack_type {
+ 	STACK_TYPE_TASK,
+ 	STACK_TYPE_IRQ,
+ 	STACK_TYPE_SOFTIRQ,
+-	STACK_TYPE_SYSENTER,
++	STACK_TYPE_ENTRY,
+ 	STACK_TYPE_EXCEPTION,
+ 	STACK_TYPE_EXCEPTION_LAST = STACK_TYPE_EXCEPTION + N_EXCEPTION_STACKS-1,
+ };
+@@ -28,7 +28,7 @@ struct stack_info {
+ bool in_task_stack(unsigned long *stack, struct task_struct *task,
+ 		   struct stack_info *info);
+ 
+-bool in_sysenter_stack(unsigned long *stack, struct stack_info *info);
++bool in_entry_stack(unsigned long *stack, struct stack_info *info);
+ 
+ int get_stack_info(unsigned long *stack, struct task_struct *task,
+ 		   struct stack_info *info, unsigned long *visit_mask);
+diff --git a/arch/x86/kernel/asm-offsets.c b/arch/x86/kernel/asm-offsets.c
+index 40c3fab107ac..25b4832e9c28 100644
+--- a/arch/x86/kernel/asm-offsets.c
++++ b/arch/x86/kernel/asm-offsets.c
+@@ -96,6 +96,6 @@ void common(void) {
+ 	/* Layout info for cpu_entry_area */
+ 	OFFSET(CPU_ENTRY_AREA_tss, cpu_entry_area, tss);
+ 	OFFSET(CPU_ENTRY_AREA_entry_trampoline, cpu_entry_area, entry_trampoline);
+-	OFFSET(CPU_ENTRY_AREA_SYSENTER_stack, cpu_entry_area, SYSENTER_stack_page);
+-	DEFINE(SIZEOF_SYSENTER_stack, sizeof(struct SYSENTER_stack));
++	OFFSET(CPU_ENTRY_AREA_entry_stack, cpu_entry_area, entry_stack_page);
++	DEFINE(SIZEOF_entry_stack, sizeof(struct entry_stack));
+ }
+diff --git a/arch/x86/kernel/asm-offsets_32.c b/arch/x86/kernel/asm-offsets_32.c
+index c4f23da7a0f0..4dba34cb777d 100644
+--- a/arch/x86/kernel/asm-offsets_32.c
++++ b/arch/x86/kernel/asm-offsets_32.c
+@@ -50,7 +50,7 @@ void foo(void)
+ 
+ 	/* Offset from the sysenter stack to tss.sp0 */
+ 	DEFINE(TSS_sysenter_sp0, offsetof(struct cpu_entry_area, tss.x86_tss.sp0) -
+-	       offsetofend(struct cpu_entry_area, SYSENTER_stack_page.stack));
++	       offsetofend(struct cpu_entry_area, entry_stack_page.stack));
+ 
+ #ifdef CONFIG_CC_STACKPROTECTOR
+ 	BLANK();
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index fcdba90e0890..7a8a5d436566 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -487,8 +487,8 @@ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
+ 	[(N_EXCEPTION_STACKS - 1) * EXCEPTION_STKSZ + DEBUG_STKSZ]);
+ #endif
+ 
+-static DEFINE_PER_CPU_PAGE_ALIGNED(struct SYSENTER_stack_page,
+-				   SYSENTER_stack_storage);
++static DEFINE_PER_CPU_PAGE_ALIGNED(struct entry_stack_page,
++				   entry_stack_storage);
+ 
+ static void __init
+ set_percpu_fixmap_pages(int idx, void *ptr, int pages, pgprot_t prot)
+@@ -523,8 +523,8 @@ static void __init setup_cpu_entry_area(int cpu)
+ #endif
+ 
+ 	__set_fixmap(get_cpu_entry_area_index(cpu, gdt), get_cpu_gdt_paddr(cpu), gdt_prot);
+-	set_percpu_fixmap_pages(get_cpu_entry_area_index(cpu, SYSENTER_stack_page),
+-				per_cpu_ptr(&SYSENTER_stack_storage, cpu), 1,
++	set_percpu_fixmap_pages(get_cpu_entry_area_index(cpu, entry_stack_page),
++				per_cpu_ptr(&entry_stack_storage, cpu), 1,
+ 				PAGE_KERNEL);
+ 
+ 	/*
+@@ -1315,7 +1315,7 @@ void enable_sep_cpu(void)
+ 
+ 	tss->x86_tss.ss1 = __KERNEL_CS;
+ 	wrmsr(MSR_IA32_SYSENTER_CS, tss->x86_tss.ss1, 0);
+-	wrmsr(MSR_IA32_SYSENTER_ESP, (unsigned long)(cpu_SYSENTER_stack(cpu) + 1), 0);
++	wrmsr(MSR_IA32_SYSENTER_ESP, (unsigned long)(cpu_entry_stack(cpu) + 1), 0);
+ 	wrmsr(MSR_IA32_SYSENTER_EIP, (unsigned long)entry_SYSENTER_32, 0);
+ 
+ 	put_cpu();
+@@ -1441,7 +1441,7 @@ void syscall_init(void)
+ 	 * AMD doesn't allow SYSENTER in long mode (either 32- or 64-bit).
+ 	 */
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_CS, (u64)__KERNEL_CS);
+-	wrmsrl_safe(MSR_IA32_SYSENTER_ESP, (unsigned long)(cpu_SYSENTER_stack(cpu) + 1));
++	wrmsrl_safe(MSR_IA32_SYSENTER_ESP, (unsigned long)(cpu_entry_stack(cpu) + 1));
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_EIP, (u64)entry_SYSENTER_compat);
+ #else
+ 	wrmsrl(MSR_CSTAR, (unsigned long)ignore_sysret);
+@@ -1655,7 +1655,7 @@ void cpu_init(void)
+ 	 */
+ 	set_tss_desc(cpu, &get_cpu_entry_area(cpu)->tss.x86_tss);
+ 	load_TR_desc();
+-	load_sp0((unsigned long)(cpu_SYSENTER_stack(cpu) + 1));
++	load_sp0((unsigned long)(cpu_entry_stack(cpu) + 1));
+ 
+ 	load_mm_ldt(&init_mm);
+ 
+diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
+index b005e5ef6738..55bf1c3b5319 100644
+--- a/arch/x86/kernel/dumpstack.c
++++ b/arch/x86/kernel/dumpstack.c
+@@ -43,9 +43,9 @@ bool in_task_stack(unsigned long *stack, struct task_struct *task,
+ 	return true;
+ }
+ 
+-bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
++bool in_entry_stack(unsigned long *stack, struct stack_info *info)
+ {
+-	struct SYSENTER_stack *ss = cpu_SYSENTER_stack(smp_processor_id());
++	struct entry_stack *ss = cpu_entry_stack(smp_processor_id());
+ 
+ 	void *begin = ss;
+ 	void *end = ss + 1;
+@@ -53,7 +53,7 @@ bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
+ 	if ((void *)stack < begin || (void *)stack >= end)
+ 		return false;
+ 
+-	info->type	= STACK_TYPE_SYSENTER;
++	info->type	= STACK_TYPE_ENTRY;
+ 	info->begin	= begin;
+ 	info->end	= end;
+ 	info->next_sp	= NULL;
+@@ -111,13 +111,13 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 	 * - task stack
+ 	 * - interrupt stack
+ 	 * - HW exception stacks (double fault, nmi, debug, mce)
+-	 * - SYSENTER stack
++	 * - entry stack
+ 	 *
+ 	 * x86-32 can have up to four stacks:
+ 	 * - task stack
+ 	 * - softirq stack
+ 	 * - hardirq stack
+-	 * - SYSENTER stack
++	 * - entry stack
+ 	 */
+ 	for (regs = NULL; stack; stack = PTR_ALIGN(stack_info.next_sp, sizeof(long))) {
+ 		const char *stack_name;
+diff --git a/arch/x86/kernel/dumpstack_32.c b/arch/x86/kernel/dumpstack_32.c
+index 3160bf2d100e..4580ba0204f6 100644
+--- a/arch/x86/kernel/dumpstack_32.c
++++ b/arch/x86/kernel/dumpstack_32.c
+@@ -25,8 +25,8 @@ const char *stack_type_name(enum stack_type type)
+ 	if (type == STACK_TYPE_SOFTIRQ)
+ 		return "SOFTIRQ";
+ 
+-	if (type == STACK_TYPE_SYSENTER)
+-		return "SYSENTER";
++	if (type == STACK_TYPE_ENTRY)
++		return "ENTRY_TRAMPOLINE";
+ 
+ 	return NULL;
+ }
+@@ -95,7 +95,7 @@ int get_stack_info(unsigned long *stack, struct task_struct *task,
+ 	if (task != current)
+ 		goto unknown;
+ 
+-	if (in_sysenter_stack(stack, info))
++	if (in_entry_stack(stack, info))
+ 		goto recursion_check;
+ 
+ 	if (in_hardirq_stack(stack, info))
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index f5107b659f86..7d9c0e06afc2 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -36,8 +36,14 @@ const char *stack_type_name(enum stack_type type)
+ 	if (type == STACK_TYPE_IRQ)
+ 		return "IRQ";
+ 
+-	if (type == STACK_TYPE_SYSENTER)
+-		return "SYSENTER";
++	if (type == STACK_TYPE_ENTRY) {
++		/*
++		 * On 64-bit, we have a generic entry stack that we
++		 * use for all the kernel entry points, including
++		 * SYSENTER.
++		 */
++		return "ENTRY_TRAMPOLINE";
++	}
+ 
+ 	if (type >= STACK_TYPE_EXCEPTION && type <= STACK_TYPE_EXCEPTION_LAST)
+ 		return exception_stack_names[type - STACK_TYPE_EXCEPTION];
+@@ -117,7 +123,7 @@ int get_stack_info(unsigned long *stack, struct task_struct *task,
+ 	if (in_irq_stack(stack, info))
+ 		goto recursion_check;
+ 
+-	if (in_sysenter_stack(stack, info))
++	if (in_entry_stack(stack, info))
+ 		goto recursion_check;
+ 
+ 	goto unknown;
+diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
+index 3ef7800007f8..634c6a78885c 100644
+--- a/arch/x86/entry/entry_32.S
++++ b/arch/x86/entry/entry_32.S
+@@ -949,9 +949,9 @@ ENTRY(debug)
+ 
+ 	/* Are we currently on the SYSENTER stack? */
+ 	movl	PER_CPU_VAR(cpu_entry_area), %ecx
+-	addl	$CPU_ENTRY_AREA_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
+-	subl	%eax, %ecx	/* ecx = (end of SYSENTER_stack) - esp */
+-	cmpl	$SIZEOF_SYSENTER_stack, %ecx
++	addl	$CPU_ENTRY_AREA_entry_stack + SIZEOF_entry_stack, %ecx
++	subl	%eax, %ecx	/* ecx = (end of entry_stack) - esp */
++	cmpl	$SIZEOF_entry_stack, %ecx
+ 	jb	.Ldebug_from_sysenter_stack
+ 
+ 	TRACE_IRQS_OFF
+@@ -993,9 +993,9 @@ ENTRY(nmi)
+ 
+ 	/* Are we currently on the SYSENTER stack? */
+ 	movl	PER_CPU_VAR(cpu_entry_area), %ecx
+-	addl	$CPU_ENTRY_AREA_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
+-	subl	%eax, %ecx	/* ecx = (end of SYSENTER_stack) - esp */
+-	cmpl	$SIZEOF_SYSENTER_stack, %ecx
++	addl	$CPU_ENTRY_AREA_entry_stack + SIZEOF_entry_stack, %ecx
++	subl	%eax, %ecx	/* ecx = (end of entry_stack) - esp */
++	cmpl	$SIZEOF_entry_stack, %ecx
+ 	jb	.Lnmi_from_sysenter_stack
+ 
+ 	/* Not on SYSENTER stack. */
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 157860b3569f..03e052f02176 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -153,8 +153,8 @@ END(native_usergs_sysret64)
+ 	_entry_trampoline - CPU_ENTRY_AREA_entry_trampoline(%rip)
+ 
+ /* The top word of the SYSENTER stack is hot and is usable as scratch space. */
+-#define RSP_SCRATCH	CPU_ENTRY_AREA_SYSENTER_stack + \
+-			SIZEOF_SYSENTER_stack - 8 + CPU_ENTRY_AREA
++#define RSP_SCRATCH	CPU_ENTRY_AREA_entry_stack + \
++			SIZEOF_entry_stack - 8 + CPU_ENTRY_AREA
+ 
+ ENTRY(entry_SYSCALL_64_trampoline)
+ 	UNWIND_HINT_EMPTY
+-- 
+2.14.2
+

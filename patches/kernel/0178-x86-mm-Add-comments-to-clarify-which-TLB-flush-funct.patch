@@ -1,0 +1,113 @@
+From 0e75b184111dbcd07911712bd87991df186c5fd3 Mon Sep 17 00:00:00 2001
+From: Peter Zijlstra <peterz@infradead.org>
+Date: Tue, 5 Dec 2017 13:34:52 +0100
+Subject: [PATCH 178/231] x86/mm: Add comments to clarify which TLB-flush
+ functions are supposed to flush what
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Per popular request..
+
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: linux-mm@kvack.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(backported from commit 3f67af51e56f291d7417d77c4f67cd774633c5e1)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 8394b666c2b3b1fc5279a897c96b196531923f3b)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/tlbflush.h | 24 ++++++++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index bc1460b4737b..ed5d483c4a1b 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -216,6 +216,10 @@ static inline void cr4_set_bits_and_update_boot(unsigned long mask)
+ 	cr4_set_bits(mask);
+ }
+ 
++
++/*
++ * flush the entire current user mapping
++ */
+ static inline void __native_flush_tlb(void)
+ {
+ 	/*
+@@ -228,6 +232,9 @@ static inline void __native_flush_tlb(void)
+ 	preempt_enable();
+ }
+ 
++/*
++ * flush everything
++ */
+ static inline void __native_flush_tlb_global(void)
+ {
+ 	unsigned long cr4, flags;
+@@ -257,17 +264,27 @@ static inline void __native_flush_tlb_global(void)
+ 	raw_local_irq_restore(flags);
+ }
+ 
++/*
++ * flush one page in the user mapping
++ */
+ static inline void __native_flush_tlb_single(unsigned long addr)
+ {
+ 	asm volatile("invlpg (%0)" ::"r" (addr) : "memory");
+ }
+ 
++/*
++ * flush everything
++ */
+ static inline void __flush_tlb_all(void)
+ {
+-	if (boot_cpu_has(X86_FEATURE_PGE))
++	if (boot_cpu_has(X86_FEATURE_PGE)) {
+ 		__flush_tlb_global();
+-	else
++	} else {
++		/*
++		 * !PGE -> !PCID (setup_pcid()), thus every flush is total.
++		 */
+ 		__flush_tlb();
++	}
+ 
+ 	/*
+ 	 * Note: if we somehow had PCID but not PGE, then this wouldn't work --
+@@ -278,6 +295,9 @@ static inline void __flush_tlb_all(void)
+ 	 */
+ }
+ 
++/*
++ * flush one page in the kernel mapping
++ */
+ static inline void __flush_tlb_one(unsigned long addr)
+ {
+ 	count_vm_tlb_event(NR_TLB_LOCAL_FLUSH_ONE);
+-- 
+2.14.2
+

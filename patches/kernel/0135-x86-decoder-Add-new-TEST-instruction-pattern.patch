@@ -1,0 +1,68 @@
+From 73c945c5114ca89d182b9fbab0b38c8afd2da375 Mon Sep 17 00:00:00 2001
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Date: Fri, 24 Nov 2017 13:56:30 +0900
+Subject: [PATCH 135/231] x86/decoder: Add new TEST instruction pattern
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The kbuild test robot reported this build warning:
+
+  Warning: arch/x86/tools/test_get_len found difference at <jump_table>:ffffffff8103dd2c
+
+  Warning: ffffffff8103dd82: f6 09 d8 testb $0xd8,(%rcx)
+  Warning: objdump says 3 bytes, but insn_get_length() says 2
+  Warning: decoded and checked 1569014 instructions with 1 warnings
+
+This sequence seems to be a new instruction not in the opcode map in the Intel SDM.
+
+The instruction sequence is "F6 09 d8", means Group3(F6), MOD(00)REG(001)RM(001), and 0xd8.
+Intel SDM vol2 A.4 Table A-6 said the table index in the group is "Encoding of Bits 5,4,3 of
+the ModR/M Byte (bits 2,1,0 in parenthesis)"
+
+In that table, opcodes listed by the index REG bits as:
+
+  000         001       010 011  100        101        110         111
+ TEST Ib/Iz,(undefined),NOT,NEG,MUL AL/rAX,IMUL AL/rAX,DIV AL/rAX,IDIV AL/rAX
+
+So, it seems TEST Ib is assigned to 001.
+
+Add the new pattern.
+
+Reported-by: kbuild test robot <fengguang.wu@intel.com>
+Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: <stable@vger.kernel.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 2cf68f74af0a6cf808ad03f0d528c72b03c89cc7)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 8896d68f8ff2a97b91279221ddaba73664c5161d)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/lib/x86-opcode-map.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
+index aa2270dc9e87..e0b85930dd77 100644
+--- a/arch/x86/lib/x86-opcode-map.txt
++++ b/arch/x86/lib/x86-opcode-map.txt
+@@ -896,7 +896,7 @@ EndTable
+ 
+ GrpTable: Grp3_1
+ 0: TEST Eb,Ib
+-1:
++1: TEST Eb,Ib
+ 2: NOT Eb
+ 3: NEG Eb
+ 4: MUL AL,Eb
+-- 
+2.14.2
+

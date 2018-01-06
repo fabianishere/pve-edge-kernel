@@ -1,0 +1,125 @@
+From 1e3688f9e76b3d8b218ed1afa292585a91b0b0c6 Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Wed, 18 Oct 2017 10:21:07 -0700
+Subject: [PATCH 073/231] x86/entry: Use SYSCALL_DEFINE() macros for
+ sys_modify_ldt()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+We do not have tracepoints for sys_modify_ldt() because we define
+it directly instead of using the normal SYSCALL_DEFINEx() macros.
+
+However, there is a reason sys_modify_ldt() does not use the macros:
+it has an 'int' return type instead of 'unsigned long'.  This is
+a bug, but it's a bug cemented in the ABI.
+
+What does this mean?  If we return -EINVAL from a function that
+returns 'int', we have 0x00000000ffffffea in %rax.  But, if we
+return -EINVAL from a function returning 'unsigned long', we end
+up with 0xffffffffffffffea in %rax, which is wrong.
+
+To work around this and maintain the 'int' behavior while using
+the SYSCALL_DEFINEx() macros, so we add a cast to 'unsigned int'
+in both implementations of sys_modify_ldt().
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Reviewed-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Brian Gerst <brgerst@gmail.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/20171018172107.1A79C532@viggo.jf.intel.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit da20ab35180780e4a6eadc804544f1fa967f3567)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d865f635f4b2c3307e79de9be5c49ea8bd4c43a6)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/syscalls.h |  2 +-
+ arch/x86/kernel/ldt.c           | 16 +++++++++++++---
+ arch/x86/um/ldt.c               |  7 +++++--
+ 3 files changed, 19 insertions(+), 6 deletions(-)
+
+diff --git a/arch/x86/include/asm/syscalls.h b/arch/x86/include/asm/syscalls.h
+index 91dfcafe27a6..bad25bb80679 100644
+--- a/arch/x86/include/asm/syscalls.h
++++ b/arch/x86/include/asm/syscalls.h
+@@ -21,7 +21,7 @@ asmlinkage long sys_ioperm(unsigned long, unsigned long, int);
+ asmlinkage long sys_iopl(unsigned int);
+ 
+ /* kernel/ldt.c */
+-asmlinkage int sys_modify_ldt(int, void __user *, unsigned long);
++asmlinkage long sys_modify_ldt(int, void __user *, unsigned long);
+ 
+ /* kernel/signal.c */
+ asmlinkage long sys_rt_sigreturn(void);
+diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
+index f0e64db18ac8..0402d44deb4d 100644
+--- a/arch/x86/kernel/ldt.c
++++ b/arch/x86/kernel/ldt.c
+@@ -12,6 +12,7 @@
+ #include <linux/string.h>
+ #include <linux/mm.h>
+ #include <linux/smp.h>
++#include <linux/syscalls.h>
+ #include <linux/slab.h>
+ #include <linux/vmalloc.h>
+ #include <linux/uaccess.h>
+@@ -294,8 +295,8 @@ static int write_ldt(void __user *ptr, unsigned long bytecount, int oldmode)
+ 	return error;
+ }
+ 
+-asmlinkage int sys_modify_ldt(int func, void __user *ptr,
+-			      unsigned long bytecount)
++SYSCALL_DEFINE3(modify_ldt, int , func , void __user * , ptr ,
++		unsigned long , bytecount)
+ {
+ 	int ret = -ENOSYS;
+ 
+@@ -313,5 +314,14 @@ asmlinkage int sys_modify_ldt(int func, void __user *ptr,
+ 		ret = write_ldt(ptr, bytecount, 0);
+ 		break;
+ 	}
+-	return ret;
++	/*
++	 * The SYSCALL_DEFINE() macros give us an 'unsigned long'
++	 * return type, but tht ABI for sys_modify_ldt() expects
++	 * 'int'.  This cast gives us an int-sized value in %rax
++	 * for the return code.  The 'unsigned' is necessary so
++	 * the compiler does not try to sign-extend the negative
++	 * return codes into the high half of the register when
++	 * taking the value from int->long.
++	 */
++	return (unsigned int)ret;
+ }
+diff --git a/arch/x86/um/ldt.c b/arch/x86/um/ldt.c
+index 836a1eb5df43..3ee234b6234d 100644
+--- a/arch/x86/um/ldt.c
++++ b/arch/x86/um/ldt.c
+@@ -6,6 +6,7 @@
+ #include <linux/mm.h>
+ #include <linux/sched.h>
+ #include <linux/slab.h>
++#include <linux/syscalls.h>
+ #include <linux/uaccess.h>
+ #include <asm/unistd.h>
+ #include <os.h>
+@@ -369,7 +370,9 @@ void free_ldt(struct mm_context *mm)
+ 	mm->arch.ldt.entry_count = 0;
+ }
+ 
+-int sys_modify_ldt(int func, void __user *ptr, unsigned long bytecount)
++SYSCALL_DEFINE3(modify_ldt, int , func , void __user * , ptr ,
++		unsigned long , bytecount)
+ {
+-	return do_modify_ldt_skas(func, ptr, bytecount);
++	/* See non-um modify_ldt() for why we do this cast */
++	return (unsigned int)do_modify_ldt_skas(func, ptr, bytecount);
+ }
+-- 
+2.14.2
+

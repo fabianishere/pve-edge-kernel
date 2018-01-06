@@ -1,0 +1,114 @@
+From 5f1c500617cd1a6f629237471344ee200debaa60 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Sat, 4 Nov 2017 04:19:50 -0700
+Subject: [PATCH 114/231] selftests/x86/ldt_gdt: Add infrastructure to test
+ set_thread_area()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Much of the test design could apply to set_thread_area() (i.e. GDT),
+not just modify_ldt().  Add set_thread_area() to the
+install_valid_mode() helper.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/02c23f8fba5547007f741dc24c3926e5284ede02.1509794321.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit d744dcad39094c9187075e274d1cdef79c57c8b5)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d6ae7ac5849304e520538a6ce3111f372f809596)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ tools/testing/selftests/x86/ldt_gdt.c | 53 ++++++++++++++++++++++++-----------
+ 1 file changed, 37 insertions(+), 16 deletions(-)
+
+diff --git a/tools/testing/selftests/x86/ldt_gdt.c b/tools/testing/selftests/x86/ldt_gdt.c
+index b2c54f4673f2..337f217d0ae9 100644
+--- a/tools/testing/selftests/x86/ldt_gdt.c
++++ b/tools/testing/selftests/x86/ldt_gdt.c
+@@ -136,30 +136,51 @@ static void check_valid_segment(uint16_t index, int ldt,
+ 	}
+ }
+ 
+-static bool install_valid_mode(const struct user_desc *desc, uint32_t ar,
+-			       bool oldmode)
++static bool install_valid_mode(const struct user_desc *d, uint32_t ar,
++			       bool oldmode, bool ldt)
+ {
+-	int ret = syscall(SYS_modify_ldt, oldmode ? 1 : 0x11,
+-			  desc, sizeof(*desc));
+-	if (ret < -1)
+-		errno = -ret;
++	struct user_desc desc = *d;
++	int ret;
++
++	if (!ldt) {
++#ifndef __i386__
++		/* No point testing set_thread_area in a 64-bit build */
++		return false;
++#endif
++		if (!gdt_entry_num)
++			return false;
++		desc.entry_number = gdt_entry_num;
++
++		ret = syscall(SYS_set_thread_area, &desc);
++	} else {
++		ret = syscall(SYS_modify_ldt, oldmode ? 1 : 0x11,
++			      &desc, sizeof(desc));
++
++		if (ret < -1)
++			errno = -ret;
++
++		if (ret != 0 && errno == ENOSYS) {
++			printf("[OK]\tmodify_ldt returned -ENOSYS\n");
++			return false;
++		}
++	}
++
+ 	if (ret == 0) {
+-		uint32_t limit = desc->limit;
+-		if (desc->limit_in_pages)
++		uint32_t limit = desc.limit;
++		if (desc.limit_in_pages)
+ 			limit = (limit << 12) + 4095;
+-		check_valid_segment(desc->entry_number, 1, ar, limit, true);
++		check_valid_segment(desc.entry_number, ldt, ar, limit, true);
+ 		return true;
+-	} else if (errno == ENOSYS) {
+-		printf("[OK]\tmodify_ldt returned -ENOSYS\n");
+-		return false;
+ 	} else {
+-		if (desc->seg_32bit) {
+-			printf("[FAIL]\tUnexpected modify_ldt failure %d\n",
++		if (desc.seg_32bit) {
++			printf("[FAIL]\tUnexpected %s failure %d\n",
++			       ldt ? "modify_ldt" : "set_thread_area",
+ 			       errno);
+ 			nerrs++;
+ 			return false;
+ 		} else {
+-			printf("[OK]\tmodify_ldt rejected 16 bit segment\n");
++			printf("[OK]\t%s rejected 16 bit segment\n",
++			       ldt ? "modify_ldt" : "set_thread_area");
+ 			return false;
+ 		}
+ 	}
+@@ -167,7 +188,7 @@ static bool install_valid_mode(const struct user_desc *desc, uint32_t ar,
+ 
+ static bool install_valid(const struct user_desc *desc, uint32_t ar)
+ {
+-	return install_valid_mode(desc, ar, false);
++	return install_valid_mode(desc, ar, false, true);
+ }
+ 
+ static void install_invalid(const struct user_desc *desc, bool oldmode)
+-- 
+2.14.2
+

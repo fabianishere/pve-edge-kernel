@@ -1,0 +1,120 @@
+From bbdde34293757490c18c57d8bd9f92e567bbdbcd Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 29 Jun 2017 08:53:21 -0700
+Subject: [PATCH 016/231] x86/mm: Enable CR4.PCIDE on supported systems
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+We can use PCID if the CPU has PCID and PGE and we're not on Xen.
+
+By itself, this has no effect. A followup patch will start using PCID.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Nadav Amit <nadav.amit@gmail.com>
+Reviewed-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Arjan van de Ven <arjan@linux.intel.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: linux-mm@kvack.org
+Link: http://lkml.kernel.org/r/6327ecd907b32f79d5aa0d466f04503bbec5df88.1498751203.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 660da7c9228f685b2ebe664f9fd69aaddcc420b5)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 7d6bbe5528395f18de50bd2532843546c849883d)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/tlbflush.h |  8 ++++++++
+ arch/x86/kernel/cpu/common.c    | 22 ++++++++++++++++++++++
+ arch/x86/xen/enlighten_pv.c     |  6 ++++++
+ 3 files changed, 36 insertions(+)
+
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index 50ea3482e1d1..2b3d68093235 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -207,6 +207,14 @@ static inline void __flush_tlb_all(void)
+ 		__flush_tlb_global();
+ 	else
+ 		__flush_tlb();
++
++	/*
++	 * Note: if we somehow had PCID but not PGE, then this wouldn't work --
++	 * we'd end up flushing kernel translations for the current ASID but
++	 * we might fail to flush kernel translations for other cached ASIDs.
++	 *
++	 * To avoid this issue, we force PCID off if PGE is off.
++	 */
+ }
+ 
+ static inline void __flush_tlb_one(unsigned long addr)
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 904485e7b230..b95cd94ca97b 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -329,6 +329,25 @@ static __always_inline void setup_smap(struct cpuinfo_x86 *c)
+ 	}
+ }
+ 
++static void setup_pcid(struct cpuinfo_x86 *c)
++{
++	if (cpu_has(c, X86_FEATURE_PCID)) {
++		if (cpu_has(c, X86_FEATURE_PGE)) {
++			cr4_set_bits(X86_CR4_PCIDE);
++		} else {
++			/*
++			 * flush_tlb_all(), as currently implemented, won't
++			 * work if PCID is on but PGE is not.  Since that
++			 * combination doesn't exist on real hardware, there's
++			 * no reason to try to fully support it, but it's
++			 * polite to avoid corrupting data if we're on
++			 * an improperly configured VM.
++			 */
++			clear_cpu_cap(c, X86_FEATURE_PCID);
++		}
++	}
++}
++
+ /*
+  * Protection Keys are not available in 32-bit mode.
+  */
+@@ -1143,6 +1162,9 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 	setup_smep(c);
+ 	setup_smap(c);
+ 
++	/* Set up PCID */
++	setup_pcid(c);
++
+ 	/*
+ 	 * The vendor-specific functions might have changed features.
+ 	 * Now we do "generic changes."
+diff --git a/arch/x86/xen/enlighten_pv.c b/arch/x86/xen/enlighten_pv.c
+index 811e4ddb3f37..290bc5ac9852 100644
+--- a/arch/x86/xen/enlighten_pv.c
++++ b/arch/x86/xen/enlighten_pv.c
+@@ -264,6 +264,12 @@ static void __init xen_init_capabilities(void)
+ 	setup_clear_cpu_cap(X86_FEATURE_ACC);
+ 	setup_clear_cpu_cap(X86_FEATURE_X2APIC);
+ 
++	/*
++	 * Xen PV would need some work to support PCID: CR3 handling as well
++	 * as xen_flush_tlb_others() would need updating.
++	 */
++	setup_clear_cpu_cap(X86_FEATURE_PCID);
++
+ 	if (!xen_initial_domain())
+ 		setup_clear_cpu_cap(X86_FEATURE_ACPI);
+ 
+-- 
+2.14.2
+

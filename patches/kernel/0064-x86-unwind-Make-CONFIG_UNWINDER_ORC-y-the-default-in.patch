@@ -1,0 +1,90 @@
+From a8ec58033a185db5d8c180d3508d34b8ae3a1c89 Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Fri, 13 Oct 2017 15:02:01 -0500
+Subject: [PATCH 064/231] x86/unwind: Make CONFIG_UNWINDER_ORC=y the default in
+ kconfig for 64-bit
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The ORC unwinder has been stable in testing so far.  Give it much wider
+testing by making it the default in kconfig for x86_64.  It's not yet
+supported for 32-bit, so leave frame pointers as the default there.
+
+Suggested-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/9b1237bbe7244ed9cdf8db2dcb1253e37e1c341e.1507924831.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit fc72ae40e30327aa24eb88a24b9c7058f938bd36)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit aff8d5169f46ae6ac0eb26a5ba745aaf9afa0704)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/Kconfig.debug | 33 +++++++++++++++++----------------
+ 1 file changed, 17 insertions(+), 16 deletions(-)
+
+diff --git a/arch/x86/Kconfig.debug b/arch/x86/Kconfig.debug
+index 5435a943f894..7d88e9878a75 100644
+--- a/arch/x86/Kconfig.debug
++++ b/arch/x86/Kconfig.debug
+@@ -358,27 +358,13 @@ config PUNIT_ATOM_DEBUG
+ 
+ choice
+ 	prompt "Choose kernel unwinder"
+-	default UNWINDER_FRAME_POINTER
++	default UNWINDER_ORC if X86_64
++	default UNWINDER_FRAME_POINTER if X86_32
+ 	---help---
+ 	  This determines which method will be used for unwinding kernel stack
+ 	  traces for panics, oopses, bugs, warnings, perf, /proc/<pid>/stack,
+ 	  livepatch, lockdep, and more.
+ 
+-config UNWINDER_FRAME_POINTER
+-	bool "Frame pointer unwinder"
+-	select FRAME_POINTER
+-	---help---
+-	  This option enables the frame pointer unwinder for unwinding kernel
+-	  stack traces.
+-
+-	  The unwinder itself is fast and it uses less RAM than the ORC
+-	  unwinder, but the kernel text size will grow by ~3% and the kernel's
+-	  overall performance will degrade by roughly 5-10%.
+-
+-	  This option is recommended if you want to use the livepatch
+-	  consistency model, as this is currently the only way to get a
+-	  reliable stack trace (CONFIG_HAVE_RELIABLE_STACKTRACE).
+-
+ config UNWINDER_ORC
+ 	bool "ORC unwinder"
+ 	depends on X86_64
+@@ -396,6 +382,21 @@ config UNWINDER_ORC
+ 	  Enabling this option will increase the kernel's runtime memory usage
+ 	  by roughly 2-4MB, depending on your kernel config.
+ 
++config UNWINDER_FRAME_POINTER
++	bool "Frame pointer unwinder"
++	select FRAME_POINTER
++	---help---
++	  This option enables the frame pointer unwinder for unwinding kernel
++	  stack traces.
++
++	  The unwinder itself is fast and it uses less RAM than the ORC
++	  unwinder, but the kernel text size will grow by ~3% and the kernel's
++	  overall performance will degrade by roughly 5-10%.
++
++	  This option is recommended if you want to use the livepatch
++	  consistency model, as this is currently the only way to get a
++	  reliable stack trace (CONFIG_HAVE_RELIABLE_STACKTRACE).
++
+ config UNWINDER_GUESS
+ 	bool "Guess unwinder"
+ 	depends on EXPERT
+-- 
+2.14.2
+

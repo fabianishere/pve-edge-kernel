@@ -1,0 +1,70 @@
+From 3bc42412073e1c559266e2b07bc1fbce154d92dc Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Mon, 4 Dec 2017 15:07:40 +0100
+Subject: [PATCH 195/231] x86/mm/pti: Populate user PGD
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+In clone_pgd_range() copy the init user PGDs which cover the kernel half of
+the address space, so a process has all the required kernel mappings
+visible.
+
+[ tglx: Split out from the big kaiser dump and folded Andys simplification ]
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit fc2fbc8512ed08d1de7720936fd7d2e4ce02c3a2)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 26c08c52162e1079cbb3e9ce8e1346a100ea7ccc)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/pgtable.h | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 3ef8415b2358..25604b8a251a 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1104,7 +1104,14 @@ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+  */
+ static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
+ {
+-       memcpy(dst, src, count * sizeof(pgd_t));
++	memcpy(dst, src, count * sizeof(pgd_t));
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++	if (!static_cpu_has(X86_FEATURE_PTI))
++		return;
++	/* Clone the user space pgd as well */
++	memcpy(kernel_to_user_pgdp(dst), kernel_to_user_pgdp(src),
++	       count * sizeof(pgd_t));
++#endif
+ }
+ 
+ #define PTE_SHIFT ilog2(PTRS_PER_PTE)
+-- 
+2.14.2
+

@@ -1,0 +1,206 @@
+From 2566b1447443f0dfaf167f43142facebf687c327 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:15 +0100
+Subject: [PATCH 145/231] x86/mm/fixmap: Generalize the GDT fixmap mechanism,
+ introduce struct cpu_entry_area
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Currently, the GDT is an ad-hoc array of pages, one per CPU, in the
+fixmap.  Generalize it to be an array of a new 'struct cpu_entry_area'
+so that we can cleanly add new things to it.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150605.563271721@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit ef8813ab280507972bb57e4b1b502811ad4411e9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit b17894f1ac91491ce29946ed946a129620b7f7ac)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/desc.h   |  9 +--------
+ arch/x86/include/asm/fixmap.h | 37 +++++++++++++++++++++++++++++++++++--
+ arch/x86/kernel/cpu/common.c  | 14 +++++++-------
+ arch/x86/xen/mmu_pv.c         |  2 +-
+ 4 files changed, 44 insertions(+), 18 deletions(-)
+
+diff --git a/arch/x86/include/asm/desc.h b/arch/x86/include/asm/desc.h
+index 22ee0a93b4f7..81c9b1e8cae9 100644
+--- a/arch/x86/include/asm/desc.h
++++ b/arch/x86/include/asm/desc.h
+@@ -58,17 +58,10 @@ static inline struct desc_struct *get_current_gdt_rw(void)
+ 	return this_cpu_ptr(&gdt_page)->gdt;
+ }
+ 
+-/* Get the fixmap index for a specific processor */
+-static inline unsigned int get_cpu_gdt_ro_index(int cpu)
+-{
+-	return FIX_GDT_REMAP_END - cpu;
+-}
+-
+ /* Provide the fixmap address of the remapped GDT */
+ static inline struct desc_struct *get_cpu_gdt_ro(int cpu)
+ {
+-	unsigned int idx = get_cpu_gdt_ro_index(cpu);
+-	return (struct desc_struct *)__fix_to_virt(idx);
++	return (struct desc_struct *)&get_cpu_entry_area(cpu)->gdt;
+ }
+ 
+ /* Provide the current read-only GDT */
+diff --git a/arch/x86/include/asm/fixmap.h b/arch/x86/include/asm/fixmap.h
+index 81c2b11f50a6..8c6ed66fe957 100644
+--- a/arch/x86/include/asm/fixmap.h
++++ b/arch/x86/include/asm/fixmap.h
+@@ -44,6 +44,19 @@ extern unsigned long __FIXADDR_TOP;
+ 			 PAGE_SIZE)
+ #endif
+ 
++/*
++ * cpu_entry_area is a percpu region in the fixmap that contains things
++ * needed by the CPU and early entry/exit code.  Real types aren't used
++ * for all fields here to avoid circular header dependencies.
++ *
++ * Every field is a virtual alias of some other allocated backing store.
++ * There is no direct allocation of a struct cpu_entry_area.
++ */
++struct cpu_entry_area {
++	char gdt[PAGE_SIZE];
++};
++
++#define CPU_ENTRY_AREA_PAGES (sizeof(struct cpu_entry_area) / PAGE_SIZE)
+ 
+ /*
+  * Here we define all the compile-time 'special' virtual
+@@ -101,8 +114,8 @@ enum fixed_addresses {
+ 	FIX_LNW_VRTC,
+ #endif
+ 	/* Fixmap entries to remap the GDTs, one per processor. */
+-	FIX_GDT_REMAP_BEGIN,
+-	FIX_GDT_REMAP_END = FIX_GDT_REMAP_BEGIN + NR_CPUS - 1,
++	FIX_CPU_ENTRY_AREA_TOP,
++	FIX_CPU_ENTRY_AREA_BOTTOM = FIX_CPU_ENTRY_AREA_TOP + (CPU_ENTRY_AREA_PAGES * NR_CPUS) - 1,
+ 
+ #ifdef CONFIG_ACPI_APEI_GHES
+ 	/* Used for GHES mapping from assorted contexts */
+@@ -171,5 +184,25 @@ static inline void __set_fixmap(enum fixed_addresses idx,
+ void __early_set_fixmap(enum fixed_addresses idx,
+ 			phys_addr_t phys, pgprot_t flags);
+ 
++static inline unsigned int __get_cpu_entry_area_page_index(int cpu, int page)
++{
++	BUILD_BUG_ON(sizeof(struct cpu_entry_area) % PAGE_SIZE != 0);
++
++	return FIX_CPU_ENTRY_AREA_BOTTOM - cpu*CPU_ENTRY_AREA_PAGES - page;
++}
++
++#define __get_cpu_entry_area_offset_index(cpu, offset) ({		\
++	BUILD_BUG_ON(offset % PAGE_SIZE != 0);				\
++	__get_cpu_entry_area_page_index(cpu, offset / PAGE_SIZE);	\
++	})
++
++#define get_cpu_entry_area_index(cpu, field)				\
++	__get_cpu_entry_area_offset_index((cpu), offsetof(struct cpu_entry_area, field))
++
++static inline struct cpu_entry_area *get_cpu_entry_area(int cpu)
++{
++	return (struct cpu_entry_area *)__fix_to_virt(__get_cpu_entry_area_page_index(cpu, 0));
++}
++
+ #endif /* !__ASSEMBLY__ */
+ #endif /* _ASM_X86_FIXMAP_H */
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index aa97e4cd3a33..ffee73ec1af1 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -466,12 +466,12 @@ void load_percpu_segment(int cpu)
+ 	load_stack_canary_segment();
+ }
+ 
+-/* Setup the fixmap mapping only once per-processor */
+-static inline void setup_fixmap_gdt(int cpu)
++/* Setup the fixmap mappings only once per-processor */
++static inline void setup_cpu_entry_area(int cpu)
+ {
+ #ifdef CONFIG_X86_64
+ 	/* On 64-bit systems, we use a read-only fixmap GDT. */
+-	pgprot_t prot = PAGE_KERNEL_RO;
++	pgprot_t gdt_prot = PAGE_KERNEL_RO;
+ #else
+ 	/*
+ 	 * On native 32-bit systems, the GDT cannot be read-only because
+@@ -482,11 +482,11 @@ static inline void setup_fixmap_gdt(int cpu)
+ 	 * On Xen PV, the GDT must be read-only because the hypervisor requires
+ 	 * it.
+ 	 */
+-	pgprot_t prot = boot_cpu_has(X86_FEATURE_XENPV) ?
++	pgprot_t gdt_prot = boot_cpu_has(X86_FEATURE_XENPV) ?
+ 		PAGE_KERNEL_RO : PAGE_KERNEL;
+ #endif
+ 
+-	__set_fixmap(get_cpu_gdt_ro_index(cpu), get_cpu_gdt_paddr(cpu), prot);
++	__set_fixmap(get_cpu_entry_area_index(cpu, gdt), get_cpu_gdt_paddr(cpu), gdt_prot);
+ }
+ 
+ /* Load the original GDT from the per-cpu structure */
+@@ -1589,7 +1589,7 @@ void cpu_init(void)
+ 	if (is_uv_system())
+ 		uv_cpu_init();
+ 
+-	setup_fixmap_gdt(cpu);
++	setup_cpu_entry_area(cpu);
+ 	load_fixmap_gdt(cpu);
+ }
+ 
+@@ -1650,7 +1650,7 @@ void cpu_init(void)
+ 
+ 	fpu__init_cpu();
+ 
+-	setup_fixmap_gdt(cpu);
++	setup_cpu_entry_area(cpu);
+ 	load_fixmap_gdt(cpu);
+ }
+ #endif
+diff --git a/arch/x86/xen/mmu_pv.c b/arch/x86/xen/mmu_pv.c
+index 45bb2d462e44..53e65f605bdd 100644
+--- a/arch/x86/xen/mmu_pv.c
++++ b/arch/x86/xen/mmu_pv.c
+@@ -2297,7 +2297,7 @@ static void xen_set_fixmap(unsigned idx, phys_addr_t phys, pgprot_t prot)
+ #endif
+ 	case FIX_TEXT_POKE0:
+ 	case FIX_TEXT_POKE1:
+-	case FIX_GDT_REMAP_BEGIN ... FIX_GDT_REMAP_END:
++	case FIX_CPU_ENTRY_AREA_TOP ... FIX_CPU_ENTRY_AREA_BOTTOM:
+ 		/* All local page mappings */
+ 		pte = pfn_pte(phys, prot);
+ 		break;
+-- 
+2.14.2
+

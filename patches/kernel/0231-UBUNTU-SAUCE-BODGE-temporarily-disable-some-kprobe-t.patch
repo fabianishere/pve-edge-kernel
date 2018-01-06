@@ -1,0 +1,273 @@
+From 13df3feb2ec154e844bca62c6bb7b91ced2b067c Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.king@canonical.com>
+Date: Sat, 6 Jan 2018 10:26:31 +0000
+Subject: [PATCH 231/231] UBUNTU: SAUCE: BODGE: temporarily disable some kprobe
+ trace points which are cratering
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Most of the interrupt related trace points are cratering when enabled.
+Simply turn them off temporarily while we are investigating this.
+
+CVE-2017-5754
+Based on work by Colin King <colin.king@canonical.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 4ecc04d14ee2f9b46d3e252215a7622d7d47e974)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/trace/irq_vectors.h | 2 +-
+ arch/x86/kernel/apic/apic.c              | 7 -------
+ arch/x86/kernel/cpu/mcheck/mce_amd.c     | 3 ---
+ arch/x86/kernel/cpu/mcheck/therm_throt.c | 3 ---
+ arch/x86/kernel/cpu/mcheck/threshold.c   | 3 ---
+ arch/x86/kernel/irq.c                    | 3 ---
+ arch/x86/kernel/irq_work.c               | 3 ---
+ arch/x86/kernel/smp.c                    | 7 -------
+ arch/x86/mm/fault.c                      | 9 ++-------
+ 9 files changed, 3 insertions(+), 37 deletions(-)
+
+diff --git a/arch/x86/include/asm/trace/irq_vectors.h b/arch/x86/include/asm/trace/irq_vectors.h
+index 7825b4426e7e..cf529e274a14 100644
+--- a/arch/x86/include/asm/trace/irq_vectors.h
++++ b/arch/x86/include/asm/trace/irq_vectors.h
+@@ -67,7 +67,7 @@ DEFINE_IRQ_VECTOR_EVENT(x86_platform_ipi);
+  * irq_work - called when entering/exiting a irq work interrupt
+  * vector handler
+  */
+-DEFINE_IRQ_VECTOR_EVENT(irq_work);
++// DEFINE_IRQ_VECTOR_EVENT(irq_work);
+ 
+ /*
+  * We must dis-allow sampling irq_work_exit() because perf event sampling
+diff --git a/arch/x86/kernel/apic/apic.c b/arch/x86/kernel/apic/apic.c
+index bb63c1350524..4a018da7eca1 100644
+--- a/arch/x86/kernel/apic/apic.c
++++ b/arch/x86/kernel/apic/apic.c
+@@ -35,7 +35,6 @@
+ #include <linux/smp.h>
+ #include <linux/mm.h>
+ 
+-#include <asm/trace/irq_vectors.h>
+ #include <asm/irq_remapping.h>
+ #include <asm/perf_event.h>
+ #include <asm/x86_init.h>
+@@ -1074,9 +1073,7 @@ __visible void __irq_entry smp_trace_apic_timer_interrupt(struct pt_regs *regs)
+ 	 * interrupt lock, which is the WrongThing (tm) to do.
+ 	 */
+ 	entering_ack_irq();
+-	trace_local_timer_entry(LOCAL_TIMER_VECTOR);
+ 	local_apic_timer_interrupt();
+-	trace_local_timer_exit(LOCAL_TIMER_VECTOR);
+ 	exiting_irq();
+ 
+ 	set_irq_regs(old_regs);
+@@ -1967,9 +1964,7 @@ __visible void __irq_entry smp_trace_spurious_interrupt(struct pt_regs *regs)
+ 	u8 vector = ~regs->orig_ax;
+ 
+ 	entering_irq();
+-	trace_spurious_apic_entry(vector);
+ 	__smp_spurious_interrupt(vector);
+-	trace_spurious_apic_exit(vector);
+ 	exiting_irq();
+ }
+ 
+@@ -2023,9 +2018,7 @@ __visible void __irq_entry smp_error_interrupt(struct pt_regs *regs)
+ __visible void __irq_entry smp_trace_error_interrupt(struct pt_regs *regs)
+ {
+ 	entering_irq();
+-	trace_error_apic_entry(ERROR_APIC_VECTOR);
+ 	__smp_error_interrupt(regs);
+-	trace_error_apic_exit(ERROR_APIC_VECTOR);
+ 	exiting_irq();
+ }
+ 
+diff --git a/arch/x86/kernel/cpu/mcheck/mce_amd.c b/arch/x86/kernel/cpu/mcheck/mce_amd.c
+index 5ce1a5689162..c983db8ccdb8 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce_amd.c
++++ b/arch/x86/kernel/cpu/mcheck/mce_amd.c
+@@ -26,7 +26,6 @@
+ #include <asm/apic.h>
+ #include <asm/mce.h>
+ #include <asm/msr.h>
+-#include <asm/trace/irq_vectors.h>
+ 
+ #define NR_BLOCKS         5
+ #define THRESHOLD_MAX     0xFFF
+@@ -787,9 +786,7 @@ asmlinkage __visible void __irq_entry smp_deferred_error_interrupt(void)
+ asmlinkage __visible void __irq_entry smp_trace_deferred_error_interrupt(void)
+ {
+ 	entering_irq();
+-	trace_deferred_error_apic_entry(DEFERRED_ERROR_VECTOR);
+ 	__smp_deferred_error_interrupt();
+-	trace_deferred_error_apic_exit(DEFERRED_ERROR_VECTOR);
+ 	exiting_ack_irq();
+ }
+ 
+diff --git a/arch/x86/kernel/cpu/mcheck/therm_throt.c b/arch/x86/kernel/cpu/mcheck/therm_throt.c
+index f7370abd33c6..f366a622e186 100644
+--- a/arch/x86/kernel/cpu/mcheck/therm_throt.c
++++ b/arch/x86/kernel/cpu/mcheck/therm_throt.c
+@@ -28,7 +28,6 @@
+ #include <asm/apic.h>
+ #include <asm/mce.h>
+ #include <asm/msr.h>
+-#include <asm/trace/irq_vectors.h>
+ 
+ /* How long to wait between reporting thermal events */
+ #define CHECK_INTERVAL		(300 * HZ)
+@@ -408,9 +407,7 @@ asmlinkage __visible void __irq_entry
+ smp_trace_thermal_interrupt(struct pt_regs *regs)
+ {
+ 	entering_irq();
+-	trace_thermal_apic_entry(THERMAL_APIC_VECTOR);
+ 	__smp_thermal_interrupt();
+-	trace_thermal_apic_exit(THERMAL_APIC_VECTOR);
+ 	exiting_ack_irq();
+ }
+ 
+diff --git a/arch/x86/kernel/cpu/mcheck/threshold.c b/arch/x86/kernel/cpu/mcheck/threshold.c
+index bb0e75eed10a..623f3e3515e0 100644
+--- a/arch/x86/kernel/cpu/mcheck/threshold.c
++++ b/arch/x86/kernel/cpu/mcheck/threshold.c
+@@ -7,7 +7,6 @@
+ #include <asm/irq_vectors.h>
+ #include <asm/apic.h>
+ #include <asm/mce.h>
+-#include <asm/trace/irq_vectors.h>
+ 
+ static void default_threshold_interrupt(void)
+ {
+@@ -33,8 +32,6 @@ asmlinkage __visible void __irq_entry smp_threshold_interrupt(void)
+ asmlinkage __visible void __irq_entry smp_trace_threshold_interrupt(void)
+ {
+ 	entering_irq();
+-	trace_threshold_apic_entry(THRESHOLD_APIC_VECTOR);
+ 	__smp_threshold_interrupt();
+-	trace_threshold_apic_exit(THRESHOLD_APIC_VECTOR);
+ 	exiting_ack_irq();
+ }
+diff --git a/arch/x86/kernel/irq.c b/arch/x86/kernel/irq.c
+index a84142a910f3..792a49c3c6d9 100644
+--- a/arch/x86/kernel/irq.c
++++ b/arch/x86/kernel/irq.c
+@@ -19,7 +19,6 @@
+ #include <asm/desc.h>
+ 
+ #define CREATE_TRACE_POINTS
+-#include <asm/trace/irq_vectors.h>
+ 
+ DEFINE_PER_CPU_SHARED_ALIGNED(irq_cpustat_t, irq_stat);
+ EXPORT_PER_CPU_SYMBOL(irq_stat);
+@@ -327,9 +326,7 @@ __visible void __irq_entry smp_trace_x86_platform_ipi(struct pt_regs *regs)
+ 	struct pt_regs *old_regs = set_irq_regs(regs);
+ 
+ 	entering_ack_irq();
+-	trace_x86_platform_ipi_entry(X86_PLATFORM_IPI_VECTOR);
+ 	__smp_x86_platform_ipi();
+-	trace_x86_platform_ipi_exit(X86_PLATFORM_IPI_VECTOR);
+ 	exiting_irq();
+ 	set_irq_regs(old_regs);
+ }
+diff --git a/arch/x86/kernel/irq_work.c b/arch/x86/kernel/irq_work.c
+index 275487872be2..06f12444c1b4 100644
+--- a/arch/x86/kernel/irq_work.c
++++ b/arch/x86/kernel/irq_work.c
+@@ -8,7 +8,6 @@
+ #include <linux/irq_work.h>
+ #include <linux/hardirq.h>
+ #include <asm/apic.h>
+-#include <asm/trace/irq_vectors.h>
+ #include <linux/interrupt.h>
+ 
+ static inline void __smp_irq_work_interrupt(void)
+@@ -27,9 +26,7 @@ __visible void __irq_entry smp_irq_work_interrupt(struct pt_regs *regs)
+ __visible void __irq_entry smp_trace_irq_work_interrupt(struct pt_regs *regs)
+ {
+ 	ipi_entering_ack_irq();
+-	trace_irq_work_entry(IRQ_WORK_VECTOR);
+ 	__smp_irq_work_interrupt();
+-	trace_irq_work_exit(IRQ_WORK_VECTOR);
+ 	exiting_irq();
+ }
+ 
+diff --git a/arch/x86/kernel/smp.c b/arch/x86/kernel/smp.c
+index d798c0da451c..fbf36f1731ab 100644
+--- a/arch/x86/kernel/smp.c
++++ b/arch/x86/kernel/smp.c
+@@ -31,7 +31,6 @@
+ #include <asm/apic.h>
+ #include <asm/nmi.h>
+ #include <asm/mce.h>
+-#include <asm/trace/irq_vectors.h>
+ #include <asm/kexec.h>
+ #include <asm/virtext.h>
+ 
+@@ -280,9 +279,7 @@ __visible void __irq_entry smp_trace_reschedule_interrupt(struct pt_regs *regs)
+ 	 * to nest.
+ 	 */
+ 	ipi_entering_ack_irq();
+-	trace_reschedule_entry(RESCHEDULE_VECTOR);
+ 	__smp_reschedule_interrupt();
+-	trace_reschedule_exit(RESCHEDULE_VECTOR);
+ 	exiting_irq();
+ 	/*
+ 	 * KVM uses this interrupt to force a cpu out of guest mode
+@@ -306,9 +303,7 @@ __visible void __irq_entry
+ smp_trace_call_function_interrupt(struct pt_regs *regs)
+ {
+ 	ipi_entering_ack_irq();
+-	trace_call_function_entry(CALL_FUNCTION_VECTOR);
+ 	__smp_call_function_interrupt();
+-	trace_call_function_exit(CALL_FUNCTION_VECTOR);
+ 	exiting_irq();
+ }
+ 
+@@ -330,9 +325,7 @@ __visible void __irq_entry
+ smp_trace_call_function_single_interrupt(struct pt_regs *regs)
+ {
+ 	ipi_entering_ack_irq();
+-	trace_call_function_single_entry(CALL_FUNCTION_SINGLE_VECTOR);
+ 	__smp_call_function_single_interrupt();
+-	trace_call_function_single_exit(CALL_FUNCTION_SINGLE_VECTOR);
+ 	exiting_irq();
+ }
+ 
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index d3a57e7ad311..4f6478d14d1f 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -26,7 +26,6 @@
+ #include <asm/mmu_context.h>		/* vma_pkey()			*/
+ 
+ #define CREATE_TRACE_POINTS
+-#include <asm/trace/exceptions.h>
+ 
+ /*
+  * Returns 0 if mmiotrace is disabled, or if the fault is not
+@@ -1471,10 +1470,6 @@ static nokprobe_inline void
+ trace_page_fault_entries(unsigned long address, struct pt_regs *regs,
+ 			 unsigned long error_code)
+ {
+-	if (user_mode(regs))
+-		trace_page_fault_user(address, regs, error_code);
+-	else
+-		trace_page_fault_kernel(address, regs, error_code);
+ }
+ 
+ /*
+@@ -1491,8 +1486,8 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
+ 	enum ctx_state prev_state;
+ 
+ 	prev_state = exception_enter();
+-	if (trace_irqvectors_enabled())
+-		trace_page_fault_entries(address, regs, error_code);
++//	if (trace_irqvectors_enabled())
++//		trace_page_fault_entries(address, regs, error_code);
+ 
+ 	__do_page_fault(regs, error_code, address);
+ 	exception_exit(prev_state);
+-- 
+2.14.2
+

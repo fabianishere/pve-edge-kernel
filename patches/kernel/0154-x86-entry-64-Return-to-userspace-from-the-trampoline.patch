@@ -1,0 +1,134 @@
+From eb1bbc0f0023eadafe368704180f4af739aca9a9 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:24 +0100
+Subject: [PATCH 154/231] x86/entry/64: Return to userspace from the trampoline
+ stack
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+By itself, this is useless.  It gives us the ability to run some final code
+before exit that cannnot run on the kernel stack.  This could include a CR3
+switch a la PAGE_TABLE_ISOLATION or some kernel stack erasing, for
+example.  (Or even weird things like *changing* which kernel stack gets
+used as an ASLR-strengthening mechanism.)
+
+The SYSRET32 path is not covered yet.  It could be in the future or
+we could just ignore it and force the slow path if needed.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.306546484@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 3e3b9293d392c577b62e24e4bc9982320438e749)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 40eb58584f732a2fefb5959e79e408bedeaaa43c)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/entry_64.S | 55 +++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 51 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index f70fedc58bac..4abe5b806d2a 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -325,8 +325,24 @@ syscall_return_via_sysret:
+ 	popq	%rsi	/* skip rcx */
+ 	popq	%rdx
+ 	popq	%rsi
++
++	/*
++	 * Now all regs are restored except RSP and RDI.
++	 * Save old stack pointer and switch to trampoline stack.
++	 */
++	movq	%rsp, %rdi
++	movq	PER_CPU_VAR(cpu_tss + TSS_sp0), %rsp
++
++	pushq	RSP-RDI(%rdi)	/* RSP */
++	pushq	(%rdi)		/* RDI */
++
++	/*
++	 * We are on the trampoline stack.  All regs except RDI are live.
++	 * We can do future final exit work right here.
++	 */
++
+ 	popq	%rdi
+-	movq	RSP-ORIG_RAX(%rsp), %rsp
++	popq	%rsp
+ 	USERGS_SYSRET64
+ END(entry_SYSCALL_64)
+ 
+@@ -629,10 +645,41 @@ GLOBAL(swapgs_restore_regs_and_return_to_usermode)
+ 	ud2
+ 1:
+ #endif
+-	SWAPGS
+ 	POP_EXTRA_REGS
+-	POP_C_REGS
+-	addq	$8, %rsp	/* skip regs->orig_ax */
++	popq	%r11
++	popq	%r10
++	popq	%r9
++	popq	%r8
++	popq	%rax
++	popq	%rcx
++	popq	%rdx
++	popq	%rsi
++
++	/*
++	 * The stack is now user RDI, orig_ax, RIP, CS, EFLAGS, RSP, SS.
++	 * Save old stack pointer and switch to trampoline stack.
++	 */
++	movq	%rsp, %rdi
++	movq	PER_CPU_VAR(cpu_tss + TSS_sp0), %rsp
++
++	/* Copy the IRET frame to the trampoline stack. */
++	pushq	6*8(%rdi)	/* SS */
++	pushq	5*8(%rdi)	/* RSP */
++	pushq	4*8(%rdi)	/* EFLAGS */
++	pushq	3*8(%rdi)	/* CS */
++	pushq	2*8(%rdi)	/* RIP */
++
++	/* Push user RDI on the trampoline stack. */
++	pushq	(%rdi)
++
++	/*
++	 * We are on the trampoline stack.  All regs except RDI are live.
++	 * We can do future final exit work right here.
++	 */
++
++	/* Restore RDI. */
++	popq	%rdi
++	SWAPGS
+ 	INTERRUPT_RETURN
+ 
+ 
+-- 
+2.14.2
+

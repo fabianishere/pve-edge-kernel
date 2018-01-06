@@ -1,0 +1,242 @@
+From 2ae2b7902084742e84eac3e32409f0d9ff4811d8 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:25 +0100
+Subject: [PATCH 155/231] x86/entry/64: Create a per-CPU SYSCALL entry
+ trampoline
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Handling SYSCALL is tricky: the SYSCALL handler is entered with every
+single register (except FLAGS), including RSP, live.  It somehow needs
+to set RSP to point to a valid stack, which means it needs to save the
+user RSP somewhere and find its own stack pointer.  The canonical way
+to do this is with SWAPGS, which lets us access percpu data using the
+%gs prefix.
+
+With PAGE_TABLE_ISOLATION-like pagetable switching, this is
+problematic.  Without a scratch register, switching CR3 is impossible, so
+%gs-based percpu memory would need to be mapped in the user pagetables.
+Doing that without information leaks is difficult or impossible.
+
+Instead, use a different sneaky trick.  Map a copy of the first part
+of the SYSCALL asm at a different address for each CPU.  Now RIP
+varies depending on the CPU, so we can use RIP-relative memory access
+to access percpu memory.  By putting the relevant information (one
+scratch slot and the stack address) at a constant offset relative to
+RIP, we can make SYSCALL work without relying on %gs.
+
+A nice thing about this approach is that we can easily switch it on
+and off if we want pagetable switching to be configurable.
+
+The compat variant of SYSCALL doesn't have this problem in the first
+place -- there are plenty of scratch registers, since we don't care
+about preserving r8-r15.  This patch therefore doesn't touch SYSCALL32
+at all.
+
+This patch actually seems to be a small speedup.  With this patch,
+SYSCALL touches an extra cache line and an extra virtual page, but
+the pipeline no longer stalls waiting for SWAPGS.  It seems that, at
+least in a tight loop, the latter outweights the former.
+
+Thanks to David Laight for an optimization tip.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bpetkov@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.403607157@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 3386bc8aed825e9f1f65ce38df4b109b2019b71a)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 9fec5954d068a19bbf134da7af66db94699b03a3)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/fixmap.h |  2 ++
+ arch/x86/kernel/asm-offsets.c |  1 +
+ arch/x86/kernel/cpu/common.c  | 15 ++++++++++-
+ arch/x86/entry/entry_64.S     | 58 +++++++++++++++++++++++++++++++++++++++++++
+ arch/x86/kernel/vmlinux.lds.S |  9 +++++++
+ 5 files changed, 84 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/fixmap.h b/arch/x86/include/asm/fixmap.h
+index c92fc30e6def..189d12d8afe0 100644
+--- a/arch/x86/include/asm/fixmap.h
++++ b/arch/x86/include/asm/fixmap.h
+@@ -61,6 +61,8 @@ struct cpu_entry_area {
+ 	 * of the TSS region.
+ 	 */
+ 	struct tss_struct tss;
++
++	char entry_trampoline[PAGE_SIZE];
+ };
+ 
+ #define CPU_ENTRY_AREA_PAGES (sizeof(struct cpu_entry_area) / PAGE_SIZE)
+diff --git a/arch/x86/kernel/asm-offsets.c b/arch/x86/kernel/asm-offsets.c
+index f765c3253ec3..822be00c85ff 100644
+--- a/arch/x86/kernel/asm-offsets.c
++++ b/arch/x86/kernel/asm-offsets.c
+@@ -100,4 +100,5 @@ void common(void) {
+ 
+ 	/* Layout info for cpu_entry_area */
+ 	OFFSET(CPU_ENTRY_AREA_tss, cpu_entry_area, tss);
++	OFFSET(CPU_ENTRY_AREA_entry_trampoline, cpu_entry_area, entry_trampoline);
+ }
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 404e4b75db6e..c2b2ee73b8a1 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -486,6 +486,8 @@ DEFINE_PER_CPU(struct cpu_entry_area *, cpu_entry_area);
+ static inline void setup_cpu_entry_area(int cpu)
+ {
+ #ifdef CONFIG_X86_64
++	extern char _entry_trampoline[];
++
+ 	/* On 64-bit systems, we use a read-only fixmap GDT. */
+ 	pgprot_t gdt_prot = PAGE_KERNEL_RO;
+ #else
+@@ -532,6 +534,11 @@ static inline void setup_cpu_entry_area(int cpu)
+ #ifdef CONFIG_X86_32
+ 	this_cpu_write(cpu_entry_area, get_cpu_entry_area(cpu));
+ #endif
++
++#ifdef CONFIG_X86_64
++	__set_fixmap(get_cpu_entry_area_index(cpu, entry_trampoline),
++		     __pa_symbol(_entry_trampoline), PAGE_KERNEL_RX);
++#endif
+ }
+ 
+ /* Load the original GDT from the per-cpu structure */
+@@ -1396,10 +1403,16 @@ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
+ /* May not be marked __init: used by software suspend */
+ void syscall_init(void)
+ {
++	extern char _entry_trampoline[];
++	extern char entry_SYSCALL_64_trampoline[];
++
+ 	int cpu = smp_processor_id();
++	unsigned long SYSCALL64_entry_trampoline =
++		(unsigned long)get_cpu_entry_area(cpu)->entry_trampoline +
++		(entry_SYSCALL_64_trampoline - _entry_trampoline);
+ 
+ 	wrmsr(MSR_STAR, 0, (__USER32_CS << 16) | __KERNEL_CS);
+-	wrmsrl(MSR_LSTAR, (unsigned long)entry_SYSCALL_64);
++	wrmsrl(MSR_LSTAR, SYSCALL64_entry_trampoline);
+ 
+ #ifdef CONFIG_IA32_EMULATION
+ 	wrmsrl(MSR_CSTAR, (unsigned long)entry_SYSCALL_compat);
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 4abe5b806d2a..dc100a7052ee 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -135,6 +135,64 @@ END(native_usergs_sysret64)
+  * with them due to bugs in both AMD and Intel CPUs.
+  */
+ 
++	.pushsection .entry_trampoline, "ax"
++
++/*
++ * The code in here gets remapped into cpu_entry_area's trampoline.  This means
++ * that the assembler and linker have the wrong idea as to where this code
++ * lives (and, in fact, it's mapped more than once, so it's not even at a
++ * fixed address).  So we can't reference any symbols outside the entry
++ * trampoline and expect it to work.
++ *
++ * Instead, we carefully abuse %rip-relative addressing.
++ * _entry_trampoline(%rip) refers to the start of the remapped) entry
++ * trampoline.  We can thus find cpu_entry_area with this macro:
++ */
++
++#define CPU_ENTRY_AREA \
++	_entry_trampoline - CPU_ENTRY_AREA_entry_trampoline(%rip)
++
++/* The top word of the SYSENTER stack is hot and is usable as scratch space. */
++#define RSP_SCRATCH	CPU_ENTRY_AREA_tss + CPU_TSS_SYSENTER_stack + \
++			SIZEOF_SYSENTER_stack - 8 + CPU_ENTRY_AREA
++
++ENTRY(entry_SYSCALL_64_trampoline)
++	UNWIND_HINT_EMPTY
++	swapgs
++
++	/* Stash the user RSP. */
++	movq	%rsp, RSP_SCRATCH
++
++	/* Load the top of the task stack into RSP */
++	movq	CPU_ENTRY_AREA_tss + TSS_sp1 + CPU_ENTRY_AREA, %rsp
++
++	/* Start building the simulated IRET frame. */
++	pushq	$__USER_DS			/* pt_regs->ss */
++	pushq	RSP_SCRATCH			/* pt_regs->sp */
++	pushq	%r11				/* pt_regs->flags */
++	pushq	$__USER_CS			/* pt_regs->cs */
++	pushq	%rcx				/* pt_regs->ip */
++
++	/*
++	 * x86 lacks a near absolute jump, and we can't jump to the real
++	 * entry text with a relative jump.  We could push the target
++	 * address and then use retq, but this destroys the pipeline on
++	 * many CPUs (wasting over 20 cycles on Sandy Bridge).  Instead,
++	 * spill RDI and restore it in a second-stage trampoline.
++	 */
++	pushq	%rdi
++	movq	$entry_SYSCALL_64_stage2, %rdi
++	jmp	*%rdi
++END(entry_SYSCALL_64_trampoline)
++
++	.popsection
++
++ENTRY(entry_SYSCALL_64_stage2)
++	UNWIND_HINT_EMPTY
++	popq	%rdi
++	jmp	entry_SYSCALL_64_after_hwframe
++END(entry_SYSCALL_64_stage2)
++
+ ENTRY(entry_SYSCALL_64)
+ 	UNWIND_HINT_EMPTY
+ 	/*
+diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
+index f05f00acac89..423aa36f0150 100644
+--- a/arch/x86/kernel/vmlinux.lds.S
++++ b/arch/x86/kernel/vmlinux.lds.S
+@@ -106,6 +106,15 @@ SECTIONS
+ 		SOFTIRQENTRY_TEXT
+ 		*(.fixup)
+ 		*(.gnu.warning)
++
++#ifdef CONFIG_X86_64
++		. = ALIGN(PAGE_SIZE);
++		_entry_trampoline = .;
++		*(.entry_trampoline)
++		. = ALIGN(PAGE_SIZE);
++		ASSERT(. - _entry_trampoline == PAGE_SIZE, "entry trampoline is too big");
++#endif
++
+ 		/* End of text section */
+ 		_etext = .;
+ 	} :text = 0x9090
+-- 
+2.14.2
+

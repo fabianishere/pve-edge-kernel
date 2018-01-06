@@ -1,0 +1,312 @@
+From 384e4cfab1886f8abb94fe16abbad2a034612f78 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 4 Dec 2017 15:07:36 +0100
+Subject: [PATCH 190/231] x86/mm/pti: Add infrastructure for page table
+ isolation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Add the initial files for kernel page table isolation, with a minimal init
+function and the boot time detection for this misfeature.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(backported from commit aa8c6248f8c75acfd610fe15d8cae23cf70d9d09)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 50da124a01ed7a59f9b2c9551f622c5a27d1caec)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ Documentation/admin-guide/kernel-parameters.txt |  2 +
+ arch/x86/mm/Makefile                            |  7 ++-
+ arch/x86/entry/calling.h                        |  7 +++
+ arch/x86/include/asm/pti.h                      | 14 +++++
+ include/linux/pti.h                             | 11 ++++
+ arch/x86/boot/compressed/pagetable.c            |  3 +
+ arch/x86/mm/init.c                              |  2 +
+ arch/x86/mm/pti.c                               | 84 +++++++++++++++++++++++++
+ init/main.c                                     |  3 +
+ 9 files changed, 130 insertions(+), 3 deletions(-)
+ create mode 100644 arch/x86/include/asm/pti.h
+ create mode 100644 include/linux/pti.h
+ create mode 100644 arch/x86/mm/pti.c
+
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index 3510e255ef4c..e2a4608da5d2 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -2677,6 +2677,8 @@
+ 			steal time is computed, but won't influence scheduler
+ 			behaviour
+ 
++	nopti		[X86-64] Disable kernel page table isolation
++
+ 	nolapic		[X86-32,APIC] Do not enable or use the local APIC.
+ 
+ 	nolapic_timer	[X86-32,APIC] Do not use the local APIC timer.
+diff --git a/arch/x86/mm/Makefile b/arch/x86/mm/Makefile
+index 76f5399a8356..7aa68fc18abe 100644
+--- a/arch/x86/mm/Makefile
++++ b/arch/x86/mm/Makefile
+@@ -35,7 +35,8 @@ obj-$(CONFIG_AMD_NUMA)		+= amdtopology.o
+ obj-$(CONFIG_ACPI_NUMA)		+= srat.o
+ obj-$(CONFIG_NUMA_EMU)		+= numa_emulation.o
+ 
+-obj-$(CONFIG_X86_INTEL_MPX)	+= mpx.o
+-obj-$(CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS) += pkeys.o
+-obj-$(CONFIG_RANDOMIZE_MEMORY) += kaslr.o
++obj-$(CONFIG_X86_INTEL_MPX)			+= mpx.o
++obj-$(CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS)	+= pkeys.o
++obj-$(CONFIG_RANDOMIZE_MEMORY)			+= kaslr.o
++obj-$(CONFIG_PAGE_TABLE_ISOLATION)		+= pti.o
+ 
+diff --git a/arch/x86/entry/calling.h b/arch/x86/entry/calling.h
+index dde6262be0a3..bb56f5346ae8 100644
+--- a/arch/x86/entry/calling.h
++++ b/arch/x86/entry/calling.h
+@@ -204,18 +204,23 @@ For 32-bit we have the following conventions - kernel is built with
+ .endm
+ 
+ .macro SWITCH_TO_KERNEL_CR3 scratch_reg:req
++	ALTERNATIVE "jmp .Lend_\@", "", X86_FEATURE_PTI
+ 	mov	%cr3, \scratch_reg
+ 	ADJUST_KERNEL_CR3 \scratch_reg
+ 	mov	\scratch_reg, %cr3
++.Lend_\@:
+ .endm
+ 
+ .macro SWITCH_TO_USER_CR3 scratch_reg:req
++	ALTERNATIVE "jmp .Lend_\@", "", X86_FEATURE_PTI
+ 	mov	%cr3, \scratch_reg
+ 	ADJUST_USER_CR3 \scratch_reg
+ 	mov	\scratch_reg, %cr3
++.Lend_\@:
+ .endm
+ 
+ .macro SAVE_AND_SWITCH_TO_KERNEL_CR3 scratch_reg:req save_reg:req
++	ALTERNATIVE "jmp .Ldone_\@", "", X86_FEATURE_PTI
+ 	movq	%cr3, \scratch_reg
+ 	movq	\scratch_reg, \save_reg
+ 	/*
+@@ -232,11 +237,13 @@ For 32-bit we have the following conventions - kernel is built with
+ .endm
+ 
+ .macro RESTORE_CR3 save_reg:req
++	ALTERNATIVE "jmp .Lend_\@", "", X86_FEATURE_PTI
+ 	/*
+ 	 * The CR3 write could be avoided when not changing its value,
+ 	 * but would require a CR3 read *and* a scratch register.
+ 	 */
+ 	movq	\save_reg, %cr3
++.Lend_\@:
+ .endm
+ 
+ #else /* CONFIG_PAGE_TABLE_ISOLATION=n: */
+diff --git a/arch/x86/include/asm/pti.h b/arch/x86/include/asm/pti.h
+new file mode 100644
+index 000000000000..0b5ef05b2d2d
+--- /dev/null
++++ b/arch/x86/include/asm/pti.h
+@@ -0,0 +1,14 @@
++// SPDX-License-Identifier: GPL-2.0
++#ifndef _ASM_X86_PTI_H
++#define _ASM_X86_PTI_H
++#ifndef __ASSEMBLY__
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++extern void pti_init(void);
++extern void pti_check_boottime_disable(void);
++#else
++static inline void pti_check_boottime_disable(void) { }
++#endif
++
++#endif /* __ASSEMBLY__ */
++#endif /* _ASM_X86_PTI_H */
+diff --git a/include/linux/pti.h b/include/linux/pti.h
+new file mode 100644
+index 000000000000..0174883a935a
+--- /dev/null
++++ b/include/linux/pti.h
+@@ -0,0 +1,11 @@
++// SPDX-License-Identifier: GPL-2.0
++#ifndef _INCLUDE_PTI_H
++#define _INCLUDE_PTI_H
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++#include <asm/pti.h>
++#else
++static inline void pti_init(void) { }
++#endif
++
++#endif
+diff --git a/arch/x86/boot/compressed/pagetable.c b/arch/x86/boot/compressed/pagetable.c
+index 28029be47fbb..21d8839cdaa7 100644
+--- a/arch/x86/boot/compressed/pagetable.c
++++ b/arch/x86/boot/compressed/pagetable.c
+@@ -15,6 +15,9 @@
+ #define __pa(x)  ((unsigned long)(x))
+ #define __va(x)  ((void *)((unsigned long)(x)))
+ 
++/* No PAGE_TABLE_ISOLATION support needed either: */
++#undef CONFIG_PAGE_TABLE_ISOLATION
++
+ #include "misc.h"
+ 
+ /* These actually do the work of building the kernel identity maps. */
+diff --git a/arch/x86/mm/init.c b/arch/x86/mm/init.c
+index 020223420308..af75069fb116 100644
+--- a/arch/x86/mm/init.c
++++ b/arch/x86/mm/init.c
+@@ -20,6 +20,7 @@
+ #include <asm/kaslr.h>
+ #include <asm/hypervisor.h>
+ #include <asm/cpufeature.h>
++#include <asm/pti.h>
+ 
+ /*
+  * We need to define the tracepoints somewhere, and tlb.c
+@@ -630,6 +631,7 @@ void __init init_mem_mapping(void)
+ {
+ 	unsigned long end;
+ 
++	pti_check_boottime_disable();
+ 	probe_page_size_mask();
+ 	setup_pcid();
+ 
+diff --git a/arch/x86/mm/pti.c b/arch/x86/mm/pti.c
+new file mode 100644
+index 000000000000..375f23a758bc
+--- /dev/null
++++ b/arch/x86/mm/pti.c
+@@ -0,0 +1,84 @@
++/*
++ * Copyright(c) 2017 Intel Corporation. All rights reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of version 2 of the GNU General Public License as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * This code is based in part on work published here:
++ *
++ *	https://github.com/IAIK/KAISER
++ *
++ * The original work was written by and and signed off by for the Linux
++ * kernel by:
++ *
++ *   Signed-off-by: Richard Fellner <richard.fellner@student.tugraz.at>
++ *   Signed-off-by: Moritz Lipp <moritz.lipp@iaik.tugraz.at>
++ *   Signed-off-by: Daniel Gruss <daniel.gruss@iaik.tugraz.at>
++ *   Signed-off-by: Michael Schwarz <michael.schwarz@iaik.tugraz.at>
++ *
++ * Major changes to the original code by: Dave Hansen <dave.hansen@intel.com>
++ * Mostly rewritten by Thomas Gleixner <tglx@linutronix.de> and
++ *		       Andy Lutomirsky <luto@amacapital.net>
++ */
++#include <linux/kernel.h>
++#include <linux/errno.h>
++#include <linux/string.h>
++#include <linux/types.h>
++#include <linux/bug.h>
++#include <linux/init.h>
++#include <linux/spinlock.h>
++#include <linux/mm.h>
++#include <linux/uaccess.h>
++
++#include <asm/cpufeature.h>
++#include <asm/hypervisor.h>
++#include <asm/cmdline.h>
++#include <asm/pti.h>
++#include <asm/pgtable.h>
++#include <asm/pgalloc.h>
++#include <asm/tlbflush.h>
++#include <asm/desc.h>
++
++#undef pr_fmt
++#define pr_fmt(fmt)     "Kernel/User page tables isolation: " fmt
++
++static void __init pti_print_if_insecure(const char *reason)
++{
++	if (boot_cpu_has_bug(X86_BUG_CPU_INSECURE))
++		pr_info("%s\n", reason);
++}
++
++void __init pti_check_boottime_disable(void)
++{
++	if (hypervisor_is_type(X86_HYPER_XEN_PV)) {
++		pti_print_if_insecure("disabled on XEN PV.");
++		return;
++	}
++
++	if (cmdline_find_option_bool(boot_command_line, "nopti")) {
++		pti_print_if_insecure("disabled on command line.");
++		return;
++	}
++
++	if (!boot_cpu_has_bug(X86_BUG_CPU_INSECURE))
++		return;
++
++	setup_force_cpu_cap(X86_FEATURE_PTI);
++}
++
++/*
++ * Initialize kernel page table isolation
++ */
++void __init pti_init(void)
++{
++	if (!static_cpu_has(X86_FEATURE_PTI))
++		return;
++
++	pr_info("enabled\n");
++}
+diff --git a/init/main.c b/init/main.c
+index de1c495da782..bb0896c24c08 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -75,6 +75,7 @@
+ #include <linux/slab.h>
+ #include <linux/perf_event.h>
+ #include <linux/ptrace.h>
++#include <linux/pti.h>
+ #include <linux/blkdev.h>
+ #include <linux/elevator.h>
+ #include <linux/sched_clock.h>
+@@ -506,6 +507,8 @@ static void __init mm_init(void)
+ 	ioremap_huge_init();
+ 	/* Should be run before the first non-init thread is created */
+ 	init_espfix_bsp();
++	/* Should be run after espfix64 is set up. */
++	pti_init();
+ }
+ 
+ asmlinkage __visible void __init start_kernel(void)
+-- 
+2.14.2
+

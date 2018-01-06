@@ -1,0 +1,70 @@
+From 9b2405a12593b1ba7894cf249ddeada92a658463 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Fri, 13 Oct 2017 14:56:45 -0700
+Subject: [PATCH 069/231] x86/fpu: Remove the explicit clearing of XSAVE
+ dependent features
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Clearing a CPU feature with setup_clear_cpu_cap() clears all features
+which depend on it. Expressing feature dependencies in one place is
+easier to maintain than keeping functions like
+fpu__xstate_clear_all_cpu_caps() up to date.
+
+The features which depend on XSAVE have their dependency expressed in the
+dependency table, so its sufficient to clear X86_FEATURE_XSAVE.
+
+Remove the explicit clearing of XSAVE dependent features.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Link: http://lkml.kernel.org/r/20171013215645.23166-6-andi@firstfloor.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 73e3a7d2a7c3be29a5a22b85026f6cfa5664267f)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit af445f9ba8bb30b47ccb5247b8f5ba28c9f2be3e)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/fpu/xstate.c | 20 --------------------
+ 1 file changed, 20 deletions(-)
+
+diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+index 3abe85b08234..fd6882c42246 100644
+--- a/arch/x86/kernel/fpu/xstate.c
++++ b/arch/x86/kernel/fpu/xstate.c
+@@ -73,26 +73,6 @@ unsigned int fpu_user_xstate_size;
+ void fpu__xstate_clear_all_cpu_caps(void)
+ {
+ 	setup_clear_cpu_cap(X86_FEATURE_XSAVE);
+-	setup_clear_cpu_cap(X86_FEATURE_XSAVEOPT);
+-	setup_clear_cpu_cap(X86_FEATURE_XSAVEC);
+-	setup_clear_cpu_cap(X86_FEATURE_XSAVES);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX2);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512F);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512IFMA);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512PF);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512ER);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512CD);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512DQ);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512BW);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512VL);
+-	setup_clear_cpu_cap(X86_FEATURE_MPX);
+-	setup_clear_cpu_cap(X86_FEATURE_XGETBV1);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512VBMI);
+-	setup_clear_cpu_cap(X86_FEATURE_PKU);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512_4VNNIW);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512_4FMAPS);
+-	setup_clear_cpu_cap(X86_FEATURE_AVX512_VPOPCNTDQ);
+ }
+ 
+ /*
+-- 
+2.14.2
+

@@ -1,0 +1,360 @@
+From e61e24c7ee0d773230646650659c34ffc5316520 Mon Sep 17 00:00:00 2001
+From: Juergen Gross <jgross@suse.com>
+Date: Wed, 16 Aug 2017 19:31:56 +0200
+Subject: [PATCH 025/231] x86/paravirt/xen: Remove xen_patch()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Xen's paravirt patch function xen_patch() does some special casing for
+irq_ops functions to apply relocations when those functions can be
+patched inline instead of calls.
+
+Unfortunately none of the special case function replacements is small
+enough to be patched inline, so the special case never applies.
+
+As xen_patch() will call paravirt_patch_default() in all cases it can
+be just dropped. xen-asm.h doesn't seem necessary without xen_patch()
+as the only thing left in it would be the definition of XEN_EFLAGS_NMI
+used only once. So move that definition and remove xen-asm.h.
+
+Signed-off-by: Juergen Gross <jgross@suse.com>
+Reviewed-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: boris.ostrovsky@oracle.com
+Cc: lguest@lists.ozlabs.org
+Cc: rusty@rustcorp.com.au
+Cc: xen-devel@lists.xenproject.org
+Link: http://lkml.kernel.org/r/20170816173157.8633-2-jgross@suse.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit edcb5cf84f05e5d2e2af25422a72ccde359fcca9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit c96c9c712136a9e24a7aaf0aac4c149eee01bd8e)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/xen/xen-asm.h      | 12 ---------
+ arch/x86/xen/xen-ops.h      | 15 +++---------
+ arch/x86/xen/enlighten_pv.c | 59 +--------------------------------------------
+ arch/x86/xen/xen-asm.S      | 26 +++++---------------
+ arch/x86/xen/xen-asm_32.S   | 27 ++++-----------------
+ arch/x86/xen/xen-asm_64.S   | 20 ++++-----------
+ 6 files changed, 21 insertions(+), 138 deletions(-)
+ delete mode 100644 arch/x86/xen/xen-asm.h
+
+diff --git a/arch/x86/xen/xen-asm.h b/arch/x86/xen/xen-asm.h
+deleted file mode 100644
+index 465276467a47..000000000000
+--- a/arch/x86/xen/xen-asm.h
++++ /dev/null
+@@ -1,12 +0,0 @@
+-#ifndef _XEN_XEN_ASM_H
+-#define _XEN_XEN_ASM_H
+-
+-#include <linux/linkage.h>
+-
+-#define RELOC(x, v)	.globl x##_reloc; x##_reloc=v
+-#define ENDPATCH(x)	.globl x##_end; x##_end=.
+-
+-/* Pseudo-flag used for virtual NMI, which we don't implement yet */
+-#define XEN_EFLAGS_NMI	0x80000000
+-
+-#endif
+diff --git a/arch/x86/xen/xen-ops.h b/arch/x86/xen/xen-ops.h
+index 0d5004477db6..70301ac0d414 100644
+--- a/arch/x86/xen/xen-ops.h
++++ b/arch/x86/xen/xen-ops.h
+@@ -129,17 +129,10 @@ static inline void __init xen_efi_init(void)
+ }
+ #endif
+ 
+-/* Declare an asm function, along with symbols needed to make it
+-   inlineable */
+-#define DECL_ASM(ret, name, ...)		\
+-	__visible ret name(__VA_ARGS__);	\
+-	extern char name##_end[] __visible;	\
+-	extern char name##_reloc[] __visible
+-
+-DECL_ASM(void, xen_irq_enable_direct, void);
+-DECL_ASM(void, xen_irq_disable_direct, void);
+-DECL_ASM(unsigned long, xen_save_fl_direct, void);
+-DECL_ASM(void, xen_restore_fl_direct, unsigned long);
++__visible void xen_irq_enable_direct(void);
++__visible void xen_irq_disable_direct(void);
++__visible unsigned long xen_save_fl_direct(void);
++__visible void xen_restore_fl_direct(unsigned long);
+ 
+ /* These are not functions, and cannot be called normally */
+ __visible void xen_iret(void);
+diff --git a/arch/x86/xen/enlighten_pv.c b/arch/x86/xen/enlighten_pv.c
+index df1921751aa5..6c279c8f0a0e 100644
+--- a/arch/x86/xen/enlighten_pv.c
++++ b/arch/x86/xen/enlighten_pv.c
+@@ -988,59 +988,6 @@ void __ref xen_setup_vcpu_info_placement(void)
+ 	}
+ }
+ 
+-static unsigned xen_patch(u8 type, u16 clobbers, void *insnbuf,
+-			  unsigned long addr, unsigned len)
+-{
+-	char *start, *end, *reloc;
+-	unsigned ret;
+-
+-	start = end = reloc = NULL;
+-
+-#define SITE(op, x)							\
+-	case PARAVIRT_PATCH(op.x):					\
+-	if (xen_have_vcpu_info_placement) {				\
+-		start = (char *)xen_##x##_direct;			\
+-		end = xen_##x##_direct_end;				\
+-		reloc = xen_##x##_direct_reloc;				\
+-	}								\
+-	goto patch_site
+-
+-	switch (type) {
+-		SITE(pv_irq_ops, irq_enable);
+-		SITE(pv_irq_ops, irq_disable);
+-		SITE(pv_irq_ops, save_fl);
+-		SITE(pv_irq_ops, restore_fl);
+-#undef SITE
+-
+-	patch_site:
+-		if (start == NULL || (end-start) > len)
+-			goto default_patch;
+-
+-		ret = paravirt_patch_insns(insnbuf, len, start, end);
+-
+-		/* Note: because reloc is assigned from something that
+-		   appears to be an array, gcc assumes it's non-null,
+-		   but doesn't know its relationship with start and
+-		   end. */
+-		if (reloc > start && reloc < end) {
+-			int reloc_off = reloc - start;
+-			long *relocp = (long *)(insnbuf + reloc_off);
+-			long delta = start - (char *)addr;
+-
+-			*relocp += delta;
+-		}
+-		break;
+-
+-	default_patch:
+-	default:
+-		ret = paravirt_patch_default(type, clobbers, insnbuf,
+-					     addr, len);
+-		break;
+-	}
+-
+-	return ret;
+-}
+-
+ static const struct pv_info xen_info __initconst = {
+ 	.shared_kernel_pmd = 0,
+ 
+@@ -1050,10 +997,6 @@ static const struct pv_info xen_info __initconst = {
+ 	.name = "Xen",
+ };
+ 
+-static const struct pv_init_ops xen_init_ops __initconst = {
+-	.patch = xen_patch,
+-};
+-
+ static const struct pv_cpu_ops xen_cpu_ops __initconst = {
+ 	.cpuid = xen_cpuid,
+ 
+@@ -1251,7 +1194,7 @@ asmlinkage __visible void __init xen_start_kernel(void)
+ 
+ 	/* Install Xen paravirt ops */
+ 	pv_info = xen_info;
+-	pv_init_ops = xen_init_ops;
++	pv_init_ops.patch = paravirt_patch_default;
+ 	pv_cpu_ops = xen_cpu_ops;
+ 
+ 	x86_platform.get_nmi_reason = xen_get_nmi_reason;
+diff --git a/arch/x86/xen/xen-asm.S b/arch/x86/xen/xen-asm.S
+index eff224df813f..dcd31fa39b5d 100644
+--- a/arch/x86/xen/xen-asm.S
++++ b/arch/x86/xen/xen-asm.S
+@@ -1,14 +1,8 @@
+ /*
+- * Asm versions of Xen pv-ops, suitable for either direct use or
+- * inlining.  The inline versions are the same as the direct-use
+- * versions, with the pre- and post-amble chopped off.
+- *
+- * This code is encoded for size rather than absolute efficiency, with
+- * a view to being able to inline as much as possible.
++ * Asm versions of Xen pv-ops, suitable for direct use.
+  *
+  * We only bother with direct forms (ie, vcpu in percpu data) of the
+- * operations here; the indirect forms are better handled in C, since
+- * they're generally too large to inline anyway.
++ * operations here; the indirect forms are better handled in C.
+  */
+ 
+ #include <asm/asm-offsets.h>
+@@ -16,7 +10,7 @@
+ #include <asm/processor-flags.h>
+ #include <asm/frame.h>
+ 
+-#include "xen-asm.h"
++#include <linux/linkage.h>
+ 
+ /*
+  * Enable events.  This clears the event mask and tests the pending
+@@ -38,13 +32,11 @@ ENTRY(xen_irq_enable_direct)
+ 	testb $0xff, PER_CPU_VAR(xen_vcpu_info) + XEN_vcpu_info_pending
+ 	jz 1f
+ 
+-2:	call check_events
++	call check_events
+ 1:
+-ENDPATCH(xen_irq_enable_direct)
+ 	FRAME_END
+ 	ret
+ 	ENDPROC(xen_irq_enable_direct)
+-	RELOC(xen_irq_enable_direct, 2b+1)
+ 
+ 
+ /*
+@@ -53,10 +45,8 @@ ENDPATCH(xen_irq_enable_direct)
+  */
+ ENTRY(xen_irq_disable_direct)
+ 	movb $1, PER_CPU_VAR(xen_vcpu_info) + XEN_vcpu_info_mask
+-ENDPATCH(xen_irq_disable_direct)
+ 	ret
+-	ENDPROC(xen_irq_disable_direct)
+-	RELOC(xen_irq_disable_direct, 0)
++ENDPROC(xen_irq_disable_direct)
+ 
+ /*
+  * (xen_)save_fl is used to get the current interrupt enable status.
+@@ -71,10 +61,8 @@ ENTRY(xen_save_fl_direct)
+ 	testb $0xff, PER_CPU_VAR(xen_vcpu_info) + XEN_vcpu_info_mask
+ 	setz %ah
+ 	addb %ah, %ah
+-ENDPATCH(xen_save_fl_direct)
+ 	ret
+ 	ENDPROC(xen_save_fl_direct)
+-	RELOC(xen_save_fl_direct, 0)
+ 
+ 
+ /*
+@@ -101,13 +89,11 @@ ENTRY(xen_restore_fl_direct)
+ 	/* check for unmasked and pending */
+ 	cmpw $0x0001, PER_CPU_VAR(xen_vcpu_info) + XEN_vcpu_info_pending
+ 	jnz 1f
+-2:	call check_events
++	call check_events
+ 1:
+-ENDPATCH(xen_restore_fl_direct)
+ 	FRAME_END
+ 	ret
+ 	ENDPROC(xen_restore_fl_direct)
+-	RELOC(xen_restore_fl_direct, 2b+1)
+ 
+ 
+ /*
+diff --git a/arch/x86/xen/xen-asm_32.S b/arch/x86/xen/xen-asm_32.S
+index feb6d40a0860..1200e262a116 100644
+--- a/arch/x86/xen/xen-asm_32.S
++++ b/arch/x86/xen/xen-asm_32.S
+@@ -1,14 +1,8 @@
+ /*
+- * Asm versions of Xen pv-ops, suitable for either direct use or
+- * inlining.  The inline versions are the same as the direct-use
+- * versions, with the pre- and post-amble chopped off.
+- *
+- * This code is encoded for size rather than absolute efficiency, with
+- * a view to being able to inline as much as possible.
++ * Asm versions of Xen pv-ops, suitable for direct use.
+  *
+  * We only bother with direct forms (ie, vcpu in pda) of the
+- * operations here; the indirect forms are better handled in C, since
+- * they're generally too large to inline anyway.
++ * operations here; the indirect forms are better handled in C.
+  */
+ 
+ #include <asm/thread_info.h>
+@@ -18,21 +12,10 @@
+ 
+ #include <xen/interface/xen.h>
+ 
+-#include "xen-asm.h"
++#include <linux/linkage.h>
+ 
+-/*
+- * Force an event check by making a hypercall, but preserve regs
+- * before making the call.
+- */
+-check_events:
+-	push %eax
+-	push %ecx
+-	push %edx
+-	call xen_force_evtchn_callback
+-	pop %edx
+-	pop %ecx
+-	pop %eax
+-	ret
++/* Pseudo-flag used for virtual NMI, which we don't implement yet */
++#define XEN_EFLAGS_NMI  0x80000000
+ 
+ /*
+  * This is run where a normal iret would be run, with the same stack setup:
+diff --git a/arch/x86/xen/xen-asm_64.S b/arch/x86/xen/xen-asm_64.S
+index c5fee2680abc..3a3b6a211584 100644
+--- a/arch/x86/xen/xen-asm_64.S
++++ b/arch/x86/xen/xen-asm_64.S
+@@ -1,14 +1,8 @@
+ /*
+- * Asm versions of Xen pv-ops, suitable for either direct use or
+- * inlining.  The inline versions are the same as the direct-use
+- * versions, with the pre- and post-amble chopped off.
+- *
+- * This code is encoded for size rather than absolute efficiency, with
+- * a view to being able to inline as much as possible.
++ * Asm versions of Xen pv-ops, suitable for direct use.
+  *
+  * We only bother with direct forms (ie, vcpu in pda) of the
+- * operations here; the indirect forms are better handled in C, since
+- * they're generally too large to inline anyway.
++ * operations here; the indirect forms are better handled in C.
+  */
+ 
+ #include <asm/errno.h>
+@@ -20,7 +14,7 @@
+ 
+ #include <xen/interface/xen.h>
+ 
+-#include "xen-asm.h"
++#include <linux/linkage.h>
+ 
+ ENTRY(xen_adjust_exception_frame)
+ 	mov 8+0(%rsp), %rcx
+@@ -46,9 +40,7 @@ hypercall_iret = hypercall_page + __HYPERVISOR_iret * 32
+  */
+ ENTRY(xen_iret)
+ 	pushq $0
+-1:	jmp hypercall_iret
+-ENDPATCH(xen_iret)
+-RELOC(xen_iret, 1b+1)
++	jmp hypercall_iret
+ 
+ ENTRY(xen_sysret64)
+ 	/*
+@@ -65,9 +57,7 @@ ENTRY(xen_sysret64)
+ 	pushq %rcx
+ 
+ 	pushq $VGCF_in_syscall
+-1:	jmp hypercall_iret
+-ENDPATCH(xen_sysret64)
+-RELOC(xen_sysret64, 1b+1)
++	jmp hypercall_iret
+ 
+ /*
+  * Xen handles syscall callbacks much like ordinary exceptions, which
+-- 
+2.14.2
+

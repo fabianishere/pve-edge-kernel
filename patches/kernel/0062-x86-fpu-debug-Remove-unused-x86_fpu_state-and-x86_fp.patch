@@ -1,0 +1,66 @@
+From bc21c74b922871588bf6626bff34fa084ed60d71 Mon Sep 17 00:00:00 2001
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Date: Thu, 12 Oct 2017 18:06:19 -0400
+Subject: [PATCH 062/231] x86/fpu/debug: Remove unused 'x86_fpu_state' and
+ 'x86_fpu_deactivate_state' tracepoints
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Commit:
+
+  d1898b733619 ("x86/fpu: Add tracepoints to dump FPU state at key points")
+
+... added the 'x86_fpu_state' and 'x86_fpu_deactivate_state' trace points,
+but never used them. Today they are still not used. As they take up
+and waste memory, remove them.
+
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/20171012180619.670b68b6@gandalf.local.home
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 127a1bea40f7f2a36bc7207ea4d51bb6b4e936fa)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit c7c367ddb6ffb6af2cfee287960e97c4aefc6548)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/trace/fpu.h | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/arch/x86/include/asm/trace/fpu.h b/arch/x86/include/asm/trace/fpu.h
+index 342e59789fcd..fed7d9ecae60 100644
+--- a/arch/x86/include/asm/trace/fpu.h
++++ b/arch/x86/include/asm/trace/fpu.h
+@@ -36,11 +36,6 @@ DECLARE_EVENT_CLASS(x86_fpu,
+ 	)
+ );
+ 
+-DEFINE_EVENT(x86_fpu, x86_fpu_state,
+-	TP_PROTO(struct fpu *fpu),
+-	TP_ARGS(fpu)
+-);
+-
+ DEFINE_EVENT(x86_fpu, x86_fpu_before_save,
+ 	TP_PROTO(struct fpu *fpu),
+ 	TP_ARGS(fpu)
+@@ -76,11 +71,6 @@ DEFINE_EVENT(x86_fpu, x86_fpu_activate_state,
+ 	TP_ARGS(fpu)
+ );
+ 
+-DEFINE_EVENT(x86_fpu, x86_fpu_deactivate_state,
+-	TP_PROTO(struct fpu *fpu),
+-	TP_ARGS(fpu)
+-);
+-
+ DEFINE_EVENT(x86_fpu, x86_fpu_init_state,
+ 	TP_PROTO(struct fpu *fpu),
+ 	TP_ARGS(fpu)
+-- 
+2.14.2
+

@@ -1,0 +1,199 @@
+From b37d3e3a9b29caf78e2da6efba8959fc912e47a0 Mon Sep 17 00:00:00 2001
+From: Peter Zijlstra <peterz@infradead.org>
+Date: Thu, 14 Dec 2017 12:27:30 +0100
+Subject: [PATCH 169/231] x86/ldt: Rework locking
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The LDT is duplicated on fork() and on exec(), which is wrong as exec()
+should start from a clean state, i.e. without LDT. To fix this the LDT
+duplication code will be moved into arch_dup_mmap() which is only called
+for fork().
+
+This introduces a locking problem. arch_dup_mmap() holds mmap_sem of the
+parent process, but the LDT duplication code needs to acquire
+mm->context.lock to access the LDT data safely, which is the reverse lock
+order of write_ldt() where mmap_sem nests into context.lock.
+
+Solve this by introducing a new rw semaphore which serializes the
+read/write_ldt() syscall operations and use context.lock to protect the
+actual installment of the LDT descriptor.
+
+So context.lock stabilizes mm->context.ldt and can nest inside of the new
+semaphore or mmap_sem.
+
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: dan.j.williams@intel.com
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: kirill.shutemov@linux.intel.com
+Cc: linux-mm@kvack.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit c2b3496bb30bd159e9de42e5c952e1f1f33c9a77)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit bf7ee649ccc71ef9acb713a00472886c19e78684)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/mmu.h         |  4 +++-
+ arch/x86/include/asm/mmu_context.h |  2 ++
+ arch/x86/kernel/ldt.c              | 33 +++++++++++++++++++++------------
+ 3 files changed, 26 insertions(+), 13 deletions(-)
+
+diff --git a/arch/x86/include/asm/mmu.h b/arch/x86/include/asm/mmu.h
+index bb8c597c2248..2d7e852b2dad 100644
+--- a/arch/x86/include/asm/mmu.h
++++ b/arch/x86/include/asm/mmu.h
+@@ -2,6 +2,7 @@
+ #define _ASM_X86_MMU_H
+ 
+ #include <linux/spinlock.h>
++#include <linux/rwsem.h>
+ #include <linux/mutex.h>
+ #include <linux/atomic.h>
+ 
+@@ -26,7 +27,8 @@ typedef struct {
+ 	atomic64_t tlb_gen;
+ 
+ #ifdef CONFIG_MODIFY_LDT_SYSCALL
+-	struct ldt_struct *ldt;
++	struct rw_semaphore	ldt_usr_sem;
++	struct ldt_struct	*ldt;
+ #endif
+ 
+ #ifdef CONFIG_X86_64
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 9be54d9c04c4..dd865c2acb9d 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -131,6 +131,8 @@ void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
+ static inline int init_new_context(struct task_struct *tsk,
+ 				   struct mm_struct *mm)
+ {
++	mutex_init(&mm->context.lock);
++
+ 	mm->context.ctx_id = atomic64_inc_return(&last_mm_ctx_id);
+ 	atomic64_set(&mm->context.tlb_gen, 0);
+ 
+diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
+index b8be2413cb74..3e7208f0c350 100644
+--- a/arch/x86/kernel/ldt.c
++++ b/arch/x86/kernel/ldt.c
+@@ -4,6 +4,11 @@
+  * Copyright (C) 2002 Andi Kleen
+  *
+  * This handles calls from both 32bit and 64bit mode.
++ *
++ * Lock order:
++ *	contex.ldt_usr_sem
++ *	  mmap_sem
++ *	    context.lock
+  */
+ 
+ #include <linux/errno.h>
+@@ -41,7 +46,7 @@ static void refresh_ldt_segments(void)
+ #endif
+ }
+ 
+-/* context.lock is held for us, so we don't need any locking. */
++/* context.lock is held by the task which issued the smp function call */
+ static void flush_ldt(void *__mm)
+ {
+ 	struct mm_struct *mm = __mm;
+@@ -98,15 +103,17 @@ static void finalize_ldt_struct(struct ldt_struct *ldt)
+ 	paravirt_alloc_ldt(ldt->entries, ldt->nr_entries);
+ }
+ 
+-/* context.lock is held */
+-static void install_ldt(struct mm_struct *current_mm,
+-			struct ldt_struct *ldt)
++static void install_ldt(struct mm_struct *mm, struct ldt_struct *ldt)
+ {
++	mutex_lock(&mm->context.lock);
++
+ 	/* Synchronizes with READ_ONCE in load_mm_ldt. */
+-	smp_store_release(&current_mm->context.ldt, ldt);
++	smp_store_release(&mm->context.ldt, ldt);
+ 
+-	/* Activate the LDT for all CPUs using current_mm. */
+-	on_each_cpu_mask(mm_cpumask(current_mm), flush_ldt, current_mm, true);
++	/* Activate the LDT for all CPUs using currents mm. */
++	on_each_cpu_mask(mm_cpumask(mm), flush_ldt, mm, true);
++
++	mutex_unlock(&mm->context.lock);
+ }
+ 
+ static void free_ldt_struct(struct ldt_struct *ldt)
+@@ -132,7 +139,8 @@ int init_new_context_ldt(struct task_struct *tsk, struct mm_struct *mm)
+ 	struct mm_struct *old_mm;
+ 	int retval = 0;
+ 
+-	mutex_init(&mm->context.lock);
++	init_rwsem(&mm->context.ldt_usr_sem);
++
+ 	old_mm = current->mm;
+ 	if (!old_mm) {
+ 		mm->context.ldt = NULL;
+@@ -179,7 +187,7 @@ static int read_ldt(void __user *ptr, unsigned long bytecount)
+ 	unsigned long entries_size;
+ 	int retval;
+ 
+-	mutex_lock(&mm->context.lock);
++	down_read(&mm->context.ldt_usr_sem);
+ 
+ 	if (!mm->context.ldt) {
+ 		retval = 0;
+@@ -208,7 +216,7 @@ static int read_ldt(void __user *ptr, unsigned long bytecount)
+ 	retval = bytecount;
+ 
+ out_unlock:
+-	mutex_unlock(&mm->context.lock);
++	up_read(&mm->context.ldt_usr_sem);
+ 	return retval;
+ }
+ 
+@@ -268,7 +276,8 @@ static int write_ldt(void __user *ptr, unsigned long bytecount, int oldmode)
+ 			ldt.avl = 0;
+ 	}
+ 
+-	mutex_lock(&mm->context.lock);
++	if (down_write_killable(&mm->context.ldt_usr_sem))
++		return -EINTR;
+ 
+ 	old_ldt       = mm->context.ldt;
+ 	old_nr_entries = old_ldt ? old_ldt->nr_entries : 0;
+@@ -290,7 +299,7 @@ static int write_ldt(void __user *ptr, unsigned long bytecount, int oldmode)
+ 	error = 0;
+ 
+ out_unlock:
+-	mutex_unlock(&mm->context.lock);
++	up_write(&mm->context.ldt_usr_sem);
+ out:
+ 	return error;
+ }
+-- 
+2.14.2
+

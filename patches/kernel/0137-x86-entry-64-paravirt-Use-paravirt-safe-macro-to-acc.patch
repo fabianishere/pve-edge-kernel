@@ -1,0 +1,129 @@
+From a76244535c7a04fde0afa6971ee1ecdb8d5b0c22 Mon Sep 17 00:00:00 2001
+From: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Date: Mon, 4 Dec 2017 15:07:07 +0100
+Subject: [PATCH 137/231] x86/entry/64/paravirt: Use paravirt-safe macro to
+ access eflags
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Commit 1d3e53e8624a ("x86/entry/64: Refactor IRQ stacks and make them
+NMI-safe") added DEBUG_ENTRY_ASSERT_IRQS_OFF macro that acceses eflags
+using 'pushfq' instruction when testing for IF bit. On PV Xen guests
+looking at IF flag directly will always see it set, resulting in 'ud2'.
+
+Introduce SAVE_FLAGS() macro that will use appropriate save_fl pv op when
+running paravirt.
+
+Signed-off-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Juergen Gross <jgross@suse.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: xen-devel@lists.xenproject.org
+Link: https://lkml.kernel.org/r/20171204150604.899457242@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit e17f8234538d1ff708673f287a42457c4dee720d)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 9f4a274842938ce8d55565ced4f45e7ad4a5da90)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/irqflags.h  | 3 +++
+ arch/x86/include/asm/paravirt.h  | 9 +++++++++
+ arch/x86/kernel/asm-offsets_64.c | 3 +++
+ arch/x86/entry/entry_64.S        | 7 ++++---
+ 4 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/include/asm/irqflags.h b/arch/x86/include/asm/irqflags.h
+index ac7692dcfa2e..d937781e1047 100644
+--- a/arch/x86/include/asm/irqflags.h
++++ b/arch/x86/include/asm/irqflags.h
+@@ -141,6 +141,9 @@ static inline notrace unsigned long arch_local_irq_save(void)
+ 	swapgs;					\
+ 	sysretl
+ 
++#ifdef CONFIG_DEBUG_ENTRY
++#define SAVE_FLAGS(x)		pushfq; popq %rax
++#endif
+ #else
+ #define INTERRUPT_RETURN		iret
+ #define ENABLE_INTERRUPTS_SYSEXIT	sti; sysexit
+diff --git a/arch/x86/include/asm/paravirt.h b/arch/x86/include/asm/paravirt.h
+index 43d4f90edebc..52dcd2361a78 100644
+--- a/arch/x86/include/asm/paravirt.h
++++ b/arch/x86/include/asm/paravirt.h
+@@ -926,6 +926,15 @@ extern void default_banner(void);
+ 	PARA_SITE(PARA_PATCH(pv_cpu_ops, PV_CPU_usergs_sysret64),	\
+ 		  CLBR_NONE,						\
+ 		  jmp PARA_INDIRECT(pv_cpu_ops+PV_CPU_usergs_sysret64))
++
++#ifdef CONFIG_DEBUG_ENTRY
++#define SAVE_FLAGS(clobbers)                                        \
++	PARA_SITE(PARA_PATCH(pv_irq_ops, PV_IRQ_save_fl), clobbers, \
++		  PV_SAVE_REGS(clobbers | CLBR_CALLEE_SAVE);        \
++		  call PARA_INDIRECT(pv_irq_ops+PV_IRQ_save_fl);    \
++		  PV_RESTORE_REGS(clobbers | CLBR_CALLEE_SAVE);)
++#endif
++
+ #endif	/* CONFIG_X86_32 */
+ 
+ #endif /* __ASSEMBLY__ */
+diff --git a/arch/x86/kernel/asm-offsets_64.c b/arch/x86/kernel/asm-offsets_64.c
+index cf42206926af..c21a5315b38e 100644
+--- a/arch/x86/kernel/asm-offsets_64.c
++++ b/arch/x86/kernel/asm-offsets_64.c
+@@ -22,6 +22,9 @@ int main(void)
+ #ifdef CONFIG_PARAVIRT
+ 	OFFSET(PV_CPU_usergs_sysret64, pv_cpu_ops, usergs_sysret64);
+ 	OFFSET(PV_CPU_swapgs, pv_cpu_ops, swapgs);
++#ifdef CONFIG_DEBUG_ENTRY
++	OFFSET(PV_IRQ_save_fl, pv_irq_ops, save_fl);
++#endif
+ 	BLANK();
+ #endif
+ 
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 2491b3b25b9a..6c73e96daf78 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -461,12 +461,13 @@ END(irq_entries_start)
+ 
+ .macro DEBUG_ENTRY_ASSERT_IRQS_OFF
+ #ifdef CONFIG_DEBUG_ENTRY
+-	pushfq
+-	testl $X86_EFLAGS_IF, (%rsp)
++	pushq %rax
++	SAVE_FLAGS(CLBR_RAX)
++	testl $X86_EFLAGS_IF, %eax
+ 	jz .Lokay_\@
+ 	ud2
+ .Lokay_\@:
+-	addq $8, %rsp
++	popq %rax
+ #endif
+ .endm
+ 
+-- 
+2.14.2
+

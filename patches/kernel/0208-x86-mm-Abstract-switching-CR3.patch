@@ -1,0 +1,96 @@
+From 7cc2d98148d5b5be191f4dbf4c29d4d6da93a9f8 Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Mon, 4 Dec 2017 15:07:58 +0100
+Subject: [PATCH 208/231] x86/mm: Abstract switching CR3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+In preparation to adding additional PCID flushing, abstract the
+loading of a new ASID into CR3.
+
+[ PeterZ: Split out from big combo patch ]
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 48e111982cda033fec832c6b0592c2acedd85d04)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 1e2affe2a79305b3a5f3ad65d3f61ad9d1f9e168)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/mm/tlb.c | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
+index ce87b69fb4e0..353f2f4e1d96 100644
+--- a/arch/x86/mm/tlb.c
++++ b/arch/x86/mm/tlb.c
+@@ -101,6 +101,24 @@ static void choose_new_asid(struct mm_struct *next, u64 next_tlb_gen,
+ 	*need_flush = true;
+ }
+ 
++static void load_new_mm_cr3(pgd_t *pgdir, u16 new_asid, bool need_flush)
++{
++	unsigned long new_mm_cr3;
++
++	if (need_flush) {
++		new_mm_cr3 = build_cr3(pgdir, new_asid);
++	} else {
++		new_mm_cr3 = build_cr3_noflush(pgdir, new_asid);
++	}
++
++	/*
++	 * Caution: many callers of this function expect
++	 * that load_cr3() is serializing and orders TLB
++	 * fills with respect to the mm_cpumask writes.
++	 */
++	write_cr3(new_mm_cr3);
++}
++
+ void leave_mm(int cpu)
+ {
+ 	struct mm_struct *loaded_mm = this_cpu_read(cpu_tlbstate.loaded_mm);
+@@ -228,7 +246,7 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 		if (need_flush) {
+ 			this_cpu_write(cpu_tlbstate.ctxs[new_asid].ctx_id, next->context.ctx_id);
+ 			this_cpu_write(cpu_tlbstate.ctxs[new_asid].tlb_gen, next_tlb_gen);
+-			write_cr3(build_cr3(next->pgd, new_asid));
++			load_new_mm_cr3(next->pgd, new_asid, true);
+ 
+ 			/*
+ 			 * NB: This gets called via leave_mm() in the idle path
+@@ -241,7 +259,7 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 			trace_tlb_flush_rcuidle(TLB_FLUSH_ON_TASK_SWITCH, TLB_FLUSH_ALL);
+ 		} else {
+ 			/* The new ASID is already up to date. */
+-			write_cr3(build_cr3_noflush(next->pgd, new_asid));
++			load_new_mm_cr3(next->pgd, new_asid, false);
+ 
+ 			/* See above wrt _rcuidle. */
+ 			trace_tlb_flush_rcuidle(TLB_FLUSH_ON_TASK_SWITCH, 0);
+-- 
+2.14.2
+

@@ -1,0 +1,189 @@
+From 0a708f5b66f8b49338f8cf8b6d84d3fdc7b3f67f Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 4 Dec 2017 15:08:06 +0100
+Subject: [PATCH 217/231] x86/mm/dump_pagetables: Allow dumping current
+ pagetables
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Add two debugfs files which allow to dump the pagetable of the current
+task.
+
+current_kernel dumps the regular page table. This is the page table which
+is normally shared between kernel and user space. If kernel page table
+isolation is enabled this is the kernel space mapping.
+
+If kernel page table isolation is enabled the second file, current_user,
+dumps the user space page table.
+
+These files allow to verify the resulting page tables for page table
+isolation, but even in the normal case its useful to be able to inspect
+user space page tables of current for debugging purposes.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: linux-mm@kvack.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit a4b51ef6552c704764684cef7e753162dc87c5fa)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit e31e0526cb47bd1d848fc3fdb10d2aeb909e46b5)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/pgtable.h |  2 +-
+ arch/x86/mm/debug_pagetables.c | 71 +++++++++++++++++++++++++++++++++++++++---
+ arch/x86/mm/dump_pagetables.c  |  6 +++-
+ 3 files changed, 73 insertions(+), 6 deletions(-)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 4f5eb81cf8be..1f9e7fea3c06 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -17,7 +17,7 @@
+ #include <asm/x86_init.h>
+ 
+ void ptdump_walk_pgd_level(struct seq_file *m, pgd_t *pgd);
+-void ptdump_walk_pgd_level_debugfs(struct seq_file *m, pgd_t *pgd);
++void ptdump_walk_pgd_level_debugfs(struct seq_file *m, pgd_t *pgd, bool user);
+ void ptdump_walk_pgd_level_checkwx(void);
+ 
+ #ifdef CONFIG_DEBUG_WX
+diff --git a/arch/x86/mm/debug_pagetables.c b/arch/x86/mm/debug_pagetables.c
+index 8e70c1599e51..421f2664ffa0 100644
+--- a/arch/x86/mm/debug_pagetables.c
++++ b/arch/x86/mm/debug_pagetables.c
+@@ -5,7 +5,7 @@
+ 
+ static int ptdump_show(struct seq_file *m, void *v)
+ {
+-	ptdump_walk_pgd_level_debugfs(m, NULL);
++	ptdump_walk_pgd_level_debugfs(m, NULL, false);
+ 	return 0;
+ }
+ 
+@@ -22,7 +22,57 @@ static const struct file_operations ptdump_fops = {
+ 	.release	= single_release,
+ };
+ 
+-static struct dentry *dir, *pe;
++static int ptdump_show_curknl(struct seq_file *m, void *v)
++{
++	if (current->mm->pgd) {
++		down_read(&current->mm->mmap_sem);
++		ptdump_walk_pgd_level_debugfs(m, current->mm->pgd, false);
++		up_read(&current->mm->mmap_sem);
++	}
++	return 0;
++}
++
++static int ptdump_open_curknl(struct inode *inode, struct file *filp)
++{
++	return single_open(filp, ptdump_show_curknl, NULL);
++}
++
++static const struct file_operations ptdump_curknl_fops = {
++	.owner		= THIS_MODULE,
++	.open		= ptdump_open_curknl,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= single_release,
++};
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++static struct dentry *pe_curusr;
++
++static int ptdump_show_curusr(struct seq_file *m, void *v)
++{
++	if (current->mm->pgd) {
++		down_read(&current->mm->mmap_sem);
++		ptdump_walk_pgd_level_debugfs(m, current->mm->pgd, true);
++		up_read(&current->mm->mmap_sem);
++	}
++	return 0;
++}
++
++static int ptdump_open_curusr(struct inode *inode, struct file *filp)
++{
++	return single_open(filp, ptdump_show_curusr, NULL);
++}
++
++static const struct file_operations ptdump_curusr_fops = {
++	.owner		= THIS_MODULE,
++	.open		= ptdump_open_curusr,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= single_release,
++};
++#endif
++
++static struct dentry *dir, *pe_knl, *pe_curknl;
+ 
+ static int __init pt_dump_debug_init(void)
+ {
+@@ -30,9 +80,22 @@ static int __init pt_dump_debug_init(void)
+ 	if (!dir)
+ 		return -ENOMEM;
+ 
+-	pe = debugfs_create_file("kernel", 0400, dir, NULL, &ptdump_fops);
+-	if (!pe)
++	pe_knl = debugfs_create_file("kernel", 0400, dir, NULL,
++				     &ptdump_fops);
++	if (!pe_knl)
++		goto err;
++
++	pe_curknl = debugfs_create_file("current_kernel", 0400,
++					dir, NULL, &ptdump_curknl_fops);
++	if (!pe_curknl)
++		goto err;
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++	pe_curusr = debugfs_create_file("current_user", 0400,
++					dir, NULL, &ptdump_curusr_fops);
++	if (!pe_curusr)
+ 		goto err;
++#endif
+ 	return 0;
+ err:
+ 	debugfs_remove_recursive(dir);
+diff --git a/arch/x86/mm/dump_pagetables.c b/arch/x86/mm/dump_pagetables.c
+index 7b022ad37c4e..12b93d350480 100644
+--- a/arch/x86/mm/dump_pagetables.c
++++ b/arch/x86/mm/dump_pagetables.c
+@@ -511,8 +511,12 @@ void ptdump_walk_pgd_level(struct seq_file *m, pgd_t *pgd)
+ 	ptdump_walk_pgd_level_core(m, pgd, false, true);
+ }
+ 
+-void ptdump_walk_pgd_level_debugfs(struct seq_file *m, pgd_t *pgd)
++void ptdump_walk_pgd_level_debugfs(struct seq_file *m, pgd_t *pgd, bool user)
+ {
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++	if (user && static_cpu_has(X86_FEATURE_PTI))
++		pgd = kernel_to_user_pgdp(pgd);
++#endif
+ 	ptdump_walk_pgd_level_core(m, pgd, false, false);
+ }
+ EXPORT_SYMBOL_GPL(ptdump_walk_pgd_level_debugfs);
+-- 
+2.14.2
+

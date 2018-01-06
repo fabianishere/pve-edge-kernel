@@ -1,0 +1,54 @@
+From 20e07f035810f1b2bb3d816e49f48f6b6a37bf64 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Wed, 6 Sep 2017 19:54:54 -0700
+Subject: [PATCH 017/231] x86/mm: Document how CR4.PCIDE restore works
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+While debugging a problem, I thought that using
+cr4_set_bits_and_update_boot() to restore CR4.PCIDE would be
+helpful.  It turns out to be counterproductive.
+
+Add a comment documenting how this works.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+(cherry picked from commit 1c9fe4409ce3e9c78b1ed96ee8ed699d4f03bf33)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 0d69e4c4a2db42a9bac6609a3df15bd91163f8b9)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/cpu/common.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index b95cd94ca97b..0b80ed14ff52 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -333,6 +333,19 @@ static void setup_pcid(struct cpuinfo_x86 *c)
+ {
+ 	if (cpu_has(c, X86_FEATURE_PCID)) {
+ 		if (cpu_has(c, X86_FEATURE_PGE)) {
++			/*
++			 * We'd like to use cr4_set_bits_and_update_boot(),
++			 * but we can't.  CR4.PCIDE is special and can only
++			 * be set in long mode, and the early CPU init code
++			 * doesn't know this and would try to restore CR4.PCIDE
++			 * prior to entering long mode.
++			 *
++			 * Instead, we rely on the fact that hotplug, resume,
++			 * etc all fully restore CR4 before they write anything
++			 * that could have nonzero PCID bits to CR3.  CR4.PCIDE
++			 * has no effect on the page tables themselves, so we
++			 * don't need it to be restored early.
++			 */
+ 			cr4_set_bits(X86_CR4_PCIDE);
+ 		} else {
+ 			/*
+-- 
+2.14.2
+

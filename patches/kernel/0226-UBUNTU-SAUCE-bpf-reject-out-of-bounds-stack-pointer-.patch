@@ -1,0 +1,69 @@
+From 3c5659ffcc9d2497045dda465a35720f78314e87 Mon Sep 17 00:00:00 2001
+From: Jann Horn <jannh@google.com>
+Date: Thu, 4 Jan 2018 08:01:21 -0600
+Subject: [PATCH 226/231] UBUNTU: SAUCE: bpf: reject out-of-bounds stack
+ pointer calculation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Reject programs that compute wildly out-of-bounds stack pointers.
+Otherwise, pointers can be computed with an offset that doesn't fit into an
+`int`, causing security issues in the stack memory access check (as well as
+signed integer overflow during offset addition).
+
+This is a fix specifically for the v4.9 stable tree because the mainline
+code looks very different at this point.
+
+Fixes: 7bca0a9702edf ("bpf: enhance verifier to understand stack pointer arithmetic")
+Signed-off-by: Jann Horn <jannh@google.com>
+Acked-by: Daniel Borkmann <daniel@iogearbox.net>
+CVE-2017-17863
+Link: https://www.spinics.net/lists/stable/msg206985.html
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 1c26ffd0e9b24d512824cabc6687a14d4777d0f3)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ kernel/bpf/verifier.c | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
+index 3940019b9740..4321625fe32a 100644
+--- a/kernel/bpf/verifier.c
++++ b/kernel/bpf/verifier.c
+@@ -2122,10 +2122,28 @@ static int check_alu_op(struct bpf_verifier_env *env, struct bpf_insn *insn)
+ 			   ((BPF_SRC(insn->code) == BPF_X &&
+ 			     regs[insn->src_reg].type == CONST_IMM) ||
+ 			    BPF_SRC(insn->code) == BPF_K)) {
+-			if (BPF_SRC(insn->code) == BPF_X)
++			if (BPF_SRC(insn->code) == BPF_X) {
++				/* check in case the register contains a big
++				 * 64-bit value
++				 */
++				if (regs[insn->src_reg].imm < -MAX_BPF_STACK ||
++				    regs[insn->src_reg].imm > MAX_BPF_STACK) {
++					verbose("R%d value too big in R%d pointer arithmetic\n",
++						insn->src_reg, insn->dst_reg);
++					return -EACCES;
++				}
+ 				dst_reg->imm += regs[insn->src_reg].imm;
+-			else
++			} else {
++				/* safe against overflow: addition of 32-bit
++				 * numbers in 64-bit representation
++				 */
+ 				dst_reg->imm += insn->imm;
++			}
++			if (dst_reg->imm > 0 || dst_reg->imm < -MAX_BPF_STACK) {
++				verbose("R%d out-of-bounds pointer arithmetic\n",
++					insn->dst_reg);
++				return -EACCES;
++			}
+ 			return 0;
+ 		} else if (opcode == BPF_ADD &&
+ 			   BPF_CLASS(insn->code) == BPF_ALU64 &&
+-- 
+2.14.2
+

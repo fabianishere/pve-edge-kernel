@@ -1,0 +1,96 @@
+From f847420cd768a0b95c3159ab822c30c909f0e5ee Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Mon, 4 Dec 2017 15:07:55 +0100
+Subject: [PATCH 180/231] x86/mm: Remove hard-coded ASID limit checks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+First, it's nice to remove the magic numbers.
+
+Second, PAGE_TABLE_ISOLATION is going to consume half of the available ASID
+space.  The space is currently unused, but add a comment to spell out this
+new restriction.
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: linux-mm@kvack.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit cb0a9144a744e55207e24dcef812f05cd15a499a)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit fd5d001ae73ccd382d4270f53e27dcf61c4e4749)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/tlbflush.h | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index 3a421b164868..c1c10db4156c 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -68,6 +68,22 @@ static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
+ 	return atomic64_inc_return(&mm->context.tlb_gen);
+ }
+ 
++/* There are 12 bits of space for ASIDS in CR3 */
++#define CR3_HW_ASID_BITS		12
++/*
++ * When enabled, PAGE_TABLE_ISOLATION consumes a single bit for
++ * user/kernel switches
++ */
++#define PTI_CONSUMED_ASID_BITS		0
++
++#define CR3_AVAIL_ASID_BITS (CR3_HW_ASID_BITS - PTI_CONSUMED_ASID_BITS)
++/*
++ * ASIDs are zero-based: 0->MAX_AVAIL_ASID are valid.  -1 below to account
++ * for them being zero-based.  Another -1 is because ASID 0 is reserved for
++ * use by non-PCID-aware users.
++ */
++#define MAX_ASID_AVAILABLE ((1 << CR3_AVAIL_ASID_BITS) - 2)
++
+ /*
+  * If PCID is on, ASID-aware code paths put the ASID+1 into the PCID bits.
+  * This serves two purposes.  It prevents a nasty situation in which
+@@ -80,7 +96,7 @@ struct pgd_t;
+ static inline unsigned long build_cr3(pgd_t *pgd, u16 asid)
+ {
+ 	if (static_cpu_has(X86_FEATURE_PCID)) {
+-		VM_WARN_ON_ONCE(asid > 4094);
++		VM_WARN_ON_ONCE(asid > MAX_ASID_AVAILABLE);
+ 		return __sme_pa(pgd) | (asid + 1);
+ 	} else {
+ 		VM_WARN_ON_ONCE(asid != 0);
+@@ -90,7 +106,7 @@ static inline unsigned long build_cr3(pgd_t *pgd, u16 asid)
+ 
+ static inline unsigned long build_cr3_noflush(pgd_t *pgd, u16 asid)
+ {
+-	VM_WARN_ON_ONCE(asid > 4094);
++	VM_WARN_ON_ONCE(asid > MAX_ASID_AVAILABLE);
+ 	return __sme_pa(pgd) | (asid + 1) | CR3_NOFLUSH;
+ }
+ 
+-- 
+2.14.2
+

@@ -1,0 +1,123 @@
+From a6bd428da9f8bbc467b119ef5dc9ad4a1fb58acc Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Sun, 17 Dec 2017 10:56:29 +0100
+Subject: [PATCH 185/231] init: Invoke init_espfix_bsp() from mm_init()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+init_espfix_bsp() needs to be invoked before the page table isolation
+initialization. Move it into mm_init() which is the place where pti_init()
+will be added.
+
+While at it get rid of the #ifdeffery and provide proper stub functions.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 613e396bc0d4c7604fba23256644e78454c68cf6)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit a187e1a3cd87c860a8db188991d2d43fedd7225f)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/espfix.h | 7 ++++---
+ include/asm-generic/pgtable.h | 5 +++++
+ arch/x86/kernel/smpboot.c     | 6 +-----
+ init/main.c                   | 6 ++----
+ 4 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/arch/x86/include/asm/espfix.h b/arch/x86/include/asm/espfix.h
+index ca3ce9ab9385..e7009ac975af 100644
+--- a/arch/x86/include/asm/espfix.h
++++ b/arch/x86/include/asm/espfix.h
+@@ -1,7 +1,7 @@
+ #ifndef _ASM_X86_ESPFIX_H
+ #define _ASM_X86_ESPFIX_H
+ 
+-#ifdef CONFIG_X86_64
++#ifdef CONFIG_X86_ESPFIX64
+ 
+ #include <asm/percpu.h>
+ 
+@@ -10,7 +10,8 @@ DECLARE_PER_CPU_READ_MOSTLY(unsigned long, espfix_waddr);
+ 
+ extern void init_espfix_bsp(void);
+ extern void init_espfix_ap(int cpu);
+-
+-#endif /* CONFIG_X86_64 */
++#else
++static inline void init_espfix_ap(int cpu) { }
++#endif
+ 
+ #endif /* _ASM_X86_ESPFIX_H */
+diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
+index 7dfa767dc680..1bab3cfc0601 100644
+--- a/include/asm-generic/pgtable.h
++++ b/include/asm-generic/pgtable.h
+@@ -956,6 +956,11 @@ static inline int pmd_clear_huge(pmd_t *pmd)
+ struct file;
+ int phys_mem_access_prot_allowed(struct file *file, unsigned long pfn,
+ 			unsigned long size, pgprot_t *vma_prot);
++
++#ifndef CONFIG_X86_ESPFIX64
++static inline void init_espfix_bsp(void) { }
++#endif
++
+ #endif /* !__ASSEMBLY__ */
+ 
+ #ifndef io_remap_pfn_range
+diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
+index 8ea3b18cbdc1..03d2ba2da3b0 100644
+--- a/arch/x86/kernel/smpboot.c
++++ b/arch/x86/kernel/smpboot.c
+@@ -989,12 +989,8 @@ static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
+ 	initial_code = (unsigned long)start_secondary;
+ 	initial_stack  = idle->thread.sp;
+ 
+-	/*
+-	 * Enable the espfix hack for this CPU
+-	*/
+-#ifdef CONFIG_X86_ESPFIX64
++	/* Enable the espfix hack for this CPU */
+ 	init_espfix_ap(cpu);
+-#endif
+ 
+ 	/* So we see what's up */
+ 	announce_cpu(cpu, apicid);
+diff --git a/init/main.c b/init/main.c
+index 83d1004e3b97..de1c495da782 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -504,6 +504,8 @@ static void __init mm_init(void)
+ 	pgtable_init();
+ 	vmalloc_init();
+ 	ioremap_huge_init();
++	/* Should be run before the first non-init thread is created */
++	init_espfix_bsp();
+ }
+ 
+ asmlinkage __visible void __init start_kernel(void)
+@@ -664,10 +666,6 @@ asmlinkage __visible void __init start_kernel(void)
+ #ifdef CONFIG_X86
+ 	if (efi_enabled(EFI_RUNTIME_SERVICES))
+ 		efi_enter_virtual_mode();
+-#endif
+-#ifdef CONFIG_X86_ESPFIX64
+-	/* Should be run before the first non-init thread is created */
+-	init_espfix_bsp();
+ #endif
+ 	thread_stack_cache_init();
+ 	cred_init();
+-- 
+2.14.2
+

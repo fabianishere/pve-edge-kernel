@@ -1,0 +1,105 @@
+From 75ea12fecab1f4af63b39227509bf706b3faf21d Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 4 Dec 2017 15:07:31 +0100
+Subject: [PATCH 161/231] x86/paravirt: Provide a way to check for hypervisors
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+There is no generic way to test whether a kernel is running on a specific
+hypervisor. But that's required to prevent the upcoming user address space
+separation feature in certain guest modes.
+
+Make the hypervisor type enum unconditionally available and provide a
+helper function which allows to test for a specific type.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Juergen Gross <jgross@suse.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.912938129@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 79cc74155218316b9a5d28577c7077b2adba8e58)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 9f637574068f1ffdaded1cd1f408917582594b36)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/hypervisor.h | 25 +++++++++++++++----------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/arch/x86/include/asm/hypervisor.h b/arch/x86/include/asm/hypervisor.h
+index 1b0a5abcd8ae..96aa6b9884dc 100644
+--- a/arch/x86/include/asm/hypervisor.h
++++ b/arch/x86/include/asm/hypervisor.h
+@@ -20,16 +20,7 @@
+ #ifndef _ASM_X86_HYPERVISOR_H
+ #define _ASM_X86_HYPERVISOR_H
+ 
+-#ifdef CONFIG_HYPERVISOR_GUEST
+-
+-#include <asm/kvm_para.h>
+-#include <asm/x86_init.h>
+-#include <asm/xen/hypervisor.h>
+-
+-/*
+- * x86 hypervisor information
+- */
+-
++/* x86 hypervisor types  */
+ enum x86_hypervisor_type {
+ 	X86_HYPER_NATIVE = 0,
+ 	X86_HYPER_VMWARE,
+@@ -39,6 +30,12 @@ enum x86_hypervisor_type {
+ 	X86_HYPER_KVM,
+ };
+ 
++#ifdef CONFIG_HYPERVISOR_GUEST
++
++#include <asm/kvm_para.h>
++#include <asm/x86_init.h>
++#include <asm/xen/hypervisor.h>
++
+ struct hypervisor_x86 {
+ 	/* Hypervisor name */
+ 	const char	*name;
+@@ -58,7 +55,15 @@ struct hypervisor_x86 {
+ 
+ extern enum x86_hypervisor_type x86_hyper_type;
+ extern void init_hypervisor_platform(void);
++static inline bool hypervisor_is_type(enum x86_hypervisor_type type)
++{
++	return x86_hyper_type == type;
++}
+ #else
+ static inline void init_hypervisor_platform(void) { }
++static inline bool hypervisor_is_type(enum x86_hypervisor_type type)
++{
++	return type == X86_HYPER_NATIVE;
++}
+ #endif /* CONFIG_HYPERVISOR_GUEST */
+ #endif /* _ASM_X86_HYPERVISOR_H */
+-- 
+2.14.2
+

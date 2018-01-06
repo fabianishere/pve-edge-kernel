@@ -1,0 +1,221 @@
+From d637e8b6db21d282cfb1fd789ae60807cc87c867 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Fri, 13 Oct 2017 14:56:42 -0700
+Subject: [PATCH 066/231] x86/cpuid: Add generic table for CPUID dependencies
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Some CPUID features depend on other features. Currently it's
+possible to to clear dependent features, but not clear the base features,
+which can cause various interesting problems.
+
+This patch implements a generic table to describe dependencies
+between CPUID features, to be used by all code that clears
+CPUID.
+
+Some subsystems (like XSAVE) had an own implementation of this,
+but it's better to do it all in a single place for everyone.
+
+Then clear_cpu_cap and setup_clear_cpu_cap always look up
+this table and clear all dependencies too.
+
+This is intended to be a practical table: only for features
+that make sense to clear. If someone for example clears FPU,
+or other features that are essentially part of the required
+base feature set, not much is going to work. Handling
+that is right now out of scope. We're only handling
+features which can be usefully cleared.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Jonathan McDowell <noodles@earth.li>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Link: http://lkml.kernel.org/r/20171013215645.23166-3-andi@firstfloor.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 0b00de857a648dafe7020878c7a27cf776f5edf4)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 35672522f2fc9a2e116ed1766f190bc08ef5582a)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/cpu/Makefile       |   1 +
+ arch/x86/include/asm/cpufeature.h  |   9 ++-
+ arch/x86/include/asm/cpufeatures.h |   5 ++
+ arch/x86/kernel/cpu/cpuid-deps.c   | 113 +++++++++++++++++++++++++++++++++++++
+ 4 files changed, 123 insertions(+), 5 deletions(-)
+ create mode 100644 arch/x86/kernel/cpu/cpuid-deps.c
+
+diff --git a/arch/x86/kernel/cpu/Makefile b/arch/x86/kernel/cpu/Makefile
+index e17942c131c8..de260fae1017 100644
+--- a/arch/x86/kernel/cpu/Makefile
++++ b/arch/x86/kernel/cpu/Makefile
+@@ -22,6 +22,7 @@ obj-y			+= rdrand.o
+ obj-y			+= match.o
+ obj-y			+= bugs.o
+ obj-$(CONFIG_CPU_FREQ)	+= aperfmperf.o
++obj-y			+= cpuid-deps.o
+ 
+ obj-$(CONFIG_PROC_FS)	+= proc.o
+ obj-$(CONFIG_X86_FEATURE_NAMES) += capflags.o powerflags.o
+diff --git a/arch/x86/include/asm/cpufeature.h b/arch/x86/include/asm/cpufeature.h
+index d59c15c3defd..225fd8374fae 100644
+--- a/arch/x86/include/asm/cpufeature.h
++++ b/arch/x86/include/asm/cpufeature.h
+@@ -125,11 +125,10 @@ extern const char * const x86_bug_flags[NBUGINTS*32];
+ #define boot_cpu_has(bit)	cpu_has(&boot_cpu_data, bit)
+ 
+ #define set_cpu_cap(c, bit)	set_bit(bit, (unsigned long *)((c)->x86_capability))
+-#define clear_cpu_cap(c, bit)	clear_bit(bit, (unsigned long *)((c)->x86_capability))
+-#define setup_clear_cpu_cap(bit) do { \
+-	clear_cpu_cap(&boot_cpu_data, bit);	\
+-	set_bit(bit, (unsigned long *)cpu_caps_cleared); \
+-} while (0)
++
++extern void setup_clear_cpu_cap(unsigned int bit);
++extern void clear_cpu_cap(struct cpuinfo_x86 *c, unsigned int bit);
++
+ #define setup_force_cpu_cap(bit) do { \
+ 	set_cpu_cap(&boot_cpu_data, bit);	\
+ 	set_bit(bit, (unsigned long *)cpu_caps_set);	\
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 5a28e8e55e36..f4e145c4b06f 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -21,6 +21,11 @@
+  * this feature bit is not displayed in /proc/cpuinfo at all.
+  */
+ 
++/*
++ * When adding new features here that depend on other features,
++ * please update the table in kernel/cpu/cpuid-deps.c
++ */
++
+ /* Intel-defined CPU features, CPUID level 0x00000001 (edx), word 0 */
+ #define X86_FEATURE_FPU		( 0*32+ 0) /* Onboard FPU */
+ #define X86_FEATURE_VME		( 0*32+ 1) /* Virtual Mode Extensions */
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+new file mode 100644
+index 000000000000..e48eb7313120
+--- /dev/null
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -0,0 +1,113 @@
++/* Declare dependencies between CPUIDs */
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/module.h>
++#include <asm/cpufeature.h>
++
++struct cpuid_dep {
++	unsigned int	feature;
++	unsigned int	depends;
++};
++
++/*
++ * Table of CPUID features that depend on others.
++ *
++ * This only includes dependencies that can be usefully disabled, not
++ * features part of the base set (like FPU).
++ *
++ * Note this all is not __init / __initdata because it can be
++ * called from cpu hotplug. It shouldn't do anything in this case,
++ * but it's difficult to tell that to the init reference checker.
++ */
++const static struct cpuid_dep cpuid_deps[] = {
++	{ X86_FEATURE_XSAVEOPT,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_XSAVEC,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_XSAVES,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_AVX,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_PKU,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_MPX,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_XGETBV1,		X86_FEATURE_XSAVE     },
++	{ X86_FEATURE_FXSR_OPT,		X86_FEATURE_FXSR      },
++	{ X86_FEATURE_XMM,		X86_FEATURE_FXSR      },
++	{ X86_FEATURE_XMM2,		X86_FEATURE_XMM       },
++	{ X86_FEATURE_XMM3,		X86_FEATURE_XMM2      },
++	{ X86_FEATURE_XMM4_1,		X86_FEATURE_XMM2      },
++	{ X86_FEATURE_XMM4_2,		X86_FEATURE_XMM2      },
++	{ X86_FEATURE_XMM3,		X86_FEATURE_XMM2      },
++	{ X86_FEATURE_PCLMULQDQ,	X86_FEATURE_XMM2      },
++	{ X86_FEATURE_SSSE3,		X86_FEATURE_XMM2,     },
++	{ X86_FEATURE_F16C,		X86_FEATURE_XMM2,     },
++	{ X86_FEATURE_AES,		X86_FEATURE_XMM2      },
++	{ X86_FEATURE_SHA_NI,		X86_FEATURE_XMM2      },
++	{ X86_FEATURE_FMA,		X86_FEATURE_AVX       },
++	{ X86_FEATURE_AVX2,		X86_FEATURE_AVX,      },
++	{ X86_FEATURE_AVX512F,		X86_FEATURE_AVX,      },
++	{ X86_FEATURE_AVX512IFMA,	X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512PF,		X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512ER,		X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512CD,		X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512DQ,		X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512BW,		X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512VL,		X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512VBMI,	X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512_4VNNIW,	X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512_4FMAPS,	X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_AVX512_VPOPCNTDQ, X86_FEATURE_AVX512F   },
++	{}
++};
++
++static inline void __clear_cpu_cap(struct cpuinfo_x86 *c, unsigned int bit)
++{
++	clear_bit32(bit, c->x86_capability);
++}
++
++static inline void __setup_clear_cpu_cap(unsigned int bit)
++{
++	clear_cpu_cap(&boot_cpu_data, bit);
++	set_bit32(bit, cpu_caps_cleared);
++}
++
++static inline void clear_feature(struct cpuinfo_x86 *c, unsigned int feature)
++{
++	if (!c)
++		__setup_clear_cpu_cap(feature);
++	else
++		__clear_cpu_cap(c, feature);
++}
++
++static void do_clear_cpu_cap(struct cpuinfo_x86 *c, unsigned int feature)
++{
++	bool changed;
++	DECLARE_BITMAP(disable, NCAPINTS * sizeof(u32) * 8);
++	const struct cpuid_dep *d;
++
++	clear_feature(c, feature);
++
++	/* Collect all features to disable, handling dependencies */
++	memset(disable, 0, sizeof(disable));
++	__set_bit(feature, disable);
++
++	/* Loop until we get a stable state. */
++	do {
++		changed = false;
++		for (d = cpuid_deps; d->feature; d++) {
++			if (!test_bit(d->depends, disable))
++				continue;
++			if (__test_and_set_bit(d->feature, disable))
++				continue;
++
++			changed = true;
++			clear_feature(c, d->feature);
++		}
++	} while (changed);
++}
++
++void clear_cpu_cap(struct cpuinfo_x86 *c, unsigned int feature)
++{
++	do_clear_cpu_cap(c, feature);
++}
++
++void setup_clear_cpu_cap(unsigned int feature)
++{
++	do_clear_cpu_cap(NULL, feature);
++}
+-- 
+2.14.2
+

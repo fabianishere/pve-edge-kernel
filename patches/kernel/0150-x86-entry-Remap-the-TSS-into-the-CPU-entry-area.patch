@@ -1,0 +1,286 @@
+From 4fed46b725eeb81ae0c3aa55167eccb7d9bfae85 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:20 +0100
+Subject: [PATCH 150/231] x86/entry: Remap the TSS into the CPU entry area
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+This has a secondary purpose: it puts the entry stack into a region
+with a well-controlled layout.  A subsequent patch will take
+advantage of this to streamline the SYSCALL entry code to be able to
+find it more easily.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bpetkov@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150605.962042855@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 72f5e08dbba2d01aa90b592cf76c378ea233b00b)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 475b37e78defbc4cb91d54e2bcf18aa75611bb3a)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/fixmap.h |  7 +++++++
+ arch/x86/kernel/asm-offsets.c |  3 +++
+ arch/x86/kernel/cpu/common.c  | 41 +++++++++++++++++++++++++++++++++++------
+ arch/x86/kernel/dumpstack.c   |  3 ++-
+ arch/x86/kvm/vmx.c            |  2 +-
+ arch/x86/power/cpu.c          | 11 ++++++-----
+ arch/x86/entry/entry_32.S     |  6 ++++--
+ 7 files changed, 58 insertions(+), 15 deletions(-)
+
+diff --git a/arch/x86/include/asm/fixmap.h b/arch/x86/include/asm/fixmap.h
+index 8c6ed66fe957..c92fc30e6def 100644
+--- a/arch/x86/include/asm/fixmap.h
++++ b/arch/x86/include/asm/fixmap.h
+@@ -54,6 +54,13 @@ extern unsigned long __FIXADDR_TOP;
+  */
+ struct cpu_entry_area {
+ 	char gdt[PAGE_SIZE];
++
++	/*
++	 * The GDT is just below cpu_tss and thus serves (on x86_64) as a
++	 * a read-only guard page for the SYSENTER stack at the bottom
++	 * of the TSS region.
++	 */
++	struct tss_struct tss;
+ };
+ 
+ #define CPU_ENTRY_AREA_PAGES (sizeof(struct cpu_entry_area) / PAGE_SIZE)
+diff --git a/arch/x86/kernel/asm-offsets.c b/arch/x86/kernel/asm-offsets.c
+index 031bd35bd911..f765c3253ec3 100644
+--- a/arch/x86/kernel/asm-offsets.c
++++ b/arch/x86/kernel/asm-offsets.c
+@@ -97,4 +97,7 @@ void common(void) {
+ 	OFFSET(CPU_TSS_SYSENTER_stack, tss_struct, SYSENTER_stack);
+ 	/* Size of SYSENTER_stack */
+ 	DEFINE(SIZEOF_SYSENTER_stack, sizeof(((struct tss_struct *)0)->SYSENTER_stack));
++
++	/* Layout info for cpu_entry_area */
++	OFFSET(CPU_ENTRY_AREA_tss, cpu_entry_area, tss);
+ }
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index e61eff11f562..4a38de4c6ede 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -466,6 +466,22 @@ void load_percpu_segment(int cpu)
+ 	load_stack_canary_segment();
+ }
+ 
++static void set_percpu_fixmap_pages(int fixmap_index, void *ptr,
++				    int pages, pgprot_t prot)
++{
++	int i;
++
++	for (i = 0; i < pages; i++) {
++		__set_fixmap(fixmap_index - i,
++			     per_cpu_ptr_to_phys(ptr + i * PAGE_SIZE), prot);
++	}
++}
++
++#ifdef CONFIG_X86_32
++/* The 32-bit entry code needs to find cpu_entry_area. */
++DEFINE_PER_CPU(struct cpu_entry_area *, cpu_entry_area);
++#endif
++
+ /* Setup the fixmap mappings only once per-processor */
+ static inline void setup_cpu_entry_area(int cpu)
+ {
+@@ -507,7 +523,15 @@ static inline void setup_cpu_entry_area(int cpu)
+ 	 */
+ 	BUILD_BUG_ON((offsetof(struct tss_struct, x86_tss) ^
+ 		      offsetofend(struct tss_struct, x86_tss)) & PAGE_MASK);
++	BUILD_BUG_ON(sizeof(struct tss_struct) % PAGE_SIZE != 0);
++	set_percpu_fixmap_pages(get_cpu_entry_area_index(cpu, tss),
++				&per_cpu(cpu_tss, cpu),
++				sizeof(struct tss_struct) / PAGE_SIZE,
++				PAGE_KERNEL);
+ 
++#ifdef CONFIG_X86_32
++	this_cpu_write(cpu_entry_area, get_cpu_entry_area(cpu));
++#endif
+ }
+ 
+ /* Load the original GDT from the per-cpu structure */
+@@ -1249,7 +1273,8 @@ void enable_sep_cpu(void)
+ 	wrmsr(MSR_IA32_SYSENTER_CS, tss->x86_tss.ss1, 0);
+ 
+ 	wrmsr(MSR_IA32_SYSENTER_ESP,
+-	      (unsigned long)tss + offsetofend(struct tss_struct, SYSENTER_stack),
++	      (unsigned long)&get_cpu_entry_area(cpu)->tss +
++	      offsetofend(struct tss_struct, SYSENTER_stack),
+ 	      0);
+ 
+ 	wrmsr(MSR_IA32_SYSENTER_EIP, (unsigned long)entry_SYSENTER_32, 0);
+@@ -1371,6 +1396,8 @@ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
+ /* May not be marked __init: used by software suspend */
+ void syscall_init(void)
+ {
++	int cpu = smp_processor_id();
++
+ 	wrmsr(MSR_STAR, 0, (__USER32_CS << 16) | __KERNEL_CS);
+ 	wrmsrl(MSR_LSTAR, (unsigned long)entry_SYSCALL_64);
+ 
+@@ -1384,7 +1411,7 @@ void syscall_init(void)
+ 	 */
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_CS, (u64)__KERNEL_CS);
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_ESP,
+-		    (unsigned long)this_cpu_ptr(&cpu_tss) +
++		    (unsigned long)&get_cpu_entry_area(cpu)->tss +
+ 		    offsetofend(struct tss_struct, SYSENTER_stack));
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_EIP, (u64)entry_SYSENTER_compat);
+ #else
+@@ -1593,11 +1620,13 @@ void cpu_init(void)
+ 	BUG_ON(me->mm);
+ 	enter_lazy_tlb(&init_mm, me);
+ 
++	setup_cpu_entry_area(cpu);
++
+ 	/*
+ 	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
+ 	 * task never enters user mode.
+ 	 */
+-	set_tss_desc(cpu, &t->x86_tss);
++	set_tss_desc(cpu, &get_cpu_entry_area(cpu)->tss.x86_tss);
+ 	load_TR_desc();
+ 
+ 	load_mm_ldt(&init_mm);
+@@ -1610,7 +1639,6 @@ void cpu_init(void)
+ 	if (is_uv_system())
+ 		uv_cpu_init();
+ 
+-	setup_cpu_entry_area(cpu);
+ 	load_fixmap_gdt(cpu);
+ }
+ 
+@@ -1650,11 +1678,13 @@ void cpu_init(void)
+ 	BUG_ON(curr->mm);
+ 	enter_lazy_tlb(&init_mm, curr);
+ 
++	setup_cpu_entry_area(cpu);
++
+ 	/*
+ 	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
+ 	 * task never enters user mode.
+ 	 */
+-	set_tss_desc(cpu, &t->x86_tss);
++	set_tss_desc(cpu, &get_cpu_entry_area(cpu)->tss.x86_tss);
+ 	load_TR_desc();
+ 
+ 	load_mm_ldt(&init_mm);
+@@ -1671,7 +1701,6 @@ void cpu_init(void)
+ 
+ 	fpu__init_cpu();
+ 
+-	setup_cpu_entry_area(cpu);
+ 	load_fixmap_gdt(cpu);
+ }
+ #endif
+diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
+index 0f4b931e1a02..c1f503673f1e 100644
+--- a/arch/x86/kernel/dumpstack.c
++++ b/arch/x86/kernel/dumpstack.c
+@@ -45,7 +45,8 @@ bool in_task_stack(unsigned long *stack, struct task_struct *task,
+ 
+ bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
+ {
+-	struct tss_struct *tss = this_cpu_ptr(&cpu_tss);
++	int cpu = smp_processor_id();
++	struct tss_struct *tss = &get_cpu_entry_area(cpu)->tss;
+ 
+ 	/* Treat the canary as part of the stack for unwinding purposes. */
+ 	void *begin = &tss->SYSENTER_stack_canary;
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index a7c5a47beab7..d61986a36575 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -2280,7 +2280,7 @@ static void vmx_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+ 		 * processors.  See 22.2.4.
+ 		 */
+ 		vmcs_writel(HOST_TR_BASE,
+-			    (unsigned long)this_cpu_ptr(&cpu_tss.x86_tss));
++			    (unsigned long)&get_cpu_entry_area(cpu)->tss.x86_tss);
+ 		vmcs_writel(HOST_GDTR_BASE, (unsigned long)gdt);   /* 22.2.4 */
+ 
+ 		/*
+diff --git a/arch/x86/power/cpu.c b/arch/x86/power/cpu.c
+index 48cd87fc7222..2a717e023c9f 100644
+--- a/arch/x86/power/cpu.c
++++ b/arch/x86/power/cpu.c
+@@ -160,18 +160,19 @@ static void do_fpu_end(void)
+ static void fix_processor_context(void)
+ {
+ 	int cpu = smp_processor_id();
+-	struct tss_struct *t = &per_cpu(cpu_tss, cpu);
+ #ifdef CONFIG_X86_64
+ 	struct desc_struct *desc = get_cpu_gdt_rw(cpu);
+ 	tss_desc tss;
+ #endif
+ 
+ 	/*
+-	 * This just modifies memory; should not be necessary. But... This is
+-	 * necessary, because 386 hardware has concept of busy TSS or some
+-	 * similar stupidity.
++	 * We need to reload TR, which requires that we change the
++	 * GDT entry to indicate "available" first.
++	 *
++	 * XXX: This could probably all be replaced by a call to
++	 * force_reload_TR().
+ 	 */
+-	set_tss_desc(cpu, &t->x86_tss);
++	set_tss_desc(cpu, &get_cpu_entry_area(cpu)->tss.x86_tss);
+ 
+ #ifdef CONFIG_X86_64
+ 	memcpy(&tss, &desc[GDT_ENTRY_TSS], sizeof(tss_desc));
+diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
+index 0092da1c056f..41e0e103f090 100644
+--- a/arch/x86/entry/entry_32.S
++++ b/arch/x86/entry/entry_32.S
+@@ -948,7 +948,8 @@ ENTRY(debug)
+ 	movl	%esp, %eax			# pt_regs pointer
+ 
+ 	/* Are we currently on the SYSENTER stack? */
+-	PER_CPU(cpu_tss + CPU_TSS_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx)
++	movl	PER_CPU_VAR(cpu_entry_area), %ecx
++	addl	$CPU_ENTRY_AREA_tss + CPU_TSS_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
+ 	subl	%eax, %ecx	/* ecx = (end of SYSENTER_stack) - esp */
+ 	cmpl	$SIZEOF_SYSENTER_stack, %ecx
+ 	jb	.Ldebug_from_sysenter_stack
+@@ -991,7 +992,8 @@ ENTRY(nmi)
+ 	movl	%esp, %eax			# pt_regs pointer
+ 
+ 	/* Are we currently on the SYSENTER stack? */
+-	PER_CPU(cpu_tss + CPU_TSS_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx)
++	movl	PER_CPU_VAR(cpu_entry_area), %ecx
++	addl	$CPU_ENTRY_AREA_tss + CPU_TSS_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
+ 	subl	%eax, %ecx	/* ecx = (end of SYSENTER_stack) - esp */
+ 	cmpl	$SIZEOF_SYSENTER_stack, %ecx
+ 	jb	.Lnmi_from_sysenter_stack
+-- 
+2.14.2
+

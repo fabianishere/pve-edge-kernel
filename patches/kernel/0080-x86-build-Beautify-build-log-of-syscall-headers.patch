@@ -1,0 +1,62 @@
+From 183c7a0eddfea6359e977cc5216972b4cc875e0d Mon Sep 17 00:00:00 2001
+From: Masahiro Yamada <yamada.masahiro@socionext.com>
+Date: Fri, 27 Oct 2017 13:11:10 +0900
+Subject: [PATCH 080/231] x86/build: Beautify build log of syscall headers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+This makes the build log look nicer.
+
+Before:
+  SYSTBL  arch/x86/entry/syscalls/../../include/generated/asm/syscalls_32.h
+  SYSHDR  arch/x86/entry/syscalls/../../include/generated/asm/unistd_32_ia32.h
+  SYSHDR  arch/x86/entry/syscalls/../../include/generated/asm/unistd_64_x32.h
+  SYSTBL  arch/x86/entry/syscalls/../../include/generated/asm/syscalls_64.h
+  SYSHDR  arch/x86/entry/syscalls/../../include/generated/uapi/asm/unistd_32.h
+  SYSHDR  arch/x86/entry/syscalls/../../include/generated/uapi/asm/unistd_64.h
+  SYSHDR  arch/x86/entry/syscalls/../../include/generated/uapi/asm/unistd_x32.h
+
+After:
+  SYSTBL  arch/x86/include/generated/asm/syscalls_32.h
+  SYSHDR  arch/x86/include/generated/asm/unistd_32_ia32.h
+  SYSHDR  arch/x86/include/generated/asm/unistd_64_x32.h
+  SYSTBL  arch/x86/include/generated/asm/syscalls_64.h
+  SYSHDR  arch/x86/include/generated/uapi/asm/unistd_32.h
+  SYSHDR  arch/x86/include/generated/uapi/asm/unistd_64.h
+  SYSHDR  arch/x86/include/generated/uapi/asm/unistd_x32.h
+
+Signed-off-by: Masahiro Yamada <yamada.masahiro@socionext.com>
+Acked-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: linux-kbuild@vger.kernel.org
+Link: http://lkml.kernel.org/r/1509077470-2735-1-git-send-email-yamada.masahiro@socionext.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit af8e947079a7dab0480b5d6db6b093fd04b86fc9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d945957924e9b1a469516b4029fd384138c2cb69)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/syscalls/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/entry/syscalls/Makefile b/arch/x86/entry/syscalls/Makefile
+index 57aa59fd140c..e34c7a931994 100644
+--- a/arch/x86/entry/syscalls/Makefile
++++ b/arch/x86/entry/syscalls/Makefile
+@@ -1,5 +1,5 @@
+-out := $(obj)/../../include/generated/asm
+-uapi := $(obj)/../../include/generated/uapi/asm
++out := arch/$(SRCARCH)/include/generated/asm
++uapi := arch/$(SRCARCH)/include/generated/uapi/asm
+ 
+ # Create output directory if not already present
+ _dummy := $(shell [ -d '$(out)' ] || mkdir -p '$(out)') \
+-- 
+2.14.2
+

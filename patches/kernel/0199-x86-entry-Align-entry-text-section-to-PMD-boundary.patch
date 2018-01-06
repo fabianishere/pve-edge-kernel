@@ -1,0 +1,79 @@
+From 1b3d3968bb45b557ce76eaf3edf894aead9e9c03 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 4 Dec 2017 15:07:46 +0100
+Subject: [PATCH 199/231] x86/entry: Align entry text section to PMD boundary
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The (irq)entry text must be visible in the user space page tables. To allow
+simple PMD based sharing, make the entry text PMD aligned.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 2f7412ba9c6af5ab16bdbb4a3fdb1dcd2b4fd3c2)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 3cf72b14b56834882ebe731d5fa84d249c56a188)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/vmlinux.lds.S | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
+index 423aa36f0150..f505d8dbdccf 100644
+--- a/arch/x86/kernel/vmlinux.lds.S
++++ b/arch/x86/kernel/vmlinux.lds.S
+@@ -60,11 +60,17 @@ jiffies_64 = jiffies;
+ 		. = ALIGN(HPAGE_SIZE);				\
+ 		__end_rodata_hpage_align = .;
+ 
++#define ALIGN_ENTRY_TEXT_BEGIN	. = ALIGN(PMD_SIZE);
++#define ALIGN_ENTRY_TEXT_END	. = ALIGN(PMD_SIZE);
++
+ #else
+ 
+ #define X64_ALIGN_RODATA_BEGIN
+ #define X64_ALIGN_RODATA_END
+ 
++#define ALIGN_ENTRY_TEXT_BEGIN
++#define ALIGN_ENTRY_TEXT_END
++
+ #endif
+ 
+ PHDRS {
+@@ -101,8 +107,10 @@ SECTIONS
+ 		CPUIDLE_TEXT
+ 		LOCK_TEXT
+ 		KPROBES_TEXT
++		ALIGN_ENTRY_TEXT_BEGIN
+ 		ENTRY_TEXT
+ 		IRQENTRY_TEXT
++		ALIGN_ENTRY_TEXT_END
+ 		SOFTIRQENTRY_TEXT
+ 		*(.fixup)
+ 		*(.gnu.warning)
+-- 
+2.14.2
+

@@ -1,7 +1,7 @@
 From 0140f5df6cd9e326f3009a16c1b66139b9bb3b45 Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Mon, 6 Nov 2017 13:31:12 +0100
-Subject: [PATCH 13/14] kvm: vmx: Reinstate support for CPUs without virtual
+Subject: [PATCH 013/231] kvm: vmx: Reinstate support for CPUs without virtual
  NMI
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

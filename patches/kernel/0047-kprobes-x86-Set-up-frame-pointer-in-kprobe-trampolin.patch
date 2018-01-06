@@ -1,0 +1,86 @@
+From f2c1440e8f0b728d48ee8ce295f4dfe495949e1f Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Tue, 3 Oct 2017 08:51:43 -0500
+Subject: [PATCH 047/231] kprobes/x86: Set up frame pointer in kprobe
+ trampoline
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Richard Weinberger saw an unwinder warning when running bcc's opensnoop:
+
+  WARNING: kernel stack frame pointer at ffff99ef4076bea0 in opensnoop:2008 has bad value 0000000000000008
+  unwind stack type:0 next_sp:          (null) mask:0x2 graph_idx:0
+  ...
+  ffff99ef4076be88: ffff99ef4076bea0 (0xffff99ef4076bea0)
+  ffff99ef4076be90: ffffffffac442721 (optimized_callback +0x81/0x90)
+  ...
+
+A lockdep stack trace was initiated from inside a kprobe handler, when
+the unwinder noticed a bad frame pointer on the stack.  The bad frame
+pointer is related to the fact that the kprobe optprobe trampoline
+doesn't save the frame pointer before calling into optimized_callback().
+
+Reported-and-tested-by: Richard Weinberger <richard@sigma-star.at>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
+Cc: Ananth N Mavinakayanahalli <ananth@linux.vnet.ibm.com>
+Cc: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
+Cc: David S . Miller <davem@davemloft.net>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/7aef2f8ecd75c2f505ef9b80490412262cf4a44c.1507038547.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit ee213fc72fd67d0988525af501534f4cb924d1e9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 0f7d5518c91335584b16c7bed1c54c10b78ea76a)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/kprobes/common.h | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/kernel/kprobes/common.h b/arch/x86/kernel/kprobes/common.h
+index db2182d63ed0..3fc0f9a794cb 100644
+--- a/arch/x86/kernel/kprobes/common.h
++++ b/arch/x86/kernel/kprobes/common.h
+@@ -3,6 +3,15 @@
+ 
+ /* Kprobes and Optprobes common header */
+ 
++#include <asm/asm.h>
++
++#ifdef CONFIG_FRAME_POINTER
++# define SAVE_RBP_STRING "	push %" _ASM_BP "\n" \
++			 "	mov  %" _ASM_SP ", %" _ASM_BP "\n"
++#else
++# define SAVE_RBP_STRING "	push %" _ASM_BP "\n"
++#endif
++
+ #ifdef CONFIG_X86_64
+ #define SAVE_REGS_STRING			\
+ 	/* Skip cs, ip, orig_ax. */		\
+@@ -17,7 +26,7 @@
+ 	"	pushq %r10\n"			\
+ 	"	pushq %r11\n"			\
+ 	"	pushq %rbx\n"			\
+-	"	pushq %rbp\n"			\
++	SAVE_RBP_STRING				\
+ 	"	pushq %r12\n"			\
+ 	"	pushq %r13\n"			\
+ 	"	pushq %r14\n"			\
+@@ -48,7 +57,7 @@
+ 	"	pushl %es\n"			\
+ 	"	pushl %ds\n"			\
+ 	"	pushl %eax\n"			\
+-	"	pushl %ebp\n"			\
++	SAVE_RBP_STRING				\
+ 	"	pushl %edi\n"			\
+ 	"	pushl %esi\n"			\
+ 	"	pushl %edx\n"			\
+-- 
+2.14.2
+

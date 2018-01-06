@@ -1,0 +1,235 @@
+From 1cb923a3733ac738f0d96fe4738bdf159db86cfd Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Mon, 4 Dec 2017 15:07:37 +0100
+Subject: [PATCH 192/231] x86/mm/pti: Add mapping helper functions
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Add the pagetable helper functions do manage the separate user space page
+tables.
+
+[ tglx: Split out from the big combo kaiser patch. Folded Andys
+	simplification and made it out of line as Boris suggested ]
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: linux-kernel@vger.kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 61e9b3671007a5da8127955a1a3bda7e0d5f42e8)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit fb45c59197f3134db6e223bb4fec0529774c07e1)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/pgtable.h    |  6 ++-
+ arch/x86/include/asm/pgtable_64.h | 92 +++++++++++++++++++++++++++++++++++++++
+ arch/x86/mm/pti.c                 | 41 +++++++++++++++++
+ 3 files changed, 138 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index bb8e9ea7deb4..abbb47c75467 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -894,7 +894,11 @@ static inline int pgd_none(pgd_t pgd)
+  * pgd_offset() returns a (pgd_t *)
+  * pgd_index() is used get the offset into the pgd page's array of pgd_t's;
+  */
+-#define pgd_offset(mm, address) ((mm)->pgd + pgd_index((address)))
++#define pgd_offset_pgd(pgd, address) (pgd + pgd_index((address)))
++/*
++ * a shortcut to get a pgd_t in a given mm
++ */
++#define pgd_offset(mm, address) pgd_offset_pgd((mm)->pgd, (address))
+ /*
+  * a shortcut which implies the use of the kernel's pgd, instead
+  * of a process's
+diff --git a/arch/x86/include/asm/pgtable_64.h b/arch/x86/include/asm/pgtable_64.h
+index 2160c1fee920..1ac15b03cf30 100644
+--- a/arch/x86/include/asm/pgtable_64.h
++++ b/arch/x86/include/asm/pgtable_64.h
+@@ -130,9 +130,97 @@ static inline pud_t native_pudp_get_and_clear(pud_t *xp)
+ #endif
+ }
+ 
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++/*
++ * All top-level PAGE_TABLE_ISOLATION page tables are order-1 pages
++ * (8k-aligned and 8k in size).  The kernel one is at the beginning 4k and
++ * the user one is in the last 4k.  To switch between them, you
++ * just need to flip the 12th bit in their addresses.
++ */
++#define PTI_PGTABLE_SWITCH_BIT	PAGE_SHIFT
++
++/*
++ * This generates better code than the inline assembly in
++ * __set_bit().
++ */
++static inline void *ptr_set_bit(void *ptr, int bit)
++{
++	unsigned long __ptr = (unsigned long)ptr;
++
++	__ptr |= BIT(bit);
++	return (void *)__ptr;
++}
++static inline void *ptr_clear_bit(void *ptr, int bit)
++{
++	unsigned long __ptr = (unsigned long)ptr;
++
++	__ptr &= ~BIT(bit);
++	return (void *)__ptr;
++}
++
++static inline pgd_t *kernel_to_user_pgdp(pgd_t *pgdp)
++{
++	return ptr_set_bit(pgdp, PTI_PGTABLE_SWITCH_BIT);
++}
++
++static inline pgd_t *user_to_kernel_pgdp(pgd_t *pgdp)
++{
++	return ptr_clear_bit(pgdp, PTI_PGTABLE_SWITCH_BIT);
++}
++
++static inline p4d_t *kernel_to_user_p4dp(p4d_t *p4dp)
++{
++	return ptr_set_bit(p4dp, PTI_PGTABLE_SWITCH_BIT);
++}
++
++static inline p4d_t *user_to_kernel_p4dp(p4d_t *p4dp)
++{
++	return ptr_clear_bit(p4dp, PTI_PGTABLE_SWITCH_BIT);
++}
++#endif /* CONFIG_PAGE_TABLE_ISOLATION */
++
++/*
++ * Page table pages are page-aligned.  The lower half of the top
++ * level is used for userspace and the top half for the kernel.
++ *
++ * Returns true for parts of the PGD that map userspace and
++ * false for the parts that map the kernel.
++ */
++static inline bool pgdp_maps_userspace(void *__ptr)
++{
++	unsigned long ptr = (unsigned long)__ptr;
++
++	return (ptr & ~PAGE_MASK) < (PAGE_SIZE / 2);
++}
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++pgd_t __pti_set_user_pgd(pgd_t *pgdp, pgd_t pgd);
++
++/*
++ * Take a PGD location (pgdp) and a pgd value that needs to be set there.
++ * Populates the user and returns the resulting PGD that must be set in
++ * the kernel copy of the page tables.
++ */
++static inline pgd_t pti_set_user_pgd(pgd_t *pgdp, pgd_t pgd)
++{
++	if (!static_cpu_has(X86_FEATURE_PTI))
++		return pgd;
++	return __pti_set_user_pgd(pgdp, pgd);
++}
++#else
++static inline pgd_t pti_set_user_pgd(pgd_t *pgdp, pgd_t pgd)
++{
++	return pgd;
++}
++#endif
++
+ static inline void native_set_p4d(p4d_t *p4dp, p4d_t p4d)
+ {
++#if defined(CONFIG_PAGE_TABLE_ISOLATION) && !defined(CONFIG_X86_5LEVEL)
++	p4dp->pgd = pti_set_user_pgd(&p4dp->pgd, p4d.pgd);
++#else
+ 	*p4dp = p4d;
++#endif
+ }
+ 
+ static inline void native_p4d_clear(p4d_t *p4d)
+@@ -146,7 +234,11 @@ static inline void native_p4d_clear(p4d_t *p4d)
+ 
+ static inline void native_set_pgd(pgd_t *pgdp, pgd_t pgd)
+ {
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++	*pgdp = pti_set_user_pgd(pgdp, pgd);
++#else
+ 	*pgdp = pgd;
++#endif
+ }
+ 
+ static inline void native_pgd_clear(pgd_t *pgd)
+diff --git a/arch/x86/mm/pti.c b/arch/x86/mm/pti.c
+index a13f6b109865..69a983365392 100644
+--- a/arch/x86/mm/pti.c
++++ b/arch/x86/mm/pti.c
+@@ -96,6 +96,47 @@ void __init pti_check_boottime_disable(void)
+ 	setup_force_cpu_cap(X86_FEATURE_PTI);
+ }
+ 
++pgd_t __pti_set_user_pgd(pgd_t *pgdp, pgd_t pgd)
++{
++	/*
++	 * Changes to the high (kernel) portion of the kernelmode page
++	 * tables are not automatically propagated to the usermode tables.
++	 *
++	 * Users should keep in mind that, unlike the kernelmode tables,
++	 * there is no vmalloc_fault equivalent for the usermode tables.
++	 * Top-level entries added to init_mm's usermode pgd after boot
++	 * will not be automatically propagated to other mms.
++	 */
++	if (!pgdp_maps_userspace(pgdp))
++		return pgd;
++
++	/*
++	 * The user page tables get the full PGD, accessible from
++	 * userspace:
++	 */
++	kernel_to_user_pgdp(pgdp)->pgd = pgd.pgd;
++
++	/*
++	 * If this is normal user memory, make it NX in the kernel
++	 * pagetables so that, if we somehow screw up and return to
++	 * usermode with the kernel CR3 loaded, we'll get a page fault
++	 * instead of allowing user code to execute with the wrong CR3.
++	 *
++	 * As exceptions, we don't set NX if:
++	 *  - _PAGE_USER is not set.  This could be an executable
++	 *     EFI runtime mapping or something similar, and the kernel
++	 *     may execute from it
++	 *  - we don't have NX support
++	 *  - we're clearing the PGD (i.e. the new pgd is not present).
++	 */
++	if ((pgd.pgd & (_PAGE_USER|_PAGE_PRESENT)) == (_PAGE_USER|_PAGE_PRESENT) &&
++	    (__supported_pte_mask & _PAGE_NX))
++		pgd.pgd |= _PAGE_NX;
++
++	/* return the copy of the PGD we want the kernel to use: */
++	return pgd;
++}
++
+ /*
+  * Initialize kernel page table isolation
+  */
+-- 
+2.14.2
+

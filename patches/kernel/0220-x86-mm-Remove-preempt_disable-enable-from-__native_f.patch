@@ -1,0 +1,89 @@
+From 5a86516e393d12bb3965342f1f690db319d01241 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Sat, 30 Dec 2017 22:13:54 +0100
+Subject: [PATCH 220/231] x86/mm: Remove preempt_disable/enable() from
+ __native_flush_tlb()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The preempt_disable/enable() pair in __native_flush_tlb() was added in
+commit:
+
+  5cf0791da5c1 ("x86/mm: Disable preemption during CR3 read+write")
+
+... to protect the UP variant of flush_tlb_mm_range().
+
+That preempt_disable/enable() pair should have been added to the UP variant
+of flush_tlb_mm_range() instead.
+
+The UP variant was removed with commit:
+
+  ce4a4e565f52 ("x86/mm: Remove the UP asm/tlbflush.h code, always use the (formerly) SMP code")
+
+... but the preempt_disable/enable() pair stayed around.
+
+The latest change to __native_flush_tlb() in commit:
+
+  6fd166aae78c ("x86/mm: Use/Fix PCID to optimize user/kernel switches")
+
+... added an access to a per CPU variable outside the preempt disabled
+regions, which makes no sense at all. __native_flush_tlb() must always
+be called with at least preemption disabled.
+
+Remove the preempt_disable/enable() pair and add a WARN_ON_ONCE() to catch
+bad callers independent of the smp_processor_id() debugging.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: <stable@vger.kernel.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Dominik Brodowski <linux@dominikbrodowski.net>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linuxfoundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Link: http://lkml.kernel.org/r/20171230211829.679325424@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit decab0888e6e14e11d53cefa85f8b3d3b45ce73c)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit cfcf931c425b60d0092bcb4a4deb1f5d5db0e293)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/tlbflush.h | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index 7a04a1f1ca11..ff6a6d668c32 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -334,15 +334,17 @@ static inline void invalidate_user_asid(u16 asid)
+  */
+ static inline void __native_flush_tlb(void)
+ {
+-	invalidate_user_asid(this_cpu_read(cpu_tlbstate.loaded_mm_asid));
+ 	/*
+-	 * If current->mm == NULL then we borrow a mm which may change
+-	 * during a task switch and therefore we must not be preempted
+-	 * while we write CR3 back:
++	 * Preemption or interrupts must be disabled to protect the access
++	 * to the per CPU variable and to prevent being preempted between
++	 * read_cr3() and write_cr3().
+ 	 */
+-	preempt_disable();
++	WARN_ON_ONCE(preemptible());
++
++	invalidate_user_asid(this_cpu_read(cpu_tlbstate.loaded_mm_asid));
++
++	/* If current->mm == NULL then the read_cr3() "borrows" an mm */
+ 	native_write_cr3(__native_read_cr3());
+-	preempt_enable();
+ }
+ 
+ /*
+-- 
+2.14.2
+

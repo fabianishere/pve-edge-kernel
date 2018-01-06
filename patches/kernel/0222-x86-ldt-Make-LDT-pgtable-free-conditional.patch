@@ -1,0 +1,42 @@
+From 35ef33d8c7a31a246e499588a28717ef0bfa2a91 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Sun, 31 Dec 2017 16:52:15 +0100
+Subject: [PATCH 222/231] x86/ldt: Make LDT pgtable free conditional
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Andy prefers to be paranoid about the pagetable free in the error path of
+write_ldt(). Make it conditional and warn whenever the installment of a
+secondary LDT fails.
+
+Requested-by: Andy Lutomirski <luto@amacapital.net>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+(cherry picked from commit 7f414195b0c3612acd12b4611a5fe75995cf10c7)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 4e23d9d8427c9b2bd10176bd56dfcaca5e0d6b0f)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/ldt.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
+index 9a35b7e541bc..51af781fac85 100644
+--- a/arch/x86/kernel/ldt.c
++++ b/arch/x86/kernel/ldt.c
+@@ -425,7 +425,8 @@ static int write_ldt(void __user *ptr, unsigned long bytecount, int oldmode)
+ 		 * already installed then the PTE page is already
+ 		 * populated. Mop up a half populated page table.
+ 		 */
+-		free_ldt_pgtables(mm);
++		if (!WARN_ON_ONCE(old_ldt))
++			free_ldt_pgtables(mm);
+ 		free_ldt_struct(new_ldt);
+ 		goto out_unlock;
+ 	}
+-- 
+2.14.2
+

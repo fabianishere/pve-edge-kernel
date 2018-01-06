@@ -1,0 +1,168 @@
+From a67ab82a8f60f725b002034dff10f28c7e2ac88e Mon Sep 17 00:00:00 2001
+From: Peter Zijlstra <peterz@infradead.org>
+Date: Tue, 5 Dec 2017 13:34:47 +0100
+Subject: [PATCH 182/231] x86/mm: Create asm/invpcid.h
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Unclutter tlbflush.h a little.
+
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: linux-mm@kvack.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 1a3b0caeb77edeac5ce5fa05e6a61c474c9a9745)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 5af02a8c43ce521f460891f6ba68af69428abe90)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/invpcid.h  | 53 +++++++++++++++++++++++++++++++++++++++++
+ arch/x86/include/asm/tlbflush.h | 49 +------------------------------------
+ 2 files changed, 54 insertions(+), 48 deletions(-)
+ create mode 100644 arch/x86/include/asm/invpcid.h
+
+diff --git a/arch/x86/include/asm/invpcid.h b/arch/x86/include/asm/invpcid.h
+new file mode 100644
+index 000000000000..989cfa86de85
+--- /dev/null
++++ b/arch/x86/include/asm/invpcid.h
+@@ -0,0 +1,53 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _ASM_X86_INVPCID
++#define _ASM_X86_INVPCID
++
++static inline void __invpcid(unsigned long pcid, unsigned long addr,
++			     unsigned long type)
++{
++	struct { u64 d[2]; } desc = { { pcid, addr } };
++
++	/*
++	 * The memory clobber is because the whole point is to invalidate
++	 * stale TLB entries and, especially if we're flushing global
++	 * mappings, we don't want the compiler to reorder any subsequent
++	 * memory accesses before the TLB flush.
++	 *
++	 * The hex opcode is invpcid (%ecx), %eax in 32-bit mode and
++	 * invpcid (%rcx), %rax in long mode.
++	 */
++	asm volatile (".byte 0x66, 0x0f, 0x38, 0x82, 0x01"
++		      : : "m" (desc), "a" (type), "c" (&desc) : "memory");
++}
++
++#define INVPCID_TYPE_INDIV_ADDR		0
++#define INVPCID_TYPE_SINGLE_CTXT	1
++#define INVPCID_TYPE_ALL_INCL_GLOBAL	2
++#define INVPCID_TYPE_ALL_NON_GLOBAL	3
++
++/* Flush all mappings for a given pcid and addr, not including globals. */
++static inline void invpcid_flush_one(unsigned long pcid,
++				     unsigned long addr)
++{
++	__invpcid(pcid, addr, INVPCID_TYPE_INDIV_ADDR);
++}
++
++/* Flush all mappings for a given PCID, not including globals. */
++static inline void invpcid_flush_single_context(unsigned long pcid)
++{
++	__invpcid(pcid, 0, INVPCID_TYPE_SINGLE_CTXT);
++}
++
++/* Flush all mappings, including globals, for all PCIDs. */
++static inline void invpcid_flush_all(void)
++{
++	__invpcid(0, 0, INVPCID_TYPE_ALL_INCL_GLOBAL);
++}
++
++/* Flush all mappings for all PCIDs except globals. */
++static inline void invpcid_flush_all_nonglobals(void)
++{
++	__invpcid(0, 0, INVPCID_TYPE_ALL_NON_GLOBAL);
++}
++
++#endif /* _ASM_X86_INVPCID */
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index ecd634f87e4e..503f87c30c15 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -8,54 +8,7 @@
+ #include <asm/cpufeature.h>
+ #include <asm/special_insns.h>
+ #include <asm/smp.h>
+-
+-static inline void __invpcid(unsigned long pcid, unsigned long addr,
+-			     unsigned long type)
+-{
+-	struct { u64 d[2]; } desc = { { pcid, addr } };
+-
+-	/*
+-	 * The memory clobber is because the whole point is to invalidate
+-	 * stale TLB entries and, especially if we're flushing global
+-	 * mappings, we don't want the compiler to reorder any subsequent
+-	 * memory accesses before the TLB flush.
+-	 *
+-	 * The hex opcode is invpcid (%ecx), %eax in 32-bit mode and
+-	 * invpcid (%rcx), %rax in long mode.
+-	 */
+-	asm volatile (".byte 0x66, 0x0f, 0x38, 0x82, 0x01"
+-		      : : "m" (desc), "a" (type), "c" (&desc) : "memory");
+-}
+-
+-#define INVPCID_TYPE_INDIV_ADDR		0
+-#define INVPCID_TYPE_SINGLE_CTXT	1
+-#define INVPCID_TYPE_ALL_INCL_GLOBAL	2
+-#define INVPCID_TYPE_ALL_NON_GLOBAL	3
+-
+-/* Flush all mappings for a given pcid and addr, not including globals. */
+-static inline void invpcid_flush_one(unsigned long pcid,
+-				     unsigned long addr)
+-{
+-	__invpcid(pcid, addr, INVPCID_TYPE_INDIV_ADDR);
+-}
+-
+-/* Flush all mappings for a given PCID, not including globals. */
+-static inline void invpcid_flush_single_context(unsigned long pcid)
+-{
+-	__invpcid(pcid, 0, INVPCID_TYPE_SINGLE_CTXT);
+-}
+-
+-/* Flush all mappings, including globals, for all PCIDs. */
+-static inline void invpcid_flush_all(void)
+-{
+-	__invpcid(0, 0, INVPCID_TYPE_ALL_INCL_GLOBAL);
+-}
+-
+-/* Flush all mappings for all PCIDs except globals. */
+-static inline void invpcid_flush_all_nonglobals(void)
+-{
+-	__invpcid(0, 0, INVPCID_TYPE_ALL_NON_GLOBAL);
+-}
++#include <asm/invpcid.h>
+ 
+ static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
+ {
+-- 
+2.14.2
+

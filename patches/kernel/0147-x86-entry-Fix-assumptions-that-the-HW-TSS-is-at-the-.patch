@@ -1,0 +1,227 @@
+From 01e4ee94acbd960e302c23481529a5f5323d9969 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:17 +0100
+Subject: [PATCH 147/231] x86/entry: Fix assumptions that the HW TSS is at the
+ beginning of cpu_tss
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+A future patch will move SYSENTER_stack to the beginning of cpu_tss
+to help detect overflow.  Before this can happen, fix several code
+paths that hardcode assumptions about the old layout.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Reviewed-by: Dave Hansen <dave.hansen@intel.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150605.722425540@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(backported from commit 7fb983b4dd569e08564134a850dfd4eb1c63d9b8)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 7123a5de72dc59dea18ce8886e7db726f7259caf)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/desc.h      |  2 +-
+ arch/x86/include/asm/processor.h |  9 +++++++--
+ arch/x86/kernel/cpu/common.c     |  8 ++++----
+ arch/x86/kernel/doublefault.c    | 36 +++++++++++++++++-------------------
+ arch/x86/kvm/vmx.c               |  2 +-
+ arch/x86/power/cpu.c             | 13 +++++++------
+ 6 files changed, 37 insertions(+), 33 deletions(-)
+
+diff --git a/arch/x86/include/asm/desc.h b/arch/x86/include/asm/desc.h
+index 81c9b1e8cae9..b817fe247506 100644
+--- a/arch/x86/include/asm/desc.h
++++ b/arch/x86/include/asm/desc.h
+@@ -190,7 +190,7 @@ static inline void set_tssldt_descriptor(void *d, unsigned long addr,
+ #endif
+ }
+ 
+-static inline void __set_tss_desc(unsigned cpu, unsigned int entry, void *addr)
++static inline void __set_tss_desc(unsigned cpu, unsigned int entry, struct x86_hw_tss *addr)
+ {
+ 	struct desc_struct *d = get_cpu_gdt_rw(cpu);
+ 	tss_desc tss;
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 5225917f9760..78123abdb046 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -161,7 +161,7 @@ extern struct cpuinfo_x86	new_cpu_data;
+ 
+ #include <linux/thread_info.h>
+ 
+-extern struct tss_struct	doublefault_tss;
++extern struct x86_hw_tss	doublefault_tss;
+ extern __u32			cpu_caps_cleared[NCAPINTS];
+ extern __u32			cpu_caps_set[NCAPINTS];
+ 
+@@ -246,6 +246,11 @@ static inline void load_cr3(pgd_t *pgdir)
+ 	write_cr3(__pa(pgdir));
+ }
+ 
++/*
++ * Note that while the legacy 'TSS' name comes from 'Task State Segment',
++ * on modern x86 CPUs the TSS also holds information important to 64-bit mode,
++ * unrelated to the task-switch mechanism:
++ */
+ #ifdef CONFIG_X86_32
+ /* This is the TSS defined by the hardware. */
+ struct x86_hw_tss {
+@@ -316,7 +321,7 @@ struct x86_hw_tss {
+ #define IO_BITMAP_BITS			65536
+ #define IO_BITMAP_BYTES			(IO_BITMAP_BITS/8)
+ #define IO_BITMAP_LONGS			(IO_BITMAP_BYTES/sizeof(long))
+-#define IO_BITMAP_OFFSET		offsetof(struct tss_struct, io_bitmap)
++#define IO_BITMAP_OFFSET		(offsetof(struct tss_struct, io_bitmap) - offsetof(struct tss_struct, x86_tss))
+ #define INVALID_IO_BITMAP_OFFSET	0x8000
+ 
+ struct tss_struct {
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index ffee73ec1af1..e526d82b546c 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -1558,7 +1558,7 @@ void cpu_init(void)
+ 		}
+ 	}
+ 
+-	t->x86_tss.io_bitmap_base = offsetof(struct tss_struct, io_bitmap);
++	t->x86_tss.io_bitmap_base = IO_BITMAP_OFFSET;
+ 
+ 	/*
+ 	 * <= is required because the CPU will access up to
+@@ -1576,7 +1576,7 @@ void cpu_init(void)
+ 	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
+ 	 * task never enters user mode.
+ 	 */
+-	set_tss_desc(cpu, t);
++	set_tss_desc(cpu, &t->x86_tss);
+ 	load_TR_desc();
+ 
+ 	load_mm_ldt(&init_mm);
+@@ -1633,12 +1633,12 @@ void cpu_init(void)
+ 	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
+ 	 * task never enters user mode.
+ 	 */
+-	set_tss_desc(cpu, t);
++	set_tss_desc(cpu, &t->x86_tss);
+ 	load_TR_desc();
+ 
+ 	load_mm_ldt(&init_mm);
+ 
+-	t->x86_tss.io_bitmap_base = offsetof(struct tss_struct, io_bitmap);
++	t->x86_tss.io_bitmap_base = IO_BITMAP_OFFSET;
+ 
+ #ifdef CONFIG_DOUBLEFAULT
+ 	/* Set up doublefault TSS pointer in the GDT */
+diff --git a/arch/x86/kernel/doublefault.c b/arch/x86/kernel/doublefault.c
+index f9c324e08d85..a9fe79d49d39 100644
+--- a/arch/x86/kernel/doublefault.c
++++ b/arch/x86/kernel/doublefault.c
+@@ -49,25 +49,23 @@ static void doublefault_fn(void)
+ 		cpu_relax();
+ }
+ 
+-struct tss_struct doublefault_tss __cacheline_aligned = {
+-	.x86_tss = {
+-		.sp0		= STACK_START,
+-		.ss0		= __KERNEL_DS,
+-		.ldt		= 0,
+-		.io_bitmap_base	= INVALID_IO_BITMAP_OFFSET,
+-
+-		.ip		= (unsigned long) doublefault_fn,
+-		/* 0x2 bit is always set */
+-		.flags		= X86_EFLAGS_SF | 0x2,
+-		.sp		= STACK_START,
+-		.es		= __USER_DS,
+-		.cs		= __KERNEL_CS,
+-		.ss		= __KERNEL_DS,
+-		.ds		= __USER_DS,
+-		.fs		= __KERNEL_PERCPU,
+-
+-		.__cr3		= __pa_nodebug(swapper_pg_dir),
+-	}
++struct x86_hw_tss doublefault_tss __cacheline_aligned = {
++	.sp0		= STACK_START,
++	.ss0		= __KERNEL_DS,
++	.ldt		= 0,
++	.io_bitmap_base	= INVALID_IO_BITMAP_OFFSET,
++
++	.ip		= (unsigned long) doublefault_fn,
++	/* 0x2 bit is always set */
++	.flags		= X86_EFLAGS_SF | 0x2,
++	.sp		= STACK_START,
++	.es		= __USER_DS,
++	.cs		= __KERNEL_CS,
++	.ss		= __KERNEL_DS,
++	.ds		= __USER_DS,
++	.fs		= __KERNEL_PERCPU,
++
++	.__cr3		= __pa_nodebug(swapper_pg_dir),
+ };
+ 
+ /* dummy for do_double_fault() call */
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index dd4996a96c71..a7c5a47beab7 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -2280,7 +2280,7 @@ static void vmx_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+ 		 * processors.  See 22.2.4.
+ 		 */
+ 		vmcs_writel(HOST_TR_BASE,
+-			    (unsigned long)this_cpu_ptr(&cpu_tss));
++			    (unsigned long)this_cpu_ptr(&cpu_tss.x86_tss));
+ 		vmcs_writel(HOST_GDTR_BASE, (unsigned long)gdt);   /* 22.2.4 */
+ 
+ 		/*
+diff --git a/arch/x86/power/cpu.c b/arch/x86/power/cpu.c
+index 78459a6d455a..48cd87fc7222 100644
+--- a/arch/x86/power/cpu.c
++++ b/arch/x86/power/cpu.c
+@@ -165,12 +165,13 @@ static void fix_processor_context(void)
+ 	struct desc_struct *desc = get_cpu_gdt_rw(cpu);
+ 	tss_desc tss;
+ #endif
+-	set_tss_desc(cpu, t);	/*
+-				 * This just modifies memory; should not be
+-				 * necessary. But... This is necessary, because
+-				 * 386 hardware has concept of busy TSS or some
+-				 * similar stupidity.
+-				 */
++
++	/*
++	 * This just modifies memory; should not be necessary. But... This is
++	 * necessary, because 386 hardware has concept of busy TSS or some
++	 * similar stupidity.
++	 */
++	set_tss_desc(cpu, &t->x86_tss);
+ 
+ #ifdef CONFIG_X86_64
+ 	memcpy(&tss, &desc[GDT_ENTRY_TSS], sizeof(tss_desc));
+-- 
+2.14.2
+

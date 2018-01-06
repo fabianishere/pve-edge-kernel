@@ -1,0 +1,117 @@
+From 4a112915e611296f0d196bb6cb2baa99af0e9148 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 2 Nov 2017 00:59:08 -0700
+Subject: [PATCH 096/231] x86/entry/64: De-Xen-ify our NMI code
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Xen PV is fundamentally incompatible with our fancy NMI code: it
+doesn't use IST at all, and Xen entries clobber two stack slots
+below the hardware frame.
+
+Drop Xen PV support from our NMI code entirely.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Acked-by: Juergen Gross <jgross@suse.com>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/bfbe711b5ae03f672f8848999a8eb2711efc7f98.1509609304.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 929bacec21478a72c78e4f29f98fb799bd00105a)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit ffc372909c1701c4fdd2bde7861692573ef381a7)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/entry_64.S | 30 ++++++++++++++++++------------
+ 1 file changed, 18 insertions(+), 12 deletions(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 5a6aba7cf3bd..05501c781c20 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -1253,9 +1253,13 @@ ENTRY(error_exit)
+ 	jmp	retint_user
+ END(error_exit)
+ 
+-/* Runs on exception stack */
++/*
++ * Runs on exception stack.  Xen PV does not go through this path at all,
++ * so we can use real assembly here.
++ */
+ ENTRY(nmi)
+ 	UNWIND_HINT_IRET_REGS
++
+ 	/*
+ 	 * We allow breakpoints in NMIs. If a breakpoint occurs, then
+ 	 * the iretq it performs will take us out of NMI context.
+@@ -1313,7 +1317,7 @@ ENTRY(nmi)
+ 	 * stacks lest we corrupt the "NMI executing" variable.
+ 	 */
+ 
+-	SWAPGS_UNSAFE_STACK
++	swapgs
+ 	cld
+ 	movq	%rsp, %rdx
+ 	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
+@@ -1478,7 +1482,7 @@ nested_nmi_out:
+ 	popq	%rdx
+ 
+ 	/* We are returning to kernel mode, so this cannot result in a fault. */
+-	INTERRUPT_RETURN
++	iretq
+ 
+ first_nmi:
+ 	/* Restore rdx. */
+@@ -1509,7 +1513,7 @@ first_nmi:
+ 	pushfq			/* RFLAGS */
+ 	pushq	$__KERNEL_CS	/* CS */
+ 	pushq	$1f		/* RIP */
+-	INTERRUPT_RETURN	/* continues at repeat_nmi below */
++	iretq			/* continues at repeat_nmi below */
+ 	UNWIND_HINT_IRET_REGS
+ 1:
+ #endif
+@@ -1584,20 +1588,22 @@ nmi_restore:
+ 	/*
+ 	 * Clear "NMI executing".  Set DF first so that we can easily
+ 	 * distinguish the remaining code between here and IRET from
+-	 * the SYSCALL entry and exit paths.  On a native kernel, we
+-	 * could just inspect RIP, but, on paravirt kernels,
+-	 * INTERRUPT_RETURN can translate into a jump into a
+-	 * hypercall page.
++	 * the SYSCALL entry and exit paths.
++	 *
++	 * We arguably should just inspect RIP instead, but I (Andy) wrote
++	 * this code when I had the misapprehension that Xen PV supported
++	 * NMIs, and Xen PV would break that approach.
+ 	 */
+ 	std
+ 	movq	$0, 5*8(%rsp)		/* clear "NMI executing" */
+ 
+ 	/*
+-	 * INTERRUPT_RETURN reads the "iret" frame and exits the NMI
+-	 * stack in a single instruction.  We are returning to kernel
+-	 * mode, so this cannot result in a fault.
++	 * iretq reads the "iret" frame and exits the NMI stack in a
++	 * single instruction.  We are returning to kernel mode, so this
++	 * cannot result in a fault.  Similarly, we don't need to worry
++	 * about espfix64 on the way back to kernel mode.
+ 	 */
+-	INTERRUPT_RETURN
++	iretq
+ END(nmi)
+ 
+ ENTRY(ignore_sysret)
+-- 
+2.14.2
+

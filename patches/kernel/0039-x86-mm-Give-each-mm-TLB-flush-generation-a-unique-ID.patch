@@ -1,0 +1,182 @@
+From 09fedd9befc7affbfa9490ef3993d60c7d582a6f Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 29 Jun 2017 08:53:15 -0700
+Subject: [PATCH 039/231] x86/mm: Give each mm TLB flush generation a unique ID
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+This adds two new variables to mmu_context_t: ctx_id and tlb_gen.
+ctx_id uniquely identifies the mm_struct and will never be reused.
+For a given mm_struct (and hence ctx_id), tlb_gen is a monotonic
+count of the number of times that a TLB flush has been requested.
+The pair (ctx_id, tlb_gen) can be used as an identifier for TLB
+flush actions and will be used in subsequent patches to reliably
+determine whether all needed TLB flushes have occurred on a given
+CPU.
+
+This patch is split out for ease of review.  By itself, it has no
+real effect other than creating and updating the new variables.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Nadav Amit <nadav.amit@gmail.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Arjan van de Ven <arjan@linux.intel.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: linux-mm@kvack.org
+Link: http://lkml.kernel.org/r/413a91c24dab3ed0caa5f4e4d017d87b0857f920.1498751203.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit f39681ed0f48498b80455095376f11535feea332)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit e566a0dfbb2a5f7ea90dd66ce384740372739e14)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/mmu.h         | 25 +++++++++++++++++++++++--
+ arch/x86/include/asm/mmu_context.h |  6 ++++++
+ arch/x86/include/asm/tlbflush.h    | 18 ++++++++++++++++++
+ arch/x86/mm/tlb.c                  |  6 ++++--
+ 4 files changed, 51 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/include/asm/mmu.h b/arch/x86/include/asm/mmu.h
+index 79b647a7ebd0..bb8c597c2248 100644
+--- a/arch/x86/include/asm/mmu.h
++++ b/arch/x86/include/asm/mmu.h
+@@ -3,12 +3,28 @@
+ 
+ #include <linux/spinlock.h>
+ #include <linux/mutex.h>
++#include <linux/atomic.h>
+ 
+ /*
+- * The x86 doesn't have a mmu context, but
+- * we put the segment information here.
++ * x86 has arch-specific MMU state beyond what lives in mm_struct.
+  */
+ typedef struct {
++	/*
++	 * ctx_id uniquely identifies this mm_struct.  A ctx_id will never
++	 * be reused, and zero is not a valid ctx_id.
++	 */
++	u64 ctx_id;
++
++	/*
++	 * Any code that needs to do any sort of TLB flushing for this
++	 * mm will first make its changes to the page tables, then
++	 * increment tlb_gen, then flush.  This lets the low-level
++	 * flushing code keep track of what needs flushing.
++	 *
++	 * This is not used on Xen PV.
++	 */
++	atomic64_t tlb_gen;
++
+ #ifdef CONFIG_MODIFY_LDT_SYSCALL
+ 	struct ldt_struct *ldt;
+ #endif
+@@ -37,6 +53,11 @@ typedef struct {
+ #endif
+ } mm_context_t;
+ 
++#define INIT_MM_CONTEXT(mm)						\
++	.context = {							\
++		.ctx_id = 1,						\
++	}
++
+ void leave_mm(int cpu);
+ 
+ #endif /* _ASM_X86_MMU_H */
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 7a234be7e298..6c05679c715b 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -12,6 +12,9 @@
+ #include <asm/tlbflush.h>
+ #include <asm/paravirt.h>
+ #include <asm/mpx.h>
++
++extern atomic64_t last_mm_ctx_id;
++
+ #ifndef CONFIG_PARAVIRT
+ static inline void paravirt_activate_mm(struct mm_struct *prev,
+ 					struct mm_struct *next)
+@@ -132,6 +135,9 @@ static inline void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
+ static inline int init_new_context(struct task_struct *tsk,
+ 				   struct mm_struct *mm)
+ {
++	mm->context.ctx_id = atomic64_inc_return(&last_mm_ctx_id);
++	atomic64_set(&mm->context.tlb_gen, 0);
++
+ 	#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+ 	if (cpu_feature_enabled(X86_FEATURE_OSPKE)) {
+ 		/* pkey 0 is the default and always allocated */
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index 2b3d68093235..f1f2e73b7b77 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -57,6 +57,23 @@ static inline void invpcid_flush_all_nonglobals(void)
+ 	__invpcid(0, 0, INVPCID_TYPE_ALL_NON_GLOBAL);
+ }
+ 
++static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
++{
++	u64 new_tlb_gen;
++
++	/*
++	 * Bump the generation count.  This also serves as a full barrier
++	 * that synchronizes with switch_mm(): callers are required to order
++	 * their read of mm_cpumask after their writes to the paging
++	 * structures.
++	 */
++	smp_mb__before_atomic();
++	new_tlb_gen = atomic64_inc_return(&mm->context.tlb_gen);
++	smp_mb__after_atomic();
++
++	return new_tlb_gen;
++}
++
+ #ifdef CONFIG_PARAVIRT
+ #include <asm/paravirt.h>
+ #else
+@@ -270,6 +287,7 @@ void native_flush_tlb_others(const struct cpumask *cpumask,
+ static inline void arch_tlbbatch_add_mm(struct arch_tlbflush_unmap_batch *batch,
+ 					struct mm_struct *mm)
+ {
++	inc_mm_tlb_gen(mm);
+ 	cpumask_or(&batch->cpumask, &batch->cpumask, mm_cpumask(mm));
+ }
+ 
+diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
+index 014d07a80053..14f4f8f66aa8 100644
+--- a/arch/x86/mm/tlb.c
++++ b/arch/x86/mm/tlb.c
+@@ -28,6 +28,8 @@
+  *	Implement flush IPI by CALL_FUNCTION_VECTOR, Alex Shi
+  */
+ 
++atomic64_t last_mm_ctx_id = ATOMIC64_INIT(1);
++
+ void leave_mm(int cpu)
+ {
+ 	struct mm_struct *loaded_mm = this_cpu_read(cpu_tlbstate.loaded_mm);
+@@ -250,8 +252,8 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+ 
+ 	cpu = get_cpu();
+ 
+-	/* Synchronize with switch_mm. */
+-	smp_mb();
++	/* This is also a barrier that synchronizes with switch_mm(). */
++	inc_mm_tlb_gen(mm);
+ 
+ 	/* Should we flush just the requested range? */
+ 	if ((end != TLB_FLUSH_ALL) &&
+-- 
+2.14.2
+

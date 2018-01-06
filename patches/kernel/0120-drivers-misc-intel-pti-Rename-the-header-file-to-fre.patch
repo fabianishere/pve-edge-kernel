@@ -1,0 +1,73 @@
+From b46c055fd71f53c0a80cf592805943193438104c Mon Sep 17 00:00:00 2001
+From: Ingo Molnar <mingo@kernel.org>
+Date: Tue, 5 Dec 2017 14:14:47 +0100
+Subject: [PATCH 120/231] drivers/misc/intel/pti: Rename the header file to
+ free up the namespace
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+We'd like to use the 'PTI' acronym for 'Page Table Isolation' - free up the
+namespace by renaming the <linux/pti.h> driver header to <linux/intel-pti.h>.
+
+(Also standardize the header guard name while at it.)
+
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: J Freyensee <james_p_freyensee@linux.intel.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: linux-kernel@vger.kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 1784f9144b143a1e8b19fe94083b040aa559182b)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit fc05996d0900765640d56179acd2f5d052ad33e2)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/{pti.h => intel-pti.h} | 6 +++---
+ drivers/misc/pti.c                   | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+ rename include/linux/{pti.h => intel-pti.h} (94%)
+
+diff --git a/include/linux/pti.h b/include/linux/intel-pti.h
+similarity index 94%
+rename from include/linux/pti.h
+rename to include/linux/intel-pti.h
+index b3ea01a3197e..2710d72de3c9 100644
+--- a/include/linux/pti.h
++++ b/include/linux/intel-pti.h
+@@ -22,8 +22,8 @@
+  * interface to write out it's contents for debugging a mobile system.
+  */
+ 
+-#ifndef PTI_H_
+-#define PTI_H_
++#ifndef LINUX_INTEL_PTI_H_
++#define LINUX_INTEL_PTI_H_
+ 
+ /* offset for last dword of any PTI message. Part of MIPI P1149.7 */
+ #define PTI_LASTDWORD_DTS	0x30
+@@ -40,4 +40,4 @@ struct pti_masterchannel *pti_request_masterchannel(u8 type,
+ 						    const char *thread_name);
+ void pti_release_masterchannel(struct pti_masterchannel *mc);
+ 
+-#endif /*PTI_H_*/
++#endif /* LINUX_INTEL_PTI_H_ */
+diff --git a/drivers/misc/pti.c b/drivers/misc/pti.c
+index eda38cbe8530..41f2a9f6851d 100644
+--- a/drivers/misc/pti.c
++++ b/drivers/misc/pti.c
+@@ -32,7 +32,7 @@
+ #include <linux/pci.h>
+ #include <linux/mutex.h>
+ #include <linux/miscdevice.h>
+-#include <linux/pti.h>
++#include <linux/intel-pti.h>
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
+ 
+-- 
+2.14.2
+

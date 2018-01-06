@@ -1,0 +1,74 @@
+From 079b59f4b5c810ea51534a8d7bcee4860589b5c1 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Sat, 30 Dec 2017 22:13:53 +0100
+Subject: [PATCH 219/231] x86/smpboot: Remove stale TLB flush invocations
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+smpboot_setup_warm_reset_vector() and smpboot_restore_warm_reset_vector()
+invoke local_flush_tlb() for no obvious reason.
+
+Digging in history revealed that the original code in the 2.1 era added
+those because the code manipulated a swapper_pg_dir pagetable entry. The
+pagetable manipulation was removed long ago in the 2.3 timeframe, but the
+TLB flush invocations stayed around forever.
+
+Remove them along with the pointless pr_debug()s which come from the same 2.1
+change.
+
+Reported-by: Dominik Brodowski <linux@dominikbrodowski.net>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: <stable@vger.kernel.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linuxfoundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Link: http://lkml.kernel.org/r/20171230211829.586548655@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 322f8b8b340c824aef891342b0f5795d15e11562)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit fb08c4a80a22dc79c9775f493e291dfe2c642b86)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/smpboot.c | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
+index 03d2ba2da3b0..6ad8391b9866 100644
+--- a/arch/x86/kernel/smpboot.c
++++ b/arch/x86/kernel/smpboot.c
+@@ -128,25 +128,16 @@ static inline void smpboot_setup_warm_reset_vector(unsigned long start_eip)
+ 	spin_lock_irqsave(&rtc_lock, flags);
+ 	CMOS_WRITE(0xa, 0xf);
+ 	spin_unlock_irqrestore(&rtc_lock, flags);
+-	local_flush_tlb();
+-	pr_debug("1.\n");
+ 	*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_HIGH)) =
+ 							start_eip >> 4;
+-	pr_debug("2.\n");
+ 	*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) =
+ 							start_eip & 0xf;
+-	pr_debug("3.\n");
+ }
+ 
+ static inline void smpboot_restore_warm_reset_vector(void)
+ {
+ 	unsigned long flags;
+ 
+-	/*
+-	 * Install writable page 0 entry to set BIOS data area.
+-	 */
+-	local_flush_tlb();
+-
+ 	/*
+ 	 * Paranoid:  Set warm reset code and vector here back
+ 	 * to default values.
+-- 
+2.14.2
+

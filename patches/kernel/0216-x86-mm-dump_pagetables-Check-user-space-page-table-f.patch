@@ -1,0 +1,139 @@
+From 2ed23a29f6f9c736c86dcc8d8ab87cc670593503 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 4 Dec 2017 15:08:05 +0100
+Subject: [PATCH 216/231] x86/mm/dump_pagetables: Check user space page table
+ for WX pages
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+ptdump_walk_pgd_level_checkwx() checks the kernel page table for WX pages,
+but does not check the PAGE_TABLE_ISOLATION user space page table.
+
+Restructure the code so that dmesg output is selected by an explicit
+argument and not implicit via checking the pgd argument for !NULL.
+
+Add the check for the user space page table.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Cc: linux-mm@kvack.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit b4bf4f924b1d7bade38fd51b2e401d20d0956e4d)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 1adfe82e8fe5afa2fae59efe498c461d5a52cb6c)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/pgtable.h |  1 +
+ arch/x86/mm/debug_pagetables.c |  2 +-
+ arch/x86/mm/dump_pagetables.c  | 30 +++++++++++++++++++++++++-----
+ 3 files changed, 27 insertions(+), 6 deletions(-)
+
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 25604b8a251a..4f5eb81cf8be 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -17,6 +17,7 @@
+ #include <asm/x86_init.h>
+ 
+ void ptdump_walk_pgd_level(struct seq_file *m, pgd_t *pgd);
++void ptdump_walk_pgd_level_debugfs(struct seq_file *m, pgd_t *pgd);
+ void ptdump_walk_pgd_level_checkwx(void);
+ 
+ #ifdef CONFIG_DEBUG_WX
+diff --git a/arch/x86/mm/debug_pagetables.c b/arch/x86/mm/debug_pagetables.c
+index d1449fb6dc7a..8e70c1599e51 100644
+--- a/arch/x86/mm/debug_pagetables.c
++++ b/arch/x86/mm/debug_pagetables.c
+@@ -5,7 +5,7 @@
+ 
+ static int ptdump_show(struct seq_file *m, void *v)
+ {
+-	ptdump_walk_pgd_level(m, NULL);
++	ptdump_walk_pgd_level_debugfs(m, NULL);
+ 	return 0;
+ }
+ 
+diff --git a/arch/x86/mm/dump_pagetables.c b/arch/x86/mm/dump_pagetables.c
+index eed93dd4cb4a..7b022ad37c4e 100644
+--- a/arch/x86/mm/dump_pagetables.c
++++ b/arch/x86/mm/dump_pagetables.c
+@@ -457,7 +457,7 @@ static inline bool is_hypervisor_range(int idx)
+ }
+ 
+ static void ptdump_walk_pgd_level_core(struct seq_file *m, pgd_t *pgd,
+-				       bool checkwx)
++				       bool checkwx, bool dmesg)
+ {
+ #ifdef CONFIG_X86_64
+ 	pgd_t *start = (pgd_t *) &init_top_pgt;
+@@ -470,7 +470,7 @@ static void ptdump_walk_pgd_level_core(struct seq_file *m, pgd_t *pgd,
+ 
+ 	if (pgd) {
+ 		start = pgd;
+-		st.to_dmesg = true;
++		st.to_dmesg = dmesg;
+ 	}
+ 
+ 	st.check_wx = checkwx;
+@@ -508,13 +508,33 @@ static void ptdump_walk_pgd_level_core(struct seq_file *m, pgd_t *pgd,
+ 
+ void ptdump_walk_pgd_level(struct seq_file *m, pgd_t *pgd)
+ {
+-	ptdump_walk_pgd_level_core(m, pgd, false);
++	ptdump_walk_pgd_level_core(m, pgd, false, true);
++}
++
++void ptdump_walk_pgd_level_debugfs(struct seq_file *m, pgd_t *pgd)
++{
++	ptdump_walk_pgd_level_core(m, pgd, false, false);
++}
++EXPORT_SYMBOL_GPL(ptdump_walk_pgd_level_debugfs);
++
++static void ptdump_walk_user_pgd_level_checkwx(void)
++{
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++	pgd_t *pgd = (pgd_t *) &init_top_pgt;
++
++	if (!static_cpu_has(X86_FEATURE_PTI))
++		return;
++
++	pr_info("x86/mm: Checking user space page tables\n");
++	pgd = kernel_to_user_pgdp(pgd);
++	ptdump_walk_pgd_level_core(NULL, pgd, true, false);
++#endif
+ }
+-EXPORT_SYMBOL_GPL(ptdump_walk_pgd_level);
+ 
+ void ptdump_walk_pgd_level_checkwx(void)
+ {
+-	ptdump_walk_pgd_level_core(NULL, NULL, true);
++	ptdump_walk_pgd_level_core(NULL, NULL, true, false);
++	ptdump_walk_user_pgd_level_checkwx();
+ }
+ 
+ static int __init pt_dump_init(void)
+-- 
+2.14.2
+

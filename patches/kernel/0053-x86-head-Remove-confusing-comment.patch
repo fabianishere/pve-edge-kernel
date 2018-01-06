@@ -1,0 +1,54 @@
+From 109bbd8c905806e929b67ca0b2eaf57ff88f10c1 Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Mon, 18 Sep 2017 21:43:31 -0500
+Subject: [PATCH 053/231] x86/head: Remove confusing comment
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+This comment is actively wrong and confusing.  It refers to the
+registers' stack offsets after the pt_regs has been constructed on the
+stack, but this code is *before* that.
+
+At this point the stack just has the standard iret frame, for which no
+comment should be needed.
+
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Jiri Slaby <jslaby@suse.cz>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/a3c267b770fc56c9b86df9c11c552848248aace2.1505764066.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 17270717e80de33a884ad328fea5f407d87f6d6a)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 49187e0108184688304260a75d29b789f36f3a2b)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/head_64.S | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/arch/x86/kernel/head_64.S b/arch/x86/kernel/head_64.S
+index 6225550883df..627c798b2f15 100644
+--- a/arch/x86/kernel/head_64.S
++++ b/arch/x86/kernel/head_64.S
+@@ -254,10 +254,6 @@ bad_address:
+ 
+ 	__INIT
+ ENTRY(early_idt_handler_array)
+-	# 104(%rsp) %rflags
+-	#  96(%rsp) %cs
+-	#  88(%rsp) %rip
+-	#  80(%rsp) error code
+ 	i = 0
+ 	.rept NUM_EXCEPTION_VECTORS
+ 	.ifeq (EXCEPTION_ERRCODE_MASK >> i) & 1
+-- 
+2.14.2
+

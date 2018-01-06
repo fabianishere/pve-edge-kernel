@@ -1,0 +1,75 @@
+From 2b0f4b4c0431f0e68a01a51b889c7935f6920765 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:10 +0100
+Subject: [PATCH 140/231] x86/irq: Remove an old outdated comment about context
+ tracking races
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+That race has been fixed and code cleaned up for a while now.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150605.150551639@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 6669a692605547892a026445e460bf233958bd7f)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 7344db7580965d6f9994b6d7b1a74206d7635565)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/irq.c | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/arch/x86/kernel/irq.c b/arch/x86/kernel/irq.c
+index 4ed0aba8dbc8..a84142a910f3 100644
+--- a/arch/x86/kernel/irq.c
++++ b/arch/x86/kernel/irq.c
+@@ -222,18 +222,6 @@ __visible unsigned int __irq_entry do_IRQ(struct pt_regs *regs)
+ 	/* high bit used in ret_from_ code  */
+ 	unsigned vector = ~regs->orig_ax;
+ 
+-	/*
+-	 * NB: Unlike exception entries, IRQ entries do not reliably
+-	 * handle context tracking in the low-level entry code.  This is
+-	 * because syscall entries execute briefly with IRQs on before
+-	 * updating context tracking state, so we can take an IRQ from
+-	 * kernel mode with CONTEXT_USER.  The low-level entry code only
+-	 * updates the context if we came from user mode, so we won't
+-	 * switch to CONTEXT_KERNEL.  We'll fix that once the syscall
+-	 * code is cleaned up enough that we can cleanly defer enabling
+-	 * IRQs.
+-	 */
+-
+ 	entering_irq();
+ 
+ 	/* entering_irq() tells RCU that we're not quiescent.  Check it. */
+-- 
+2.14.2
+

@@ -1,0 +1,134 @@
+From 6ef121f444bab6ac294e1eda62eb727ee639c6d7 Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Mon, 18 Sep 2017 21:43:37 -0500
+Subject: [PATCH 059/231] x86/head: Add unwind hint annotations
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Jiri Slaby reported an ORC issue when unwinding from an idle task.  The
+stack was:
+
+    ffffffff811083c2 do_idle+0x142/0x1e0
+    ffffffff8110861d cpu_startup_entry+0x5d/0x60
+    ffffffff82715f58 start_kernel+0x3ff/0x407
+    ffffffff827153e8 x86_64_start_kernel+0x14e/0x15d
+    ffffffff810001bf secondary_startup_64+0x9f/0xa0
+
+The ORC unwinder errored out at secondary_startup_64 because the head
+code isn't annotated yet so there wasn't a corresponding ORC entry.
+
+Fix that and any other head-related unwinding issues by adding unwind
+hints to the head code.
+
+Reported-by: Jiri Slaby <jslaby@suse.cz>
+Tested-by: Jiri Slaby <jslaby@suse.cz>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/78ef000a2f68f545d6eef44ee912edceaad82ccf.1505764066.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 2704fbb672d0d9a19414907fda7949283dcef6a1)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit b63a868e404e64172afefea553c6a40963a151db)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/Makefile  |  1 -
+ arch/x86/kernel/head_64.S | 14 ++++++++++++--
+ 2 files changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 287eac7d207f..e2315aecc441 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -26,7 +26,6 @@ KASAN_SANITIZE_dumpstack.o				:= n
+ KASAN_SANITIZE_dumpstack_$(BITS).o			:= n
+ KASAN_SANITIZE_stacktrace.o := n
+ 
+-OBJECT_FILES_NON_STANDARD_head_$(BITS).o		:= y
+ OBJECT_FILES_NON_STANDARD_relocate_kernel_$(BITS).o	:= y
+ OBJECT_FILES_NON_STANDARD_ftrace_$(BITS).o		:= y
+ OBJECT_FILES_NON_STANDARD_test_nx.o			:= y
+diff --git a/arch/x86/kernel/head_64.S b/arch/x86/kernel/head_64.S
+index 45b18b1a6417..d081bc7a027d 100644
+--- a/arch/x86/kernel/head_64.S
++++ b/arch/x86/kernel/head_64.S
+@@ -49,6 +49,7 @@ L3_START_KERNEL = pud_index(__START_KERNEL_map)
+ 	.code64
+ 	.globl startup_64
+ startup_64:
++	UNWIND_HINT_EMPTY
+ 	/*
+ 	 * At this point the CPU runs in 64bit mode CS.L = 1 CS.D = 0,
+ 	 * and someone has loaded an identity mapped page table
+@@ -81,6 +82,7 @@ startup_64:
+ 	movq	$(early_top_pgt - __START_KERNEL_map), %rax
+ 	jmp 1f
+ ENTRY(secondary_startup_64)
++	UNWIND_HINT_EMPTY
+ 	/*
+ 	 * At this point the CPU runs in 64bit mode CS.L = 1 CS.D = 0,
+ 	 * and someone has loaded a mapped page table.
+@@ -116,6 +118,7 @@ ENTRY(secondary_startup_64)
+ 	movq	$1f, %rax
+ 	jmp	*%rax
+ 1:
++	UNWIND_HINT_EMPTY
+ 
+ 	/* Check if nx is implemented */
+ 	movl	$0x80000001, %eax
+@@ -230,6 +233,7 @@ END(secondary_startup_64)
+  */
+ ENTRY(start_cpu0)
+ 	movq	initial_stack(%rip), %rsp
++	UNWIND_HINT_EMPTY
+ 	jmp	.Ljump_to_C_code
+ ENDPROC(start_cpu0)
+ #endif
+@@ -254,13 +258,18 @@ ENTRY(early_idt_handler_array)
+ 	i = 0
+ 	.rept NUM_EXCEPTION_VECTORS
+ 	.ifeq (EXCEPTION_ERRCODE_MASK >> i) & 1
+-	pushq $0		# Dummy error code, to make stack frame uniform
++		UNWIND_HINT_IRET_REGS
++		pushq $0	# Dummy error code, to make stack frame uniform
++	.else
++		UNWIND_HINT_IRET_REGS offset=8
+ 	.endif
+ 	pushq $i		# 72(%rsp) Vector number
+ 	jmp early_idt_handler_common
++	UNWIND_HINT_IRET_REGS
+ 	i = i + 1
+ 	.fill early_idt_handler_array + i*EARLY_IDT_HANDLER_SIZE - ., 1, 0xcc
+ 	.endr
++	UNWIND_HINT_IRET_REGS offset=16
+ END(early_idt_handler_array)
+ 
+ early_idt_handler_common:
+@@ -289,6 +298,7 @@ early_idt_handler_common:
+ 	pushq %r13				/* pt_regs->r13 */
+ 	pushq %r14				/* pt_regs->r14 */
+ 	pushq %r15				/* pt_regs->r15 */
++	UNWIND_HINT_REGS
+ 
+ 	cmpq $14,%rsi		/* Page fault? */
+ 	jnz 10f
+@@ -411,7 +421,7 @@ ENTRY(phys_base)
+ EXPORT_SYMBOL(phys_base)
+ 
+ #include "../../x86/xen/xen-head.S"
+-	
++
+ 	__PAGE_ALIGNED_BSS
+ NEXT_PAGE(empty_zero_page)
+ 	.skip PAGE_SIZE
+-- 
+2.14.2
+

@@ -1,0 +1,56 @@
+From 883f164f2205159613e17e6550c7ff44cef0ff01 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Wed, 20 Dec 2017 18:02:34 +0100
+Subject: [PATCH 163/231] x86/Kconfig: Limit NR_CPUS on 32-bit to a sane amount
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The recent cpu_entry_area changes fail to compile on 32-bit when BIGSMP=y
+and NR_CPUS=512, because the fixmap area becomes too big.
+
+Limit the number of CPUs with BIGSMP to 64, which is already way to big for
+32-bit, but it's at least a working limitation.
+
+We performed a quick survey of 32-bit-only machines that might be affected
+by this change negatively, but found none.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 7bbcbd3d1cdcbacd0f9f8dc4c98d550972f1ca30)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 8ea88ee6f0d058835bfb5685be1ec1beb51177c2)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/Kconfig | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 8b5499bb24bb..51003e53e738 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -923,7 +923,8 @@ config MAXSMP
+ config NR_CPUS
+ 	int "Maximum number of CPUs" if SMP && !MAXSMP
+ 	range 2 8 if SMP && X86_32 && !X86_BIGSMP
+-	range 2 512 if SMP && !MAXSMP && !CPUMASK_OFFSTACK
++	range 2 64 if SMP && X86_32 && X86_BIGSMP
++	range 2 512 if SMP && !MAXSMP && !CPUMASK_OFFSTACK && X86_64
+ 	range 2 8192 if SMP && !MAXSMP && CPUMASK_OFFSTACK && X86_64
+ 	default "1" if !SMP
+ 	default "8192" if MAXSMP
+-- 
+2.14.2
+

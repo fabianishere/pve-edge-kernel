@@ -1,0 +1,235 @@
+From 548bfd4d539c4e13eb86236f8f09596e3663c38b Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:26 +0100
+Subject: [PATCH 156/231] x86/entry/64: Move the IST stacks into struct
+ cpu_entry_area
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The IST stacks are needed when an IST exception occurs and are accessed
+before any kernel code at all runs.  Move them into struct cpu_entry_area.
+
+The IST stacks are unlike the rest of cpu_entry_area: they're used even for
+entries from kernel mode.  This means that they should be set up before we
+load the final IDT.  Move cpu_entry_area setup to trap_init() for the boot
+CPU and set it up for all possible CPUs at once in native_smp_prepare_cpus().
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.480598743@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(backported from commit 40e7f949e0d9a33968ebde5d67f7e3a47c97742a)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 88e7277709f2e7c023e66ff9ae158aeff4cf7c8f)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/fixmap.h | 12 +++++++
+ arch/x86/kernel/cpu/common.c  | 74 ++++++++++++++++++++++++-------------------
+ arch/x86/kernel/traps.c       |  3 ++
+ 3 files changed, 57 insertions(+), 32 deletions(-)
+
+diff --git a/arch/x86/include/asm/fixmap.h b/arch/x86/include/asm/fixmap.h
+index 189d12d8afe0..953aed54cb5e 100644
+--- a/arch/x86/include/asm/fixmap.h
++++ b/arch/x86/include/asm/fixmap.h
+@@ -63,10 +63,22 @@ struct cpu_entry_area {
+ 	struct tss_struct tss;
+ 
+ 	char entry_trampoline[PAGE_SIZE];
++
++#ifdef CONFIG_X86_64
++	/*
++	 * Exception stacks used for IST entries.
++	 *
++	 * In the future, this should have a separate slot for each stack
++	 * with guard pages between them.
++	 */
++	char exception_stacks[(N_EXCEPTION_STACKS - 1) * EXCEPTION_STKSZ + DEBUG_STKSZ];
++#endif
+ };
+ 
+ #define CPU_ENTRY_AREA_PAGES (sizeof(struct cpu_entry_area) / PAGE_SIZE)
+ 
++extern void setup_cpu_entry_areas(void);
++
+ /*
+  * Here we define all the compile-time 'special' virtual
+  * addresses. The point is to have a constant address at
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index c2b2ee73b8a1..f487766855d3 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -466,24 +466,36 @@ void load_percpu_segment(int cpu)
+ 	load_stack_canary_segment();
+ }
+ 
+-static void set_percpu_fixmap_pages(int fixmap_index, void *ptr,
+-				    int pages, pgprot_t prot)
+-{
+-	int i;
+-
+-	for (i = 0; i < pages; i++) {
+-		__set_fixmap(fixmap_index - i,
+-			     per_cpu_ptr_to_phys(ptr + i * PAGE_SIZE), prot);
+-	}
+-}
+-
+ #ifdef CONFIG_X86_32
+ /* The 32-bit entry code needs to find cpu_entry_area. */
+ DEFINE_PER_CPU(struct cpu_entry_area *, cpu_entry_area);
+ #endif
+ 
++#ifdef CONFIG_X86_64
++/*
++ * Special IST stacks which the CPU switches to when it calls
++ * an IST-marked descriptor entry. Up to 7 stacks (hardware
++ * limit), all of them are 4K, except the debug stack which
++ * is 8K.
++ */
++static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
++	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
++	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
++};
++
++static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
++	[(N_EXCEPTION_STACKS - 1) * EXCEPTION_STKSZ + DEBUG_STKSZ]);
++#endif
++
++static void __init
++set_percpu_fixmap_pages(int idx, void *ptr, int pages, pgprot_t prot)
++{
++	for ( ; pages; pages--, idx--, ptr += PAGE_SIZE)
++		__set_fixmap(idx, per_cpu_ptr_to_phys(ptr), prot);
++}
++
+ /* Setup the fixmap mappings only once per-processor */
+-static inline void setup_cpu_entry_area(int cpu)
++static void __init setup_cpu_entry_area(int cpu)
+ {
+ #ifdef CONFIG_X86_64
+ 	extern char _entry_trampoline[];
+@@ -532,15 +544,31 @@ static inline void setup_cpu_entry_area(int cpu)
+ 				PAGE_KERNEL);
+ 
+ #ifdef CONFIG_X86_32
+-	this_cpu_write(cpu_entry_area, get_cpu_entry_area(cpu));
++	per_cpu(cpu_entry_area, cpu) = get_cpu_entry_area(cpu);
+ #endif
+ 
+ #ifdef CONFIG_X86_64
++	BUILD_BUG_ON(sizeof(exception_stacks) % PAGE_SIZE != 0);
++	BUILD_BUG_ON(sizeof(exception_stacks) !=
++		     sizeof(((struct cpu_entry_area *)0)->exception_stacks));
++	set_percpu_fixmap_pages(get_cpu_entry_area_index(cpu, exception_stacks),
++				&per_cpu(exception_stacks, cpu),
++				sizeof(exception_stacks) / PAGE_SIZE,
++				PAGE_KERNEL);
++
+ 	__set_fixmap(get_cpu_entry_area_index(cpu, entry_trampoline),
+ 		     __pa_symbol(_entry_trampoline), PAGE_KERNEL_RX);
+ #endif
+ }
+ 
++void __init setup_cpu_entry_areas(void)
++{
++	unsigned int cpu;
++
++	for_each_possible_cpu(cpu)
++		setup_cpu_entry_area(cpu);
++}
++
+ /* Load the original GDT from the per-cpu structure */
+ void load_direct_gdt(int cpu)
+ {
+@@ -1386,20 +1414,6 @@ DEFINE_PER_CPU(unsigned int, irq_count) __visible = -1;
+ DEFINE_PER_CPU(int, __preempt_count) = INIT_PREEMPT_COUNT;
+ EXPORT_PER_CPU_SYMBOL(__preempt_count);
+ 
+-/*
+- * Special IST stacks which the CPU switches to when it calls
+- * an IST-marked descriptor entry. Up to 7 stacks (hardware
+- * limit), all of them are 4K, except the debug stack which
+- * is 8K.
+- */
+-static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
+-	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
+-	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
+-};
+-
+-static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
+-	[(N_EXCEPTION_STACKS - 1) * EXCEPTION_STKSZ + DEBUG_STKSZ]);
+-
+ /* May not be marked __init: used by software suspend */
+ void syscall_init(void)
+ {
+@@ -1608,7 +1622,7 @@ void cpu_init(void)
+ 	 * set up and load the per-CPU TSS
+ 	 */
+ 	if (!oist->ist[0]) {
+-		char *estacks = per_cpu(exception_stacks, cpu);
++		char *estacks = get_cpu_entry_area(cpu)->exception_stacks;
+ 
+ 		for (v = 0; v < N_EXCEPTION_STACKS; v++) {
+ 			estacks += exception_stack_sizes[v];
+@@ -1633,8 +1647,6 @@ void cpu_init(void)
+ 	BUG_ON(me->mm);
+ 	enter_lazy_tlb(&init_mm, me);
+ 
+-	setup_cpu_entry_area(cpu);
+-
+ 	/*
+ 	 * Initialize the TSS.  sp0 points to the entry trampoline stack
+ 	 * regardless of what task is running.
+@@ -1693,8 +1705,6 @@ void cpu_init(void)
+ 	BUG_ON(curr->mm);
+ 	enter_lazy_tlb(&init_mm, curr);
+ 
+-	setup_cpu_entry_area(cpu);
+-
+ 	/*
+ 	 * Initialize the TSS.  Don't bother initializing sp0, as the initial
+ 	 * task never enters user mode.
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index d9debdafe7a6..fd4d47e8672e 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -992,6 +992,9 @@ void __init trap_init(void)
+ {
+ 	int i;
+ 
++	/* Init cpu_entry_area before IST entries are set up */
++	setup_cpu_entry_areas();
++
+ #ifdef CONFIG_EISA
+ 	void __iomem *p = early_ioremap(0x0FFFD9, 4);
+ 
+-- 
+2.14.2
+

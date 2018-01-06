@@ -1,0 +1,111 @@
+From b153f8e687bf0739b113445d3cfe029593e9484a Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:27 +0100
+Subject: [PATCH 157/231] x86/entry/64: Remove the SYSENTER stack canary
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Now that the SYSENTER stack has a guard page, there's no need for a canary
+to detect overflow after the fact.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.572577316@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 7fbbd5cbebf118a9e09f5453f686656a167c3d1c)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 8158adf795cb48be67891feacacc36d7a247afdf)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/processor.h | 1 -
+ arch/x86/kernel/dumpstack.c      | 3 +--
+ arch/x86/kernel/process.c        | 1 -
+ arch/x86/kernel/traps.c          | 7 -------
+ 4 files changed, 1 insertion(+), 11 deletions(-)
+
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 1bfe4bad797a..4737d378d7b5 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -335,7 +335,6 @@ struct tss_struct {
+ 	 * Space for the temporary SYSENTER stack, used for SYSENTER
+ 	 * and the entry trampoline as well.
+ 	 */
+-	unsigned long		SYSENTER_stack_canary;
+ 	unsigned long		SYSENTER_stack[64];
+ 
+ 	/*
+diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
+index c1f503673f1e..c32c6cce9dcc 100644
+--- a/arch/x86/kernel/dumpstack.c
++++ b/arch/x86/kernel/dumpstack.c
+@@ -48,8 +48,7 @@ bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
+ 	int cpu = smp_processor_id();
+ 	struct tss_struct *tss = &get_cpu_entry_area(cpu)->tss;
+ 
+-	/* Treat the canary as part of the stack for unwinding purposes. */
+-	void *begin = &tss->SYSENTER_stack_canary;
++	void *begin = &tss->SYSENTER_stack;
+ 	void *end = (void *)&tss->SYSENTER_stack + sizeof(tss->SYSENTER_stack);
+ 
+ 	if ((void *)stack < begin || (void *)stack >= end)
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 407fc37a8718..ec758390d24e 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -80,7 +80,6 @@ __visible DEFINE_PER_CPU_SHARED_ALIGNED(struct tss_struct, cpu_tss) = {
+ 	  */
+ 	.io_bitmap		= { [0 ... IO_BITMAP_LONGS] = ~0 },
+ #endif
+-	.SYSENTER_stack_canary	= STACK_END_MAGIC,
+ };
+ EXPORT_PER_CPU_SYMBOL(cpu_tss);
+ 
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index fd4d47e8672e..2818c83892b3 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -826,13 +826,6 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
+ 	debug_stack_usage_dec();
+ 
+ exit:
+-	/*
+-	 * This is the most likely code path that involves non-trivial use
+-	 * of the SYSENTER stack.  Check that we haven't overrun it.
+-	 */
+-	WARN(this_cpu_read(cpu_tss.SYSENTER_stack_canary) != STACK_END_MAGIC,
+-	     "Overran or corrupted SYSENTER stack\n");
+-
+ 	ist_exit(regs);
+ }
+ NOKPROBE_SYMBOL(do_debug);
+-- 
+2.14.2
+

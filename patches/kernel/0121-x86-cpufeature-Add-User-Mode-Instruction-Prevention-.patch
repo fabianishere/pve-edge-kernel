@@ -1,0 +1,88 @@
+From c2c378764103c12f96d1e913c8a2ffe3af3b1360 Mon Sep 17 00:00:00 2001
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Sun, 5 Nov 2017 18:27:51 -0800
+Subject: [PATCH 121/231] x86/cpufeature: Add User-Mode Instruction Prevention
+ definitions
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+[ Note, this is a Git cherry-pick of the following commit: (limited to the cpufeatures.h file)
+
+    3522c2a6a4f3 ("x86/cpufeature: Add User-Mode Instruction Prevention definitions")
+
+  ... for easier x86 PTI code testing and back-porting. ]
+
+User-Mode Instruction Prevention is a security feature present in new
+Intel processors that, when set, prevents the execution of a subset of
+instructions if such instructions are executed in user mode (CPL > 0).
+Attempting to execute such instructions causes a general protection
+exception.
+
+The subset of instructions comprises:
+
+ * SGDT - Store Global Descriptor Table
+ * SIDT - Store Interrupt Descriptor Table
+ * SLDT - Store Local Descriptor Table
+ * SMSW - Store Machine Status Word
+ * STR  - Store Task Register
+
+This feature is also added to the list of disabled-features to allow
+a cleaner handling of build-time configuration.
+
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Chen Yucong <slaoub@gmail.com>
+Cc: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Fenghua Yu <fenghua.yu@intel.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Huang Rui <ray.huang@amd.com>
+Cc: Jiri Slaby <jslaby@suse.cz>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Masami Hiramatsu <mhiramat@kernel.org>
+Cc: Michael S. Tsirkin <mst@redhat.com>
+Cc: Paolo Bonzini <pbonzini@redhat.com>
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ravi V. Shankar <ravi.v.shankar@intel.com>
+Cc: Shuah Khan <shuah@kernel.org>
+Cc: Tony Luck <tony.luck@intel.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: ricardo.neri@intel.com
+Link: http://lkml.kernel.org/r/1509935277-22138-7-git-send-email-ricardo.neri-calderon@linux.intel.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit a8b4db562e7283a1520f9e9730297ecaab7622ea)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 6193ddb9de38665ba45f7f17dd9713baec3673ca)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/cpufeatures.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 6db782ed9cdb..0ea630bb3e74 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -295,6 +295,7 @@
+ 
+ /* Intel-defined CPU features, CPUID level 0x00000007:0 (ECX), word 16 */
+ #define X86_FEATURE_AVX512VBMI		(16*32+ 1) /* AVX512 Vector Bit Manipulation instructions*/
++#define X86_FEATURE_UMIP		(16*32+ 2) /* User Mode Instruction Protection */
+ #define X86_FEATURE_PKU			(16*32+ 3) /* Protection Keys for Userspace */
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
+-- 
+2.14.2
+

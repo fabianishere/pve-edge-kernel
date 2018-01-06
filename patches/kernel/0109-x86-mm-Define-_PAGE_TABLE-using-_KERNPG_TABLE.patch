@@ -1,0 +1,48 @@
+From 19a0f9475a62580729769eb430d5dd38026f0f02 Mon Sep 17 00:00:00 2001
+From: Borislav Petkov <bp@suse.de>
+Date: Fri, 3 Nov 2017 11:20:28 +0100
+Subject: [PATCH 109/231] x86/mm: Define _PAGE_TABLE using _KERNPG_TABLE
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+... so that the difference is obvious.
+
+No functionality change.
+
+Signed-off-by: Borislav Petkov <bp@suse.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/20171103102028.20284-1-bp@alien8.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(backported from commit c7da092a1f243bfd1bfb4124f538e69e941882da)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 8c69b0c03cd24576ac69c36ede00afae76bab464)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/pgtable_types.h | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+index bf9638e1ee42..01f6dc938ccb 100644
+--- a/arch/x86/include/asm/pgtable_types.h
++++ b/arch/x86/include/asm/pgtable_types.h
+@@ -121,10 +121,9 @@
+ 
+ #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
+ 
+-#define _PAGE_TABLE	(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER |	\
+-			 _PAGE_ACCESSED | _PAGE_DIRTY)
+ #define _KERNPG_TABLE	(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED |	\
+ 			 _PAGE_DIRTY)
++#define _PAGE_TABLE	(_KERNPG_TABLE | _PAGE_USER)
+ 
+ /*
+  * Set of bits not changed in pte_modify.  The pte's
+-- 
+2.14.2
+

@@ -1,0 +1,83 @@
+From 95e4ae0f4ad738ff6ec8e44ab9fa5529d4369655 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 29 Jun 2017 08:53:20 -0700
+Subject: [PATCH 015/231] x86/mm: Add the 'nopcid' boot option to turn off PCID
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The parameter is only present on x86_64 systems to save a few bytes,
+as PCID is always disabled on x86_32.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Nadav Amit <nadav.amit@gmail.com>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Arjan van de Ven <arjan@linux.intel.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: linux-mm@kvack.org
+Link: http://lkml.kernel.org/r/8bbb2e65bcd249a5f18bfb8128b4689f08ac2b60.1498751203.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 0790c9aad84901ca1bdc14746175549c8b5da215)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 62d3a63645c17611fe8ccc0c5adc5e840d9cff7b)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ Documentation/admin-guide/kernel-parameters.txt |  2 ++
+ arch/x86/kernel/cpu/common.c                    | 18 ++++++++++++++++++
+ 2 files changed, 20 insertions(+)
+
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index 73fd6abac39b..3510e255ef4c 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -2700,6 +2700,8 @@
+ 	nopat		[X86] Disable PAT (page attribute table extension of
+ 			pagetables) support.
+ 
++	nopcid		[X86-64] Disable the PCID cpu feature.
++
+ 	norandmaps	Don't use address space randomization.  Equivalent to
+ 			echo 0 > /proc/sys/kernel/randomize_va_space
+ 
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index c8b39870f33e..904485e7b230 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -168,6 +168,24 @@ static int __init x86_mpx_setup(char *s)
+ }
+ __setup("nompx", x86_mpx_setup);
+ 
++#ifdef CONFIG_X86_64
++static int __init x86_pcid_setup(char *s)
++{
++	/* require an exact match without trailing characters */
++	if (strlen(s))
++		return 0;
++
++	/* do not emit a message if the feature is not present */
++	if (!boot_cpu_has(X86_FEATURE_PCID))
++		return 1;
++
++	setup_clear_cpu_cap(X86_FEATURE_PCID);
++	pr_info("nopcid: PCID feature disabled\n");
++	return 1;
++}
++__setup("nopcid", x86_pcid_setup);
++#endif
++
+ static int __init x86_noinvpcid_setup(char *s)
+ {
+ 	/* noinvpcid doesn't accept parameters */
+-- 
+2.14.2
+

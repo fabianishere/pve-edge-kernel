@@ -1,0 +1,437 @@
+From e5688fb8c2c243658f3fe754d33c7250c8aed146 Mon Sep 17 00:00:00 2001
+From: Juergen Gross <jgross@suse.com>
+Date: Thu, 31 Aug 2017 19:42:49 +0200
+Subject: [PATCH 029/231] x86/xen: Get rid of paravirt op
+ adjust_exception_frame
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+When running as Xen pv-guest the exception frame on the stack contains
+%r11 and %rcx additional to the other data pushed by the processor.
+
+Instead of having a paravirt op being called for each exception type
+prepend the Xen specific code to each exception entry. When running as
+Xen pv-guest just use the exception entry with prepended instructions,
+otherwise use the entry without the Xen specific code.
+
+[ tglx: Merged through tip to avoid ugly merge conflict ]
+
+Signed-off-by: Juergen Gross <jgross@suse.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: xen-devel@lists.xenproject.org
+Cc: boris.ostrovsky@oracle.com
+Cc: luto@amacapital.net
+Link: http://lkml.kernel.org/r/20170831174249.26853-1-jg@pfupf.net
+(backported from commit 5878d5d6fdef6447d73b0acc121ba445bef37f53)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 9a6fb927deb3ebbe831741ca82081714637181a7)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/paravirt.h       |  5 --
+ arch/x86/include/asm/paravirt_types.h |  3 --
+ arch/x86/include/asm/proto.h          |  3 ++
+ arch/x86/include/asm/traps.h          | 28 ++++++++--
+ arch/x86/xen/xen-ops.h                |  1 -
+ arch/x86/kernel/asm-offsets_64.c      |  1 -
+ arch/x86/kernel/paravirt.c            |  3 --
+ arch/x86/xen/enlighten_pv.c           | 98 +++++++++++++++++++++++------------
+ arch/x86/xen/irq.c                    |  3 --
+ arch/x86/entry/entry_64.S             | 23 ++------
+ arch/x86/entry/entry_64_compat.S      |  1 -
+ arch/x86/xen/xen-asm_64.S             | 41 +++++++++++++--
+ 12 files changed, 133 insertions(+), 77 deletions(-)
+
+diff --git a/arch/x86/include/asm/paravirt.h b/arch/x86/include/asm/paravirt.h
+index 9ccac1926587..c25dd22f7c70 100644
+--- a/arch/x86/include/asm/paravirt.h
++++ b/arch/x86/include/asm/paravirt.h
+@@ -960,11 +960,6 @@ extern void default_banner(void);
+ #define GET_CR2_INTO_RAX				\
+ 	call PARA_INDIRECT(pv_mmu_ops+PV_MMU_read_cr2)
+ 
+-#define PARAVIRT_ADJUST_EXCEPTION_FRAME					\
+-	PARA_SITE(PARA_PATCH(pv_irq_ops, PV_IRQ_adjust_exception_frame), \
+-		  CLBR_NONE,						\
+-		  call PARA_INDIRECT(pv_irq_ops+PV_IRQ_adjust_exception_frame))
+-
+ #define USERGS_SYSRET64							\
+ 	PARA_SITE(PARA_PATCH(pv_cpu_ops, PV_CPU_usergs_sysret64),	\
+ 		  CLBR_NONE,						\
+diff --git a/arch/x86/include/asm/paravirt_types.h b/arch/x86/include/asm/paravirt_types.h
+index 9ffc36bfe4cd..6b64fc6367f2 100644
+--- a/arch/x86/include/asm/paravirt_types.h
++++ b/arch/x86/include/asm/paravirt_types.h
+@@ -196,9 +196,6 @@ struct pv_irq_ops {
+ 	void (*safe_halt)(void);
+ 	void (*halt)(void);
+ 
+-#ifdef CONFIG_X86_64
+-	void (*adjust_exception_frame)(void);
+-#endif
+ } __no_randomize_layout;
+ 
+ struct pv_mmu_ops {
+diff --git a/arch/x86/include/asm/proto.h b/arch/x86/include/asm/proto.h
+index 8d3964fc5f91..b408b1886195 100644
+--- a/arch/x86/include/asm/proto.h
++++ b/arch/x86/include/asm/proto.h
+@@ -24,6 +24,9 @@ void entry_SYSENTER_compat(void);
+ void __end_entry_SYSENTER_compat(void);
+ void entry_SYSCALL_compat(void);
+ void entry_INT80_compat(void);
++#if defined(CONFIG_X86_64) && defined(CONFIG_XEN_PV)
++void xen_entry_INT80_compat(void);
++#endif
+ #endif
+ 
+ void x86_configure_nx(void);
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index b4f322d6c95f..feb89dbe359d 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -13,9 +13,6 @@ asmlinkage void divide_error(void);
+ asmlinkage void debug(void);
+ asmlinkage void nmi(void);
+ asmlinkage void int3(void);
+-asmlinkage void xen_debug(void);
+-asmlinkage void xen_int3(void);
+-asmlinkage void xen_stack_segment(void);
+ asmlinkage void overflow(void);
+ asmlinkage void bounds(void);
+ asmlinkage void invalid_op(void);
+@@ -56,6 +53,31 @@ asmlinkage void simd_coprocessor_error(void);
+ #define trace_page_fault page_fault
+ #endif
+ 
++#if defined(CONFIG_X86_64) && defined(CONFIG_XEN_PV)
++asmlinkage void xen_divide_error(void);
++asmlinkage void xen_xendebug(void);
++asmlinkage void xen_xenint3(void);
++asmlinkage void xen_nmi(void);
++asmlinkage void xen_overflow(void);
++asmlinkage void xen_bounds(void);
++asmlinkage void xen_invalid_op(void);
++asmlinkage void xen_device_not_available(void);
++asmlinkage void xen_double_fault(void);
++asmlinkage void xen_coprocessor_segment_overrun(void);
++asmlinkage void xen_invalid_TSS(void);
++asmlinkage void xen_segment_not_present(void);
++asmlinkage void xen_stack_segment(void);
++asmlinkage void xen_general_protection(void);
++asmlinkage void xen_page_fault(void);
++asmlinkage void xen_spurious_interrupt_bug(void);
++asmlinkage void xen_coprocessor_error(void);
++asmlinkage void xen_alignment_check(void);
++#ifdef CONFIG_X86_MCE
++asmlinkage void xen_machine_check(void);
++#endif /* CONFIG_X86_MCE */
++asmlinkage void xen_simd_coprocessor_error(void);
++#endif
++
+ dotraplinkage void do_divide_error(struct pt_regs *, long);
+ dotraplinkage void do_debug(struct pt_regs *, long);
+ dotraplinkage void do_nmi(struct pt_regs *, long);
+diff --git a/arch/x86/xen/xen-ops.h b/arch/x86/xen/xen-ops.h
+index 70301ac0d414..c8a6d224f7ed 100644
+--- a/arch/x86/xen/xen-ops.h
++++ b/arch/x86/xen/xen-ops.h
+@@ -138,7 +138,6 @@ __visible void xen_restore_fl_direct(unsigned long);
+ __visible void xen_iret(void);
+ __visible void xen_sysret32(void);
+ __visible void xen_sysret64(void);
+-__visible void xen_adjust_exception_frame(void);
+ 
+ extern int xen_panic_handler_init(void);
+ 
+diff --git a/arch/x86/kernel/asm-offsets_64.c b/arch/x86/kernel/asm-offsets_64.c
+index 99332f550c48..cf42206926af 100644
+--- a/arch/x86/kernel/asm-offsets_64.c
++++ b/arch/x86/kernel/asm-offsets_64.c
+@@ -20,7 +20,6 @@ static char syscalls_ia32[] = {
+ int main(void)
+ {
+ #ifdef CONFIG_PARAVIRT
+-	OFFSET(PV_IRQ_adjust_exception_frame, pv_irq_ops, adjust_exception_frame);
+ 	OFFSET(PV_CPU_usergs_sysret64, pv_cpu_ops, usergs_sysret64);
+ 	OFFSET(PV_CPU_swapgs, pv_cpu_ops, swapgs);
+ 	BLANK();
+diff --git a/arch/x86/kernel/paravirt.c b/arch/x86/kernel/paravirt.c
+index bc0a849589bb..a14df9eecfed 100644
+--- a/arch/x86/kernel/paravirt.c
++++ b/arch/x86/kernel/paravirt.c
+@@ -319,9 +319,6 @@ __visible struct pv_irq_ops pv_irq_ops = {
+ 	.irq_enable = __PV_IS_CALLEE_SAVE(native_irq_enable),
+ 	.safe_halt = native_safe_halt,
+ 	.halt = native_halt,
+-#ifdef CONFIG_X86_64
+-	.adjust_exception_frame = paravirt_nop,
+-#endif
+ };
+ 
+ __visible struct pv_cpu_ops pv_cpu_ops = {
+diff --git a/arch/x86/xen/enlighten_pv.c b/arch/x86/xen/enlighten_pv.c
+index c76f5ff4d0d7..ae2a2e2d6362 100644
+--- a/arch/x86/xen/enlighten_pv.c
++++ b/arch/x86/xen/enlighten_pv.c
+@@ -586,6 +586,70 @@ static void xen_write_ldt_entry(struct desc_struct *dt, int entrynum,
+ 	preempt_enable();
+ }
+ 
++#ifdef CONFIG_X86_64
++struct trap_array_entry {
++	void (*orig)(void);
++	void (*xen)(void);
++	bool ist_okay;
++};
++
++static struct trap_array_entry trap_array[] = {
++	{ debug,                       xen_xendebug,                    true },
++	{ int3,                        xen_xenint3,                     true },
++	{ double_fault,                xen_double_fault,                true },
++#ifdef CONFIG_X86_MCE
++	{ machine_check,               xen_machine_check,               true },
++#endif
++	{ nmi,                         xen_nmi,                         true },
++	{ overflow,                    xen_overflow,                    false },
++#ifdef CONFIG_IA32_EMULATION
++	{ entry_INT80_compat,          xen_entry_INT80_compat,          false },
++#endif
++	{ page_fault,                  xen_page_fault,                  false },
++	{ divide_error,                xen_divide_error,                false },
++	{ bounds,                      xen_bounds,                      false },
++	{ invalid_op,                  xen_invalid_op,                  false },
++	{ device_not_available,        xen_device_not_available,        false },
++	{ coprocessor_segment_overrun, xen_coprocessor_segment_overrun, false },
++	{ invalid_TSS,                 xen_invalid_TSS,                 false },
++	{ segment_not_present,         xen_segment_not_present,         false },
++	{ stack_segment,               xen_stack_segment,               false },
++	{ general_protection,          xen_general_protection,          false },
++	{ spurious_interrupt_bug,      xen_spurious_interrupt_bug,      false },
++	{ coprocessor_error,           xen_coprocessor_error,           false },
++	{ alignment_check,             xen_alignment_check,             false },
++	{ simd_coprocessor_error,      xen_simd_coprocessor_error,      false },
++};
++
++static bool get_trap_addr(void **addr, unsigned int ist)
++{
++	unsigned int nr;
++	bool ist_okay = false;
++
++	/*
++	 * Replace trap handler addresses by Xen specific ones.
++	 * Check for known traps using IST and whitelist them.
++	 * The debugger ones are the only ones we care about.
++	 * Xen will handle faults like double_fault, * so we should never see
++	 * them.  Warn if there's an unexpected IST-using fault handler.
++	 */
++	for (nr = 0; nr < ARRAY_SIZE(trap_array); nr++) {
++		struct trap_array_entry *entry = trap_array + nr;
++
++		if (*addr == entry->orig) {
++			*addr = entry->xen;
++			ist_okay = entry->ist_okay;
++			break;
++		}
++	}
++
++	if (WARN_ON(ist != 0 && !ist_okay))
++		return false;
++
++	return true;
++}
++#endif
++
+ static int cvt_gate_to_trap(int vector, const gate_desc *val,
+ 			    struct trap_info *info)
+ {
+@@ -598,40 +662,8 @@ static int cvt_gate_to_trap(int vector, const gate_desc *val,
+ 
+ 	addr = gate_offset(val);
+ #ifdef CONFIG_X86_64
+-	/*
+-	 * Look for known traps using IST, and substitute them
+-	 * appropriately.  The debugger ones are the only ones we care
+-	 * about.  Xen will handle faults like double_fault,
+-	 * so we should never see them.  Warn if
+-	 * there's an unexpected IST-using fault handler.
+-	 */
+-	if (addr == (unsigned long)debug)
+-		addr = (unsigned long)xen_debug;
+-	else if (addr == (unsigned long)int3)
+-		addr = (unsigned long)xen_int3;
+-	else if (addr == (unsigned long)stack_segment)
+-		addr = (unsigned long)xen_stack_segment;
+-	else if (addr == (unsigned long)double_fault) {
+-		/* Don't need to handle these */
++	if (!get_trap_addr((void **)&addr, val->bits.ist))
+ 		return 0;
+-#ifdef CONFIG_X86_MCE
+-	} else if (addr == (unsigned long)machine_check) {
+-		/*
+-		 * when xen hypervisor inject vMCE to guest,
+-		 * use native mce handler to handle it
+-		 */
+-		;
+-#endif
+-	} else if (addr == (unsigned long)nmi)
+-		/*
+-		 * Use the native version as well.
+-		 */
+-		;
+-	else {
+-		/* Some other trap using IST? */
+-		if (WARN_ON(val->bits.ist != 0))
+-			return 0;
+-	}
+ #endif	/* CONFIG_X86_64 */
+ 	info->address = addr;
+ 
+diff --git a/arch/x86/xen/irq.c b/arch/x86/xen/irq.c
+index 33e92955e09d..d4eff5676cfa 100644
+--- a/arch/x86/xen/irq.c
++++ b/arch/x86/xen/irq.c
+@@ -123,9 +123,6 @@ static const struct pv_irq_ops xen_irq_ops __initconst = {
+ 
+ 	.safe_halt = xen_safe_halt,
+ 	.halt = xen_halt,
+-#ifdef CONFIG_X86_64
+-	.adjust_exception_frame = xen_adjust_exception_frame,
+-#endif
+ };
+ 
+ void __init xen_init_irq_ops(void)
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index dfabcbf8e813..c12260ef3e4b 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -829,7 +829,6 @@ ENTRY(\sym)
+ 	.endif
+ 
+ 	ASM_CLAC
+-	PARAVIRT_ADJUST_EXCEPTION_FRAME
+ 
+ 	.ifeq \has_error_code
+ 	pushq	$-1				/* ORIG_RAX: no syscall to restart */
+@@ -975,7 +974,7 @@ ENTRY(do_softirq_own_stack)
+ ENDPROC(do_softirq_own_stack)
+ 
+ #ifdef CONFIG_XEN
+-idtentry xen_hypervisor_callback xen_do_hypervisor_callback has_error_code=0
++idtentry hypervisor_callback xen_do_hypervisor_callback has_error_code=0
+ 
+ /*
+  * A note on the "critical region" in our callback handler.
+@@ -1042,8 +1041,6 @@ ENTRY(xen_failsafe_callback)
+ 	movq	8(%rsp), %r11
+ 	addq	$0x30, %rsp
+ 	pushq	$0				/* RIP */
+-	pushq	%r11
+-	pushq	%rcx
+ 	UNWIND_HINT_IRET_REGS offset=8
+ 	jmp	general_protection
+ 1:	/* Segment mismatch => Category 1 (Bad segment). Retry the IRET. */
+@@ -1074,9 +1071,8 @@ idtentry int3			do_int3			has_error_code=0	paranoid=1 shift_ist=DEBUG_STACK
+ idtentry stack_segment		do_stack_segment	has_error_code=1
+ 
+ #ifdef CONFIG_XEN
+-idtentry xen_debug		do_debug		has_error_code=0
+-idtentry xen_int3		do_int3			has_error_code=0
+-idtentry xen_stack_segment	do_stack_segment	has_error_code=1
++idtentry xendebug		do_debug		has_error_code=0
++idtentry xenint3		do_int3			has_error_code=0
+ #endif
+ 
+ idtentry general_protection	do_general_protection	has_error_code=1
+@@ -1240,20 +1236,9 @@ ENTRY(error_exit)
+ END(error_exit)
+ 
+ /* Runs on exception stack */
++/* XXX: broken on Xen PV */
+ ENTRY(nmi)
+ 	UNWIND_HINT_IRET_REGS
+-	/*
+-	 * Fix up the exception frame if we're on Xen.
+-	 * PARAVIRT_ADJUST_EXCEPTION_FRAME is guaranteed to push at most
+-	 * one value to the stack on native, so it may clobber the rdx
+-	 * scratch slot, but it won't clobber any of the important
+-	 * slots past it.
+-	 *
+-	 * Xen is a different story, because the Xen frame itself overlaps
+-	 * the "NMI executing" variable.
+-	 */
+-	PARAVIRT_ADJUST_EXCEPTION_FRAME
+-
+ 	/*
+ 	 * We allow breakpoints in NMIs. If a breakpoint occurs, then
+ 	 * the iretq it performs will take us out of NMI context.
+diff --git a/arch/x86/entry/entry_64_compat.S b/arch/x86/entry/entry_64_compat.S
+index 5314d7b8e5ad..d8468ba24be0 100644
+--- a/arch/x86/entry/entry_64_compat.S
++++ b/arch/x86/entry/entry_64_compat.S
+@@ -293,7 +293,6 @@ ENTRY(entry_INT80_compat)
+ 	/*
+ 	 * Interrupts are off on entry.
+ 	 */
+-	PARAVIRT_ADJUST_EXCEPTION_FRAME
+ 	ASM_CLAC			/* Do this early to minimize exposure */
+ 	SWAPGS
+ 
+diff --git a/arch/x86/xen/xen-asm_64.S b/arch/x86/xen/xen-asm_64.S
+index 3a3b6a211584..dae2cc33afb5 100644
+--- a/arch/x86/xen/xen-asm_64.S
++++ b/arch/x86/xen/xen-asm_64.S
+@@ -16,11 +16,42 @@
+ 
+ #include <linux/linkage.h>
+ 
+-ENTRY(xen_adjust_exception_frame)
+-	mov 8+0(%rsp), %rcx
+-	mov 8+8(%rsp), %r11
+-	ret $16
+-ENDPROC(xen_adjust_exception_frame)
++.macro xen_pv_trap name
++ENTRY(xen_\name)
++	pop %rcx
++	pop %r11
++	jmp  \name
++END(xen_\name)
++.endm
++
++xen_pv_trap divide_error
++xen_pv_trap debug
++xen_pv_trap xendebug
++xen_pv_trap int3
++xen_pv_trap xenint3
++xen_pv_trap nmi
++xen_pv_trap overflow
++xen_pv_trap bounds
++xen_pv_trap invalid_op
++xen_pv_trap device_not_available
++xen_pv_trap double_fault
++xen_pv_trap coprocessor_segment_overrun
++xen_pv_trap invalid_TSS
++xen_pv_trap segment_not_present
++xen_pv_trap stack_segment
++xen_pv_trap general_protection
++xen_pv_trap page_fault
++xen_pv_trap spurious_interrupt_bug
++xen_pv_trap coprocessor_error
++xen_pv_trap alignment_check
++#ifdef CONFIG_X86_MCE
++xen_pv_trap machine_check
++#endif /* CONFIG_X86_MCE */
++xen_pv_trap simd_coprocessor_error
++#ifdef CONFIG_IA32_EMULATION
++xen_pv_trap entry_INT80_compat
++#endif
++xen_pv_trap hypervisor_callback
+ 
+ hypercall_iret = hypercall_page + __HYPERVISOR_iret * 32
+ /*
+-- 
+2.14.2
+

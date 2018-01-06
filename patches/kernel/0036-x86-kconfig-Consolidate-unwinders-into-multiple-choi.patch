@@ -1,0 +1,171 @@
+From 73cf1dd35105d9cf270caf4a72b400b0a3ab4bb2 Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Tue, 25 Jul 2017 08:54:24 -0500
+Subject: [PATCH 036/231] x86/kconfig: Consolidate unwinders into multiple
+ choice selection
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+There are three mutually exclusive unwinders.  Make that more obvious by
+combining them into a multiple-choice selection:
+
+  CONFIG_FRAME_POINTER_UNWINDER
+  CONFIG_ORC_UNWINDER
+  CONFIG_GUESS_UNWINDER (if CONFIG_EXPERT=y)
+
+Frame pointers are still the default (for now).
+
+The old CONFIG_FRAME_POINTER option is still used in some
+arch-independent places, so keep it around, but make it
+invisible to the user on x86 - it's now selected by
+CONFIG_FRAME_POINTER_UNWINDER=y.
+
+Suggested-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Jiri Slaby <jslaby@suse.cz>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Galbraith <efault@gmx.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: live-patching@vger.kernel.org
+Link: http://lkml.kernel.org/r/20170725135424.zukjmgpz3plf5pmt@treble
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 81d387190039c14edac8de2b3ec789beb899afd9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 26ddacc1e6333555e4a6bd63c4c935b323509f92)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/unwind.h |  4 ++--
+ arch/x86/Kconfig              |  3 +--
+ arch/x86/Kconfig.debug        | 45 +++++++++++++++++++++++++++++++++++++------
+ arch/x86/configs/tiny.config  |  2 ++
+ 4 files changed, 44 insertions(+), 10 deletions(-)
+
+diff --git a/arch/x86/include/asm/unwind.h b/arch/x86/include/asm/unwind.h
+index 25b8d31a007d..e9f793e2df7a 100644
+--- a/arch/x86/include/asm/unwind.h
++++ b/arch/x86/include/asm/unwind.h
+@@ -16,7 +16,7 @@ struct unwind_state {
+ 	bool signal, full_regs;
+ 	unsigned long sp, bp, ip;
+ 	struct pt_regs *regs;
+-#elif defined(CONFIG_FRAME_POINTER)
++#elif defined(CONFIG_FRAME_POINTER_UNWINDER)
+ 	bool got_irq;
+ 	unsigned long *bp, *orig_sp, ip;
+ 	struct pt_regs *regs;
+@@ -50,7 +50,7 @@ void unwind_start(struct unwind_state *state, struct task_struct *task,
+ 	__unwind_start(state, task, regs, first_frame);
+ }
+ 
+-#if defined(CONFIG_ORC_UNWINDER) || defined(CONFIG_FRAME_POINTER)
++#if defined(CONFIG_ORC_UNWINDER) || defined(CONFIG_FRAME_POINTER_UNWINDER)
+ static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state)
+ {
+ 	if (unwind_done(state))
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index d6f45f6d1054..3a0b8cb57caf 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -73,7 +73,6 @@ config X86
+ 	select ARCH_USE_QUEUED_RWLOCKS
+ 	select ARCH_USE_QUEUED_SPINLOCKS
+ 	select ARCH_WANT_BATCHED_UNMAP_TLB_FLUSH
+-	select ARCH_WANT_FRAME_POINTERS
+ 	select ARCH_WANTS_DYNAMIC_TASK_STRUCT
+ 	select ARCH_WANTS_THP_SWAP		if X86_64
+ 	select BUILDTIME_EXTABLE_SORT
+@@ -169,7 +168,7 @@ config X86
+ 	select HAVE_PERF_REGS
+ 	select HAVE_PERF_USER_STACK_DUMP
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
+-	select HAVE_RELIABLE_STACKTRACE		if X86_64 && FRAME_POINTER && STACK_VALIDATION
++	select HAVE_RELIABLE_STACKTRACE		if X86_64 && FRAME_POINTER_UNWINDER && STACK_VALIDATION
+ 	select HAVE_STACK_VALIDATION		if X86_64
+ 	select HAVE_SYSCALL_TRACEPOINTS
+ 	select HAVE_UNSTABLE_SCHED_CLOCK
+diff --git a/arch/x86/Kconfig.debug b/arch/x86/Kconfig.debug
+index d5bca2ec8a74..c441b5d65ec8 100644
+--- a/arch/x86/Kconfig.debug
++++ b/arch/x86/Kconfig.debug
+@@ -356,6 +356,29 @@ config PUNIT_ATOM_DEBUG
+ 	  The current power state can be read from
+ 	  /sys/kernel/debug/punit_atom/dev_power_state
+ 
++choice
++	prompt "Choose kernel unwinder"
++	default FRAME_POINTER_UNWINDER
++	---help---
++	  This determines which method will be used for unwinding kernel stack
++	  traces for panics, oopses, bugs, warnings, perf, /proc/<pid>/stack,
++	  livepatch, lockdep, and more.
++
++config FRAME_POINTER_UNWINDER
++	bool "Frame pointer unwinder"
++	select FRAME_POINTER
++	---help---
++	  This option enables the frame pointer unwinder for unwinding kernel
++	  stack traces.
++
++	  The unwinder itself is fast and it uses less RAM than the ORC
++	  unwinder, but the kernel text size will grow by ~3% and the kernel's
++	  overall performance will degrade by roughly 5-10%.
++
++	  This option is recommended if you want to use the livepatch
++	  consistency model, as this is currently the only way to get a
++	  reliable stack trace (CONFIG_HAVE_RELIABLE_STACKTRACE).
++
+ config ORC_UNWINDER
+ 	bool "ORC unwinder"
+ 	depends on X86_64
+@@ -373,12 +396,22 @@ config ORC_UNWINDER
+ 	  Enabling this option will increase the kernel's runtime memory usage
+ 	  by roughly 2-4MB, depending on your kernel config.
+ 
+-config FRAME_POINTER_UNWINDER
+-	def_bool y
+-	depends on !ORC_UNWINDER && FRAME_POINTER
+-
+ config GUESS_UNWINDER
+-	def_bool y
+-	depends on !ORC_UNWINDER && !FRAME_POINTER
++	bool "Guess unwinder"
++	depends on EXPERT
++	---help---
++	  This option enables the "guess" unwinder for unwinding kernel stack
++	  traces.  It scans the stack and reports every kernel text address it
++	  finds.  Some of the addresses it reports may be incorrect.
++
++	  While this option often produces false positives, it can still be
++	  useful in many cases.  Unlike the other unwinders, it has no runtime
++	  overhead.
++
++endchoice
++
++config FRAME_POINTER
++	depends on !ORC_UNWINDER && !GUESS_UNWINDER
++	bool
+ 
+ endmenu
+diff --git a/arch/x86/configs/tiny.config b/arch/x86/configs/tiny.config
+index 4b429df40d7a..550cd5012b73 100644
+--- a/arch/x86/configs/tiny.config
++++ b/arch/x86/configs/tiny.config
+@@ -1,3 +1,5 @@
+ CONFIG_NOHIGHMEM=y
+ # CONFIG_HIGHMEM4G is not set
+ # CONFIG_HIGHMEM64G is not set
++CONFIG_GUESS_UNWINDER=y
++# CONFIG_FRAME_POINTER_UNWINDER is not set
+-- 
+2.14.2
+

@@ -1,0 +1,237 @@
+From d9fd6653e5dd9d80c7c75065329250529281e02d Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Sun, 10 Sep 2017 17:48:27 -0700
+Subject: [PATCH 032/231] x86/mm/64: Initialize CR4.PCIDE early
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+cpu_init() is weird: it's called rather late (after early
+identification and after most MMU state is initialized) on the boot
+CPU but is called extremely early (before identification) on secondary
+CPUs.  It's called just late enough on the boot CPU that its CR4 value
+isn't propagated to mmu_cr4_features.
+
+Even if we put CR4.PCIDE into mmu_cr4_features, we'd hit two
+problems.  First, we'd crash in the trampoline code.  That's
+fixable, and I tried that.  It turns out that mmu_cr4_features is
+totally ignored by secondary_start_64(), though, so even with the
+trampoline code fixed, it wouldn't help.
+
+This means that we don't currently have CR4.PCIDE reliably initialized
+before we start playing with cpu_tlbstate.  This is very fragile and
+tends to cause boot failures if I make even small changes to the TLB
+handling code.
+
+Make it more robust: initialize CR4.PCIDE earlier on the boot CPU
+and propagate it to secondary CPUs in start_secondary().
+
+( Yes, this is ugly.  I think we should have improved mmu_cr4_features
+  to actually control CR4 during secondary bootup, but that would be
+  fairly intrusive at this stage. )
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reported-by: Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>
+Tested-by: Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org
+Fixes: 660da7c9228f ("x86/mm: Enable CR4.PCIDE on supported systems")
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit c7ad5ad297e644601747d6dbee978bf85e14f7bc)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 0e6a37a43aa876327e7d21881c09977da2d5c270)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/cpu/common.c | 49 +++++++-------------------------------------
+ arch/x86/kernel/setup.c      |  5 ++++-
+ arch/x86/kernel/smpboot.c    |  8 +++++---
+ arch/x86/mm/init.c           | 34 ++++++++++++++++++++++++++++++
+ 4 files changed, 50 insertions(+), 46 deletions(-)
+
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 0b80ed14ff52..4be7b209a3d6 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -169,21 +169,21 @@ static int __init x86_mpx_setup(char *s)
+ __setup("nompx", x86_mpx_setup);
+ 
+ #ifdef CONFIG_X86_64
+-static int __init x86_pcid_setup(char *s)
++static int __init x86_nopcid_setup(char *s)
+ {
+-	/* require an exact match without trailing characters */
+-	if (strlen(s))
+-		return 0;
++	/* nopcid doesn't accept parameters */
++	if (s)
++		return -EINVAL;
+ 
+ 	/* do not emit a message if the feature is not present */
+ 	if (!boot_cpu_has(X86_FEATURE_PCID))
+-		return 1;
++		return 0;
+ 
+ 	setup_clear_cpu_cap(X86_FEATURE_PCID);
+ 	pr_info("nopcid: PCID feature disabled\n");
+-	return 1;
++	return 0;
+ }
+-__setup("nopcid", x86_pcid_setup);
++early_param("nopcid", x86_nopcid_setup);
+ #endif
+ 
+ static int __init x86_noinvpcid_setup(char *s)
+@@ -329,38 +329,6 @@ static __always_inline void setup_smap(struct cpuinfo_x86 *c)
+ 	}
+ }
+ 
+-static void setup_pcid(struct cpuinfo_x86 *c)
+-{
+-	if (cpu_has(c, X86_FEATURE_PCID)) {
+-		if (cpu_has(c, X86_FEATURE_PGE)) {
+-			/*
+-			 * We'd like to use cr4_set_bits_and_update_boot(),
+-			 * but we can't.  CR4.PCIDE is special and can only
+-			 * be set in long mode, and the early CPU init code
+-			 * doesn't know this and would try to restore CR4.PCIDE
+-			 * prior to entering long mode.
+-			 *
+-			 * Instead, we rely on the fact that hotplug, resume,
+-			 * etc all fully restore CR4 before they write anything
+-			 * that could have nonzero PCID bits to CR3.  CR4.PCIDE
+-			 * has no effect on the page tables themselves, so we
+-			 * don't need it to be restored early.
+-			 */
+-			cr4_set_bits(X86_CR4_PCIDE);
+-		} else {
+-			/*
+-			 * flush_tlb_all(), as currently implemented, won't
+-			 * work if PCID is on but PGE is not.  Since that
+-			 * combination doesn't exist on real hardware, there's
+-			 * no reason to try to fully support it, but it's
+-			 * polite to avoid corrupting data if we're on
+-			 * an improperly configured VM.
+-			 */
+-			clear_cpu_cap(c, X86_FEATURE_PCID);
+-		}
+-	}
+-}
+-
+ /*
+  * Protection Keys are not available in 32-bit mode.
+  */
+@@ -1175,9 +1143,6 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+ 	setup_smep(c);
+ 	setup_smap(c);
+ 
+-	/* Set up PCID */
+-	setup_pcid(c);
+-
+ 	/*
+ 	 * The vendor-specific functions might have changed features.
+ 	 * Now we do "generic changes."
+diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
+index d7e8b983aa72..f964bfddfefd 100644
+--- a/arch/x86/kernel/setup.c
++++ b/arch/x86/kernel/setup.c
+@@ -1174,8 +1174,11 @@ void __init setup_arch(char **cmdline_p)
+ 	 * with the current CR4 value.  This may not be necessary, but
+ 	 * auditing all the early-boot CR4 manipulation would be needed to
+ 	 * rule it out.
++	 *
++	 * Mask off features that don't work outside long mode (just
++	 * PCIDE for now).
+ 	 */
+-	mmu_cr4_features = __read_cr4();
++	mmu_cr4_features = __read_cr4() & ~X86_CR4_PCIDE;
+ 
+ 	memblock_set_current_limit(get_max_mapped());
+ 
+diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
+index 893fd8c849e2..d05006f6c31c 100644
+--- a/arch/x86/kernel/smpboot.c
++++ b/arch/x86/kernel/smpboot.c
+@@ -227,10 +227,12 @@ static int enable_start_cpu0;
+ static void notrace start_secondary(void *unused)
+ {
+ 	/*
+-	 * Don't put *anything* before cpu_init(), SMP booting is too
+-	 * fragile that we want to limit the things done here to the
+-	 * most necessary things.
++	 * Don't put *anything* except direct CPU state initialization
++	 * before cpu_init(), SMP booting is too fragile that we want to
++	 * limit the things done here to the most necessary things.
+ 	 */
++	if (boot_cpu_has(X86_FEATURE_PCID))
++		__write_cr4(__read_cr4() | X86_CR4_PCIDE);
+ 	cpu_init();
+ 	x86_cpuinit.early_percpu_clock_init();
+ 	preempt_disable();
+diff --git a/arch/x86/mm/init.c b/arch/x86/mm/init.c
+index bf3f1065d6ad..df2624b091a7 100644
+--- a/arch/x86/mm/init.c
++++ b/arch/x86/mm/init.c
+@@ -19,6 +19,7 @@
+ #include <asm/microcode.h>
+ #include <asm/kaslr.h>
+ #include <asm/hypervisor.h>
++#include <asm/cpufeature.h>
+ 
+ /*
+  * We need to define the tracepoints somewhere, and tlb.c
+@@ -193,6 +194,38 @@ static void __init probe_page_size_mask(void)
+ 	}
+ }
+ 
++static void setup_pcid(void)
++{
++#ifdef CONFIG_X86_64
++	if (boot_cpu_has(X86_FEATURE_PCID)) {
++		if (boot_cpu_has(X86_FEATURE_PGE)) {
++			/*
++			 * This can't be cr4_set_bits_and_update_boot() --
++			 * the trampoline code can't handle CR4.PCIDE and
++			 * it wouldn't do any good anyway.  Despite the name,
++			 * cr4_set_bits_and_update_boot() doesn't actually
++			 * cause the bits in question to remain set all the
++			 * way through the secondary boot asm.
++			 *
++			 * Instead, we brute-force it and set CR4.PCIDE
++			 * manually in start_secondary().
++			 */
++			cr4_set_bits(X86_CR4_PCIDE);
++		} else {
++			/*
++			 * flush_tlb_all(), as currently implemented, won't
++			 * work if PCID is on but PGE is not.  Since that
++			 * combination doesn't exist on real hardware, there's
++			 * no reason to try to fully support it, but it's
++			 * polite to avoid corrupting data if we're on
++			 * an improperly configured VM.
++			 */
++			setup_clear_cpu_cap(X86_FEATURE_PCID);
++		}
++	}
++#endif
++}
++
+ #ifdef CONFIG_X86_32
+ #define NR_RANGE_MR 3
+ #else /* CONFIG_X86_64 */
+@@ -592,6 +625,7 @@ void __init init_mem_mapping(void)
+ 	unsigned long end;
+ 
+ 	probe_page_size_mask();
++	setup_pcid();
+ 
+ #ifdef CONFIG_X86_64
+ 	end = max_pfn << PAGE_SHIFT;
+-- 
+2.14.2
+

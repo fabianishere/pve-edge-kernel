@@ -1,0 +1,77 @@
+From 6be390fe5b1a7e9480e9cf0f85777a8eb205ad08 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Sat, 4 Nov 2017 04:19:48 -0700
+Subject: [PATCH 112/231] selftests/x86/protection_keys: Fix syscall NR
+ redefinition warnings
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+On new enough glibc, the pkey syscalls numbers are available.  Check
+first before defining them to avoid warnings like:
+
+protection_keys.c:198:0: warning: "SYS_pkey_alloc" redefined
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable@vger.kernel.org
+Link: http://lkml.kernel.org/r/1fbef53a9e6befb7165ff855fc1a7d4788a191d6.1509794321.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 693cb5580fdb026922363aa103add64b3ecd572e)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 64c8ec4beb84ca8b0ff3250a8b6044d06be6315b)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ tools/testing/selftests/x86/protection_keys.c | 24 ++++++++++++++++++------
+ 1 file changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/tools/testing/selftests/x86/protection_keys.c b/tools/testing/selftests/x86/protection_keys.c
+index 3237bc010e1c..3c54d5c40952 100644
+--- a/tools/testing/selftests/x86/protection_keys.c
++++ b/tools/testing/selftests/x86/protection_keys.c
+@@ -188,17 +188,29 @@ void lots_o_noops_around_write(int *write_to_me)
+ #define u64 uint64_t
+ 
+ #ifdef __i386__
+-#define SYS_mprotect_key 380
+-#define SYS_pkey_alloc	 381
+-#define SYS_pkey_free	 382
++
++#ifndef SYS_mprotect_key
++# define SYS_mprotect_key 380
++#endif
++#ifndef SYS_pkey_alloc
++# define SYS_pkey_alloc	 381
++# define SYS_pkey_free	 382
++#endif
+ #define REG_IP_IDX REG_EIP
+ #define si_pkey_offset 0x14
++
+ #else
+-#define SYS_mprotect_key 329
+-#define SYS_pkey_alloc	 330
+-#define SYS_pkey_free	 331
++
++#ifndef SYS_mprotect_key
++# define SYS_mprotect_key 329
++#endif
++#ifndef SYS_pkey_alloc
++# define SYS_pkey_alloc	 330
++# define SYS_pkey_free	 331
++#endif
+ #define REG_IP_IDX REG_RIP
+ #define si_pkey_offset 0x20
++
+ #endif
+ 
+ void dump_mem(void *dumpme, int len_bytes)
+-- 
+2.14.2
+

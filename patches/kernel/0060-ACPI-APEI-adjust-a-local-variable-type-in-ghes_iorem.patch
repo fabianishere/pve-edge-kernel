@@ -1,0 +1,43 @@
+From 012bd636105426b93026d594261663e8a728dcc1 Mon Sep 17 00:00:00 2001
+From: Jan Beulich <JBeulich@suse.com>
+Date: Mon, 25 Sep 2017 02:06:19 -0600
+Subject: [PATCH 060/231] ACPI / APEI: adjust a local variable type in
+ ghes_ioremap_pfn_irq()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Match up with what 7edda0886b ("acpi: apei: handle SEA notification
+type for ARMv8") did for ghes_ioremap_pfn_nmi().
+
+Signed-off-by: Jan Beulich <jbeulich@suse.com>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+(cherry picked from commit 095f613c6b386a1704b73a549e9ba66c1d5381ae)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 0a5c092882b0ead111dc3a6bbaa870665b54d796)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/acpi/apei/ghes.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/acpi/apei/ghes.c b/drivers/acpi/apei/ghes.c
+index d661d452b238..3628078ee351 100644
+--- a/drivers/acpi/apei/ghes.c
++++ b/drivers/acpi/apei/ghes.c
+@@ -174,7 +174,8 @@ static void __iomem *ghes_ioremap_pfn_nmi(u64 pfn)
+ 
+ static void __iomem *ghes_ioremap_pfn_irq(u64 pfn)
+ {
+-	unsigned long vaddr, paddr;
++	unsigned long vaddr;
++	phys_addr_t paddr;
+ 	pgprot_t prot;
+ 
+ 	vaddr = (unsigned long)GHES_IOREMAP_IRQ_PAGE(ghes_ioremap_area->addr);
+-- 
+2.14.2
+

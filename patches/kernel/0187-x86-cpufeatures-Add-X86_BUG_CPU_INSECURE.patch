@@ -1,0 +1,120 @@
+From 05be4302d695b8676c90b26abe0495df58602685 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 4 Dec 2017 15:07:33 +0100
+Subject: [PATCH 187/231] x86/cpufeatures: Add X86_BUG_CPU_INSECURE
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Many x86 CPUs leak information to user space due to missing isolation of
+user space and kernel space page tables. There are many well documented
+ways to exploit that.
+
+The upcoming software migitation of isolating the user and kernel space
+page tables needs a misfeature flag so code can be made runtime
+conditional.
+
+Add the BUG bits which indicates that the CPU is affected and add a feature
+bit which indicates that the software migitation is enabled.
+
+Assume for now that _ALL_ x86 CPUs are affected by this. Exceptions can be
+made later.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit a89f040fa34ec9cd682aed98b8f04e3c47d998bd)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 3b0dffb3557f6a1084a2b92ac0cc2d36b5e1f39f)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/cpufeatures.h       | 3 ++-
+ arch/x86/include/asm/disabled-features.h | 8 +++++++-
+ arch/x86/kernel/cpu/common.c             | 4 ++++
+ 3 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index d57a174ec97c..de4e91452de4 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -200,7 +200,7 @@
+ #define X86_FEATURE_HW_PSTATE		( 7*32+ 8) /* AMD HW-PState */
+ #define X86_FEATURE_PROC_FEEDBACK	( 7*32+ 9) /* AMD ProcFeedbackInterface */
+ #define X86_FEATURE_SME			( 7*32+10) /* AMD Secure Memory Encryption */
+-
++#define X86_FEATURE_PTI			( 7*32+11) /* Kernel Page Table Isolation enabled */
+ #define X86_FEATURE_INTEL_PPIN		( 7*32+14) /* Intel Processor Inventory Number */
+ #define X86_FEATURE_INTEL_PT		( 7*32+15) /* Intel Processor Trace */
+ #define X86_FEATURE_AVX512_4VNNIW	( 7*32+16) /* AVX-512 Neural Network Instructions */
+@@ -339,5 +339,6 @@
+ #define X86_BUG_SWAPGS_FENCE		X86_BUG(11) /* SWAPGS without input dep on GS */
+ #define X86_BUG_MONITOR			X86_BUG(12) /* IPI required to wake up remote CPU */
+ #define X86_BUG_AMD_E400		X86_BUG(13) /* CPU is among the affected by Erratum 400 */
++#define X86_BUG_CPU_INSECURE		X86_BUG(14) /* CPU is insecure and needs kernel page table isolation */
+ 
+ #endif /* _ASM_X86_CPUFEATURES_H */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 5dff775af7cd..db681152f024 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -42,6 +42,12 @@
+ # define DISABLE_LA57	(1<<(X86_FEATURE_LA57 & 31))
+ #endif
+ 
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++# define DISABLE_PTI		0
++#else
++# define DISABLE_PTI		(1 << (X86_FEATURE_PTI & 31))
++#endif
++
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -52,7 +58,7 @@
+ #define DISABLED_MASK4	0
+ #define DISABLED_MASK5	0
+ #define DISABLED_MASK6	0
+-#define DISABLED_MASK7	0
++#define DISABLED_MASK7	(DISABLE_PTI)
+ #define DISABLED_MASK8	0
+ #define DISABLED_MASK9	(DISABLE_MPX)
+ #define DISABLED_MASK10	0
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 96171ce46d61..623ba3635793 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -898,6 +898,10 @@ static void __init early_identify_cpu(struct cpuinfo_x86 *c)
+ 	}
+ 
+ 	setup_force_cpu_cap(X86_FEATURE_ALWAYS);
++
++	/* Assume for now that ALL x86 CPUs are insecure */
++	setup_force_cpu_bug(X86_BUG_CPU_INSECURE);
++
+ 	fpu__init_system(c);
+ }
+ 
+-- 
+2.14.2
+

@@ -1,0 +1,103 @@
+From 475d437587dd1de2d6a53f7fbbb9bc88c7700fc3 Mon Sep 17 00:00:00 2001
+From: Mikulas Patocka <mpatocka@redhat.com>
+Date: Sat, 2 Dec 2017 16:17:44 -0600
+Subject: [PATCH 133/231] objtool: Fix 64-bit build on 32-bit host
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The new ORC unwinder breaks the build of a 64-bit kernel on a 32-bit
+host.  Building the kernel on a i386 or x32 host fails with:
+
+  orc_dump.c: In function 'orc_dump':
+  orc_dump.c:105:26: error: passing argument 2 of 'elf_getshdrnum' from incompatible pointer type [-Werror=incompatible-pointer-types]
+    if (elf_getshdrnum(elf, &nr_sections)) {
+                            ^
+  In file included from /usr/local/include/gelf.h:32:0,
+                   from elf.h:22,
+                   from warn.h:26,
+                   from orc_dump.c:20:
+  /usr/local/include/libelf.h:304:12: note: expected 'size_t * {aka unsigned int *}' but argument is of type 'long unsigned int *'
+   extern int elf_getshdrnum (Elf *__elf, size_t *__dst);
+              ^~~~~~~~~~~~~~
+  orc_dump.c:190:17: error: format '%lx' expects argument of type 'long unsigned int', but argument 3 has type 'Elf64_Sxword {aka long long int}' [-Werror=format=]
+      printf("%s+%lx:", name, rela.r_addend);
+                 ~~^          ~~~~~~~~~~~~~
+                 %llx
+
+Fix the build failure.
+
+Another problem is that if the user specifies HOSTCC or HOSTLD
+variables, they are ignored in the objtool makefile.  Change the
+Makefile to respect these variables.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Sven Joachim <svenjoac@gmx.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Fixes: 627fce14809b ("objtool: Add ORC unwind table generation")
+Link: http://lkml.kernel.org/r/19f0e64d8e07e30a7b307cd010eb780c404fe08d.1512252895.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 0db897fb081b66c26a338e5481f317c71df779c9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 979c9a5cacd1d40d08c1c24ed5c5810cf7f3069c)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ tools/objtool/Makefile   | 8 +++++---
+ tools/objtool/orc_dump.c | 7 ++++---
+ 2 files changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/tools/objtool/Makefile b/tools/objtool/Makefile
+index 847e99aa54ea..5c71bae01064 100644
+--- a/tools/objtool/Makefile
++++ b/tools/objtool/Makefile
+@@ -6,9 +6,11 @@ ARCH := x86
+ endif
+ 
+ # always use the host compiler
+-CC = gcc
+-LD = ld
+-AR = ar
++HOSTCC	?= gcc
++HOSTLD	?= ld
++CC	 = $(HOSTCC)
++LD	 = $(HOSTLD)
++AR	 = ar
+ 
+ ifeq ($(srctree),)
+ srctree := $(patsubst %/,%,$(dir $(CURDIR)))
+diff --git a/tools/objtool/orc_dump.c b/tools/objtool/orc_dump.c
+index 36c5bf6a2675..c3343820916a 100644
+--- a/tools/objtool/orc_dump.c
++++ b/tools/objtool/orc_dump.c
+@@ -76,7 +76,8 @@ int orc_dump(const char *_objname)
+ 	int fd, nr_entries, i, *orc_ip = NULL, orc_size = 0;
+ 	struct orc_entry *orc = NULL;
+ 	char *name;
+-	unsigned long nr_sections, orc_ip_addr = 0;
++	size_t nr_sections;
++	Elf64_Addr orc_ip_addr = 0;
+ 	size_t shstrtab_idx;
+ 	Elf *elf;
+ 	Elf_Scn *scn;
+@@ -187,10 +188,10 @@ int orc_dump(const char *_objname)
+ 				return -1;
+ 			}
+ 
+-			printf("%s+%lx:", name, rela.r_addend);
++			printf("%s+%llx:", name, (unsigned long long)rela.r_addend);
+ 
+ 		} else {
+-			printf("%lx:", orc_ip_addr + (i * sizeof(int)) + orc_ip[i]);
++			printf("%llx:", (unsigned long long)(orc_ip_addr + (i * sizeof(int)) + orc_ip[i]));
+ 		}
+ 
+ 
+-- 
+2.14.2
+

@@ -1,0 +1,74 @@
+From 5280fab9bb19e94b1ea5046dc1360f121ec64c0f Mon Sep 17 00:00:00 2001
+From: Rudolf Marek <r.marek@assembler.cz>
+Date: Tue, 28 Nov 2017 22:01:06 +0100
+Subject: [PATCH 122/231] x86: Make X86_BUG_FXSAVE_LEAK detectable in CPUID on
+ AMD
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+[ Note, this is a Git cherry-pick of the following commit:
+
+    2b67799bdf25 ("x86: Make X86_BUG_FXSAVE_LEAK detectable in CPUID on AMD")
+
+  ... for easier x86 PTI code testing and back-porting. ]
+
+The latest AMD AMD64 Architecture Programmer's Manual
+adds a CPUID feature XSaveErPtr (CPUID_Fn80000008_EBX[2]).
+
+If this feature is set, the FXSAVE, XSAVE, FXSAVEOPT, XSAVEC, XSAVES
+/ FXRSTOR, XRSTOR, XRSTORS always save/restore error pointers,
+thus making the X86_BUG_FXSAVE_LEAK workaround obsolete on such CPUs.
+
+Signed-Off-By: Rudolf Marek <r.marek@assembler.cz>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Tested-by: Borislav Petkov <bp@suse.de>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Link: https://lkml.kernel.org/r/bdcebe90-62c5-1f05-083c-eba7f08b2540@assembler.cz
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit f2dbad36c55e5d3a91dccbde6e8cae345fe5632f)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 281b622113c66ba2de9b7725e1d232ea3c282114)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/cpufeatures.h | 1 +
+ arch/x86/kernel/cpu/amd.c          | 7 +++++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 0ea630bb3e74..d57a174ec97c 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -265,6 +265,7 @@
+ /* AMD-defined CPU features, CPUID level 0x80000008 (EBX), word 13 */
+ #define X86_FEATURE_CLZERO		(13*32+ 0) /* CLZERO instruction */
+ #define X86_FEATURE_IRPERF		(13*32+ 1) /* Instructions Retired Count */
++#define X86_FEATURE_XSAVEERPTR		(13*32+ 2) /* Always save/restore FP error pointers */
+ 
+ /* Thermal and Power Management Leaf, CPUID level 0x00000006 (EAX), word 14 */
+ #define X86_FEATURE_DTHERM		(14*32+ 0) /* Digital Thermal Sensor */
+diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
+index 3b9e220621f8..2a5328cc03a6 100644
+--- a/arch/x86/kernel/cpu/amd.c
++++ b/arch/x86/kernel/cpu/amd.c
+@@ -760,8 +760,11 @@ static void init_amd(struct cpuinfo_x86 *c)
+ 	case 0x15: init_amd_bd(c); break;
+ 	}
+ 
+-	/* Enable workaround for FXSAVE leak */
+-	if (c->x86 >= 6)
++	/*
++	 * Enable workaround for FXSAVE leak on CPUs
++	 * without a XSaveErPtr feature
++	 */
++	if ((c->x86 >= 6) && (!cpu_has(c, X86_FEATURE_XSAVEERPTR)))
+ 		set_cpu_bug(c, X86_BUG_FXSAVE_LEAK);
+ 
+ 	cpu_detect_cache_sizes(c);
+-- 
+2.14.2
+

@@ -1,0 +1,51 @@
+From 870277eb767ecec9293c5dd5ba5bf1c912251e85 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 2 Nov 2017 00:59:15 -0700
+Subject: [PATCH 103/231] x86/entry/32: Fix cpu_current_top_of_stack
+ initialization at boot
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+cpu_current_top_of_stack's initialization forgot about
+TOP_OF_KERNEL_STACK_PADDING.  This bug didn't matter because the
+idle threads never enter user mode.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/e5e370a7e6e4fddd1c4e4cf619765d96bb874b21.1509609304.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit cd493a6deb8b78eca280d05f7fa73fd69403ae29)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 258c98e7d4b8f1459772e656cd736c028a13add9)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/smpboot.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
+index d05006f6c31c..8ea3b18cbdc1 100644
+--- a/arch/x86/kernel/smpboot.c
++++ b/arch/x86/kernel/smpboot.c
+@@ -961,8 +961,7 @@ void common_cpu_up(unsigned int cpu, struct task_struct *idle)
+ #ifdef CONFIG_X86_32
+ 	/* Stack for startup_32 can be just as for start_secondary onwards */
+ 	irq_ctx_init(cpu);
+-	per_cpu(cpu_current_top_of_stack, cpu) =
+-		(unsigned long)task_stack_page(idle) + THREAD_SIZE;
++	per_cpu(cpu_current_top_of_stack, cpu) = task_top_of_stack(idle);
+ #else
+ 	initial_gs = per_cpu_offset(cpu);
+ #endif
+-- 
+2.14.2
+

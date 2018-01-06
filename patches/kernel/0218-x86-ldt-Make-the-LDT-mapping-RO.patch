@@ -1,0 +1,123 @@
+From d1feee4957a5cb314ec0b3c4ca86ba79ccaeceb8 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Fri, 15 Dec 2017 20:35:11 +0100
+Subject: [PATCH 218/231] x86/ldt: Make the LDT mapping RO
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Now that the LDT mapping is in a known area when PAGE_TABLE_ISOLATION is
+enabled its a primary target for attacks, if a user space interface fails
+to validate a write address correctly. That can never happen, right?
+
+The SDM states:
+
+    If the segment descriptors in the GDT or an LDT are placed in ROM, the
+    processor can enter an indefinite loop if software or the processor
+    attempts to update (write to) the ROM-based segment descriptors. To
+    prevent this problem, set the accessed bits for all segment descriptors
+    placed in a ROM. Also, remove operating-system or executive code that
+    attempts to modify segment descriptors located in ROM.
+
+So its a valid approach to set the ACCESS bit when setting up the LDT entry
+and to map the table RO. Fixup the selftest so it can handle that new mode.
+
+Remove the manual ACCESS bit setter in set_tls_desc() as this is now
+pointless. Folded the patch from Peter Ziljstra.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 9f5cb6b32d9e0a3a7453222baaf15664d92adbf2)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit f4b13d6f67b3a89d878094901a9ca834b39415c1)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/desc.h           |  2 ++
+ arch/x86/kernel/ldt.c                 |  7 ++++++-
+ arch/x86/kernel/tls.c                 | 11 ++---------
+ tools/testing/selftests/x86/ldt_gdt.c |  3 +--
+ 4 files changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/arch/x86/include/asm/desc.h b/arch/x86/include/asm/desc.h
+index de40c514ba25..c765bc294a9d 100644
+--- a/arch/x86/include/asm/desc.h
++++ b/arch/x86/include/asm/desc.h
+@@ -20,6 +20,8 @@ static inline void fill_ldt(struct desc_struct *desc, const struct user_desc *in
+ 
+ 	desc->type		= (info->read_exec_only ^ 1) << 1;
+ 	desc->type	       |= info->contents << 2;
++	/* Set the ACCESS bit so it can be mapped RO */
++	desc->type	       |= 1;
+ 
+ 	desc->s			= 1;
+ 	desc->dpl		= 0x3;
+diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
+index eceaada581ff..2260eb6e2de7 100644
+--- a/arch/x86/kernel/ldt.c
++++ b/arch/x86/kernel/ldt.c
+@@ -157,7 +157,12 @@ map_ldt_struct(struct mm_struct *mm, struct ldt_struct *ldt, int slot)
+ 		ptep = get_locked_pte(mm, va, &ptl);
+ 		if (!ptep)
+ 			return -ENOMEM;
+-		pte = pfn_pte(pfn, __pgprot(__PAGE_KERNEL & ~_PAGE_GLOBAL));
++		/*
++		 * Map it RO so the easy to find address is not a primary
++		 * target via some kernel interface which misses a
++		 * permission check.
++		 */
++		pte = pfn_pte(pfn, __pgprot(__PAGE_KERNEL_RO & ~_PAGE_GLOBAL));
+ 		set_pte_at(mm, va, ptep, pte);
+ 		pte_unmap_unlock(ptep, ptl);
+ 	}
+diff --git a/arch/x86/kernel/tls.c b/arch/x86/kernel/tls.c
+index a106b9719c58..41880a2421ea 100644
+--- a/arch/x86/kernel/tls.c
++++ b/arch/x86/kernel/tls.c
+@@ -92,17 +92,10 @@ static void set_tls_desc(struct task_struct *p, int idx,
+ 	cpu = get_cpu();
+ 
+ 	while (n-- > 0) {
+-		if (LDT_empty(info) || LDT_zero(info)) {
++		if (LDT_empty(info) || LDT_zero(info))
+ 			memset(desc, 0, sizeof(*desc));
+-		} else {
++		else
+ 			fill_ldt(desc, info);
+-
+-			/*
+-			 * Always set the accessed bit so that the CPU
+-			 * doesn't try to write to the (read-only) GDT.
+-			 */
+-			desc->type |= 1;
+-		}
+ 		++info;
+ 		++desc;
+ 	}
+diff --git a/tools/testing/selftests/x86/ldt_gdt.c b/tools/testing/selftests/x86/ldt_gdt.c
+index 783e1a754b78..bbd1d0e4d683 100644
+--- a/tools/testing/selftests/x86/ldt_gdt.c
++++ b/tools/testing/selftests/x86/ldt_gdt.c
+@@ -121,8 +121,7 @@ static void check_valid_segment(uint16_t index, int ldt,
+ 	 * NB: Different Linux versions do different things with the
+ 	 * accessed bit in set_thread_area().
+ 	 */
+-	if (ar != expected_ar &&
+-	    (ldt || ar != (expected_ar | AR_ACCESSED))) {
++	if (ar != expected_ar && ar != (expected_ar | AR_ACCESSED)) {
+ 		printf("[FAIL]\t%s entry %hu has AR 0x%08X but expected 0x%08X\n",
+ 		       (ldt ? "LDT" : "GDT"), index, ar, expected_ar);
+ 		nerrs++;
+-- 
+2.14.2
+

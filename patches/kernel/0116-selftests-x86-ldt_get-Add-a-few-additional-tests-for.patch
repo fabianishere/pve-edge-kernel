@@ -1,0 +1,67 @@
+From 26e89424fe3c13d437f960736a7b925f3953cad6 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Sat, 4 Nov 2017 04:19:52 -0700
+Subject: [PATCH 116/231] selftests/x86/ldt_get: Add a few additional tests for
+ limits
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+We weren't testing the .limit and .limit_in_pages fields very well.
+Add more tests.
+
+This addition seems to trigger the "bits 16:19 are undefined" issue
+that was fixed in an earlier patch.  I think that, at least on my
+CPU, the high nibble of the limit ends in LAR bits 16:19.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/5601c15ea9b3113d288953fd2838b18bedf6bc67.1509794321.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit fec8f5ae1715a01c72ad52cb2ecd8aacaf142302)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit a1cdabf77d7ed9ba02697ad8beb04adf46a7c7b8)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ tools/testing/selftests/x86/ldt_gdt.c | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/tools/testing/selftests/x86/ldt_gdt.c b/tools/testing/selftests/x86/ldt_gdt.c
+index 05d0d6f49c2c..8e290c9b2c3f 100644
+--- a/tools/testing/selftests/x86/ldt_gdt.c
++++ b/tools/testing/selftests/x86/ldt_gdt.c
+@@ -403,9 +403,24 @@ static void do_simple_tests(void)
+ 	install_invalid(&desc, false);
+ 
+ 	desc.seg_not_present = 0;
+-	desc.read_exec_only = 0;
+ 	desc.seg_32bit = 1;
++	desc.read_exec_only = 0;
++	desc.limit = 0xfffff;
++
+ 	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S | AR_P | AR_DB);
++
++	desc.limit_in_pages = 1;
++
++	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA | AR_S | AR_P | AR_DB | AR_G);
++	desc.read_exec_only = 1;
++	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA | AR_S | AR_P | AR_DB | AR_G);
++	desc.contents = 1;
++	desc.read_exec_only = 0;
++	install_valid(&desc, AR_DPL3 | AR_TYPE_RWDATA_EXPDOWN | AR_S | AR_P | AR_DB | AR_G);
++	desc.read_exec_only = 1;
++	install_valid(&desc, AR_DPL3 | AR_TYPE_RODATA_EXPDOWN | AR_S | AR_P | AR_DB | AR_G);
++
++	desc.limit = 0;
+ 	install_invalid(&desc, true);
+ }
+ 
+-- 
+2.14.2
+

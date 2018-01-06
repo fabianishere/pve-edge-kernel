@@ -1,0 +1,273 @@
+From dcc61cf4d482d478979471795935733845fe757e Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Fri, 13 Oct 2017 15:02:00 -0500
+Subject: [PATCH 063/231] x86/unwind: Rename unwinder config options to
+ 'CONFIG_UNWINDER_*'
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Rename the unwinder config options from:
+
+  CONFIG_ORC_UNWINDER
+  CONFIG_FRAME_POINTER_UNWINDER
+  CONFIG_GUESS_UNWINDER
+
+to:
+
+  CONFIG_UNWINDER_ORC
+  CONFIG_UNWINDER_FRAME_POINTER
+  CONFIG_UNWINDER_GUESS
+
+... in order to give them a more logical config namespace.
+
+Suggested-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/73972fc7e2762e91912c6b9584582703d6f1b8cc.1507924831.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 11af847446ed0d131cf24d16a7ef3d5ea7a49554)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 27ab2a240a797b073ce63385b1d5db06e44fc3ae)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ Documentation/x86/orc-unwinder.txt |  2 +-
+ Makefile                           |  4 ++--
+ arch/x86/kernel/Makefile           |  6 +++---
+ scripts/Makefile.build             |  2 +-
+ arch/x86/include/asm/module.h      |  2 +-
+ arch/x86/include/asm/unwind.h      |  8 ++++----
+ include/asm-generic/vmlinux.lds.h  |  2 +-
+ arch/x86/Kconfig                   |  2 +-
+ arch/x86/Kconfig.debug             | 10 +++++-----
+ arch/x86/configs/tiny.config       |  4 ++--
+ arch/x86/configs/x86_64_defconfig  |  2 +-
+ lib/Kconfig.debug                  |  2 +-
+ 12 files changed, 23 insertions(+), 23 deletions(-)
+
+diff --git a/Documentation/x86/orc-unwinder.txt b/Documentation/x86/orc-unwinder.txt
+index af0c9a4c65a6..cd4b29be29af 100644
+--- a/Documentation/x86/orc-unwinder.txt
++++ b/Documentation/x86/orc-unwinder.txt
+@@ -4,7 +4,7 @@ ORC unwinder
+ Overview
+ --------
+ 
+-The kernel CONFIG_ORC_UNWINDER option enables the ORC unwinder, which is
++The kernel CONFIG_UNWINDER_ORC option enables the ORC unwinder, which is
+ similar in concept to a DWARF unwinder.  The difference is that the
+ format of the ORC data is much simpler than DWARF, which in turn allows
+ the ORC unwinder to be much simpler and faster.
+diff --git a/Makefile b/Makefile
+index 490ce18685ea..b740e3dc9ff8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -965,8 +965,8 @@ ifdef CONFIG_STACK_VALIDATION
+   ifeq ($(has_libelf),1)
+     objtool_target := tools/objtool FORCE
+   else
+-    ifdef CONFIG_ORC_UNWINDER
+-      $(error "Cannot generate ORC metadata for CONFIG_ORC_UNWINDER=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel")
++    ifdef CONFIG_UNWINDER_ORC
++      $(error "Cannot generate ORC metadata for CONFIG_UNWINDER_ORC=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel")
+     else
+       $(warning "Cannot use CONFIG_STACK_VALIDATION=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel")
+     endif
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index e2315aecc441..5bf0d5a473b4 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -125,9 +125,9 @@ obj-$(CONFIG_PERF_EVENTS)		+= perf_regs.o
+ obj-$(CONFIG_TRACING)			+= tracepoint.o
+ obj-$(CONFIG_SCHED_MC_PRIO)		+= itmt.o
+ 
+-obj-$(CONFIG_ORC_UNWINDER)		+= unwind_orc.o
+-obj-$(CONFIG_FRAME_POINTER_UNWINDER)	+= unwind_frame.o
+-obj-$(CONFIG_GUESS_UNWINDER)		+= unwind_guess.o
++obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
++obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
++obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ ###
+ # 64 bit specific files
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index ab2c8ef43cdb..436005392047 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -258,7 +258,7 @@ ifneq ($(SKIP_STACK_VALIDATION),1)
+ 
+ __objtool_obj := $(objtree)/tools/objtool/objtool
+ 
+-objtool_args = $(if $(CONFIG_ORC_UNWINDER),orc generate,check)
++objtool_args = $(if $(CONFIG_UNWINDER_ORC),orc generate,check)
+ 
+ ifndef CONFIG_FRAME_POINTER
+ objtool_args += --no-fp
+diff --git a/arch/x86/include/asm/module.h b/arch/x86/include/asm/module.h
+index 9eb7c718aaf8..9f05a1002aa9 100644
+--- a/arch/x86/include/asm/module.h
++++ b/arch/x86/include/asm/module.h
+@@ -5,7 +5,7 @@
+ #include <asm/orc_types.h>
+ 
+ struct mod_arch_specific {
+-#ifdef CONFIG_ORC_UNWINDER
++#ifdef CONFIG_UNWINDER_ORC
+ 	unsigned int num_orcs;
+ 	int *orc_unwind_ip;
+ 	struct orc_entry *orc_unwind;
+diff --git a/arch/x86/include/asm/unwind.h b/arch/x86/include/asm/unwind.h
+index e9f793e2df7a..35d67dc7b69f 100644
+--- a/arch/x86/include/asm/unwind.h
++++ b/arch/x86/include/asm/unwind.h
+@@ -12,11 +12,11 @@ struct unwind_state {
+ 	struct task_struct *task;
+ 	int graph_idx;
+ 	bool error;
+-#if defined(CONFIG_ORC_UNWINDER)
++#if defined(CONFIG_UNWINDER_ORC)
+ 	bool signal, full_regs;
+ 	unsigned long sp, bp, ip;
+ 	struct pt_regs *regs;
+-#elif defined(CONFIG_FRAME_POINTER_UNWINDER)
++#elif defined(CONFIG_UNWINDER_FRAME_POINTER)
+ 	bool got_irq;
+ 	unsigned long *bp, *orig_sp, ip;
+ 	struct pt_regs *regs;
+@@ -50,7 +50,7 @@ void unwind_start(struct unwind_state *state, struct task_struct *task,
+ 	__unwind_start(state, task, regs, first_frame);
+ }
+ 
+-#if defined(CONFIG_ORC_UNWINDER) || defined(CONFIG_FRAME_POINTER_UNWINDER)
++#if defined(CONFIG_UNWINDER_ORC) || defined(CONFIG_UNWINDER_FRAME_POINTER)
+ static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state)
+ {
+ 	if (unwind_done(state))
+@@ -65,7 +65,7 @@ static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state)
+ }
+ #endif
+ 
+-#ifdef CONFIG_ORC_UNWINDER
++#ifdef CONFIG_UNWINDER_ORC
+ void unwind_init(void);
+ void unwind_module_init(struct module *mod, void *orc_ip, size_t orc_ip_size,
+ 			void *orc, size_t orc_size);
+diff --git a/include/asm-generic/vmlinux.lds.h b/include/asm-generic/vmlinux.lds.h
+index 9fdb54a95976..e71e42432360 100644
+--- a/include/asm-generic/vmlinux.lds.h
++++ b/include/asm-generic/vmlinux.lds.h
+@@ -686,7 +686,7 @@
+ #define BUG_TABLE
+ #endif
+ 
+-#ifdef CONFIG_ORC_UNWINDER
++#ifdef CONFIG_UNWINDER_ORC
+ #define ORC_UNWIND_TABLE						\
+ 	. = ALIGN(4);							\
+ 	.orc_unwind_ip : AT(ADDR(.orc_unwind_ip) - LOAD_OFFSET) {	\
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 3a0b8cb57caf..bf9f03740c30 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -168,7 +168,7 @@ config X86
+ 	select HAVE_PERF_REGS
+ 	select HAVE_PERF_USER_STACK_DUMP
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
+-	select HAVE_RELIABLE_STACKTRACE		if X86_64 && FRAME_POINTER_UNWINDER && STACK_VALIDATION
++	select HAVE_RELIABLE_STACKTRACE		if X86_64 && UNWINDER_FRAME_POINTER && STACK_VALIDATION
+ 	select HAVE_STACK_VALIDATION		if X86_64
+ 	select HAVE_SYSCALL_TRACEPOINTS
+ 	select HAVE_UNSTABLE_SCHED_CLOCK
+diff --git a/arch/x86/Kconfig.debug b/arch/x86/Kconfig.debug
+index c441b5d65ec8..5435a943f894 100644
+--- a/arch/x86/Kconfig.debug
++++ b/arch/x86/Kconfig.debug
+@@ -358,13 +358,13 @@ config PUNIT_ATOM_DEBUG
+ 
+ choice
+ 	prompt "Choose kernel unwinder"
+-	default FRAME_POINTER_UNWINDER
++	default UNWINDER_FRAME_POINTER
+ 	---help---
+ 	  This determines which method will be used for unwinding kernel stack
+ 	  traces for panics, oopses, bugs, warnings, perf, /proc/<pid>/stack,
+ 	  livepatch, lockdep, and more.
+ 
+-config FRAME_POINTER_UNWINDER
++config UNWINDER_FRAME_POINTER
+ 	bool "Frame pointer unwinder"
+ 	select FRAME_POINTER
+ 	---help---
+@@ -379,7 +379,7 @@ config FRAME_POINTER_UNWINDER
+ 	  consistency model, as this is currently the only way to get a
+ 	  reliable stack trace (CONFIG_HAVE_RELIABLE_STACKTRACE).
+ 
+-config ORC_UNWINDER
++config UNWINDER_ORC
+ 	bool "ORC unwinder"
+ 	depends on X86_64
+ 	select STACK_VALIDATION
+@@ -396,7 +396,7 @@ config ORC_UNWINDER
+ 	  Enabling this option will increase the kernel's runtime memory usage
+ 	  by roughly 2-4MB, depending on your kernel config.
+ 
+-config GUESS_UNWINDER
++config UNWINDER_GUESS
+ 	bool "Guess unwinder"
+ 	depends on EXPERT
+ 	---help---
+@@ -411,7 +411,7 @@ config GUESS_UNWINDER
+ endchoice
+ 
+ config FRAME_POINTER
+-	depends on !ORC_UNWINDER && !GUESS_UNWINDER
++	depends on !UNWINDER_ORC && !UNWINDER_GUESS
+ 	bool
+ 
+ endmenu
+diff --git a/arch/x86/configs/tiny.config b/arch/x86/configs/tiny.config
+index 550cd5012b73..66c9e2aab16c 100644
+--- a/arch/x86/configs/tiny.config
++++ b/arch/x86/configs/tiny.config
+@@ -1,5 +1,5 @@
+ CONFIG_NOHIGHMEM=y
+ # CONFIG_HIGHMEM4G is not set
+ # CONFIG_HIGHMEM64G is not set
+-CONFIG_GUESS_UNWINDER=y
+-# CONFIG_FRAME_POINTER_UNWINDER is not set
++CONFIG_UNWINDER_GUESS=y
++# CONFIG_UNWINDER_FRAME_POINTER is not set
+diff --git a/arch/x86/configs/x86_64_defconfig b/arch/x86/configs/x86_64_defconfig
+index eb65c248708d..e32fc1f274d8 100644
+--- a/arch/x86/configs/x86_64_defconfig
++++ b/arch/x86/configs/x86_64_defconfig
+@@ -299,7 +299,7 @@ CONFIG_DEBUG_STACKOVERFLOW=y
+ # CONFIG_DEBUG_RODATA_TEST is not set
+ CONFIG_DEBUG_BOOT_PARAMS=y
+ CONFIG_OPTIMIZE_INLINING=y
+-CONFIG_ORC_UNWINDER=y
++CONFIG_UNWINDER_ORC=y
+ CONFIG_SECURITY=y
+ CONFIG_SECURITY_NETWORK=y
+ CONFIG_SECURITY_SELINUX=y
+diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+index 0b4d1b3880b0..4f6ca5f60f7e 100644
+--- a/lib/Kconfig.debug
++++ b/lib/Kconfig.debug
+@@ -375,7 +375,7 @@ config STACK_VALIDATION
+ 	  that runtime stack traces are more reliable.
+ 
+ 	  This is also a prerequisite for generation of ORC unwind data, which
+-	  is needed for CONFIG_ORC_UNWINDER.
++	  is needed for CONFIG_UNWINDER_ORC.
+ 
+ 	  For more information, see
+ 	  tools/objtool/Documentation/stack-validation.txt.
+-- 
+2.14.2
+

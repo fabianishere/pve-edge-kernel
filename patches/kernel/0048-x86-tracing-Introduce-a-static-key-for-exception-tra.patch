@@ -1,0 +1,140 @@
+From 179faefa769caa263bc88b1f7292be7a60df4298 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Mon, 28 Aug 2017 08:47:21 +0200
+Subject: [PATCH 048/231] x86/tracing: Introduce a static key for exception
+ tracing
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Switching the IDT just for avoiding tracepoints creates a completely
+impenetrable macro/inline/ifdef mess.
+
+There is no point in avoiding tracepoints for most of the traps/exceptions.
+For the more expensive tracepoints, like pagefaults, this can be handled with
+an explicit static key.
+
+Preparatory patch to remove the tracing IDT.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Link: http://lkml.kernel.org/r/20170828064956.593094539@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 2feb1b316d48004d905278c02a55902cab0be8be)
+Signed-off-by: Andy Whitcroft <apw@kathleen.maas>
+(cherry picked from commit 15e0ff2a63fdd93f8881e2ebba5c048c5b601e57)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d58a56e851c339d8d9d311dc9b4fad6abbf8bf19)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/trace/common.h      | 15 +++++++++++++++
+ arch/x86/include/asm/trace/exceptions.h  |  4 +---
+ arch/x86/include/asm/trace/irq_vectors.h |  4 +---
+ arch/x86/kernel/tracepoint.c             |  9 ++++++++-
+ 4 files changed, 25 insertions(+), 7 deletions(-)
+ create mode 100644 arch/x86/include/asm/trace/common.h
+
+diff --git a/arch/x86/include/asm/trace/common.h b/arch/x86/include/asm/trace/common.h
+new file mode 100644
+index 000000000000..b1eb7b18ee8a
+--- /dev/null
++++ b/arch/x86/include/asm/trace/common.h
+@@ -0,0 +1,15 @@
++#ifndef _ASM_TRACE_COMMON_H
++#define _ASM_TRACE_COMMON_H
++
++extern int trace_irq_vector_regfunc(void);
++extern void trace_irq_vector_unregfunc(void);
++
++#ifdef CONFIG_TRACING
++DECLARE_STATIC_KEY_FALSE(trace_irqvectors_key);
++#define trace_irqvectors_enabled()			\
++	static_branch_unlikely(&trace_irqvectors_key)
++#else
++static inline bool trace_irqvectors_enabled(void) { return false; }
++#endif
++
++#endif
+diff --git a/arch/x86/include/asm/trace/exceptions.h b/arch/x86/include/asm/trace/exceptions.h
+index 2422b14c50a7..960a5b50ac3b 100644
+--- a/arch/x86/include/asm/trace/exceptions.h
++++ b/arch/x86/include/asm/trace/exceptions.h
+@@ -5,9 +5,7 @@
+ #define _TRACE_PAGE_FAULT_H
+ 
+ #include <linux/tracepoint.h>
+-
+-extern int trace_irq_vector_regfunc(void);
+-extern void trace_irq_vector_unregfunc(void);
++#include <asm/trace/common.h>
+ 
+ DECLARE_EVENT_CLASS(x86_exceptions,
+ 
+diff --git a/arch/x86/include/asm/trace/irq_vectors.h b/arch/x86/include/asm/trace/irq_vectors.h
+index 32dd6a9e343c..7825b4426e7e 100644
+--- a/arch/x86/include/asm/trace/irq_vectors.h
++++ b/arch/x86/include/asm/trace/irq_vectors.h
+@@ -5,9 +5,7 @@
+ #define _TRACE_IRQ_VECTORS_H
+ 
+ #include <linux/tracepoint.h>
+-
+-extern int trace_irq_vector_regfunc(void);
+-extern void trace_irq_vector_unregfunc(void);
++#include <asm/trace/common.h>
+ 
+ DECLARE_EVENT_CLASS(x86_irq_vector,
+ 
+diff --git a/arch/x86/kernel/tracepoint.c b/arch/x86/kernel/tracepoint.c
+index 15515132bf0d..dd4aa04bb95c 100644
+--- a/arch/x86/kernel/tracepoint.c
++++ b/arch/x86/kernel/tracepoint.c
+@@ -4,9 +4,11 @@
+  * Copyright (C) 2013 Seiji Aguchi <seiji.aguchi@hds.com>
+  *
+  */
++#include <linux/jump_label.h>
++#include <linux/atomic.h>
++
+ #include <asm/hw_irq.h>
+ #include <asm/desc.h>
+-#include <linux/atomic.h>
+ 
+ atomic_t trace_idt_ctr = ATOMIC_INIT(0);
+ struct desc_ptr trace_idt_descr = { NR_VECTORS * 16 - 1,
+@@ -15,6 +17,7 @@ struct desc_ptr trace_idt_descr = { NR_VECTORS * 16 - 1,
+ /* No need to be aligned, but done to keep all IDTs defined the same way. */
+ gate_desc trace_idt_table[NR_VECTORS] __page_aligned_bss;
+ 
++DEFINE_STATIC_KEY_FALSE(trace_irqvectors_key);
+ static int trace_irq_vector_refcount;
+ static DEFINE_MUTEX(irq_vector_mutex);
+ 
+@@ -36,6 +39,8 @@ static void switch_idt(void *arg)
+ 
+ int trace_irq_vector_regfunc(void)
+ {
++	static_branch_inc(&trace_irqvectors_key);
++
+ 	mutex_lock(&irq_vector_mutex);
+ 	if (!trace_irq_vector_refcount) {
+ 		set_trace_idt_ctr(1);
+@@ -49,6 +54,8 @@ int trace_irq_vector_regfunc(void)
+ 
+ void trace_irq_vector_unregfunc(void)
+ {
++	static_branch_dec(&trace_irqvectors_key);
++
+ 	mutex_lock(&irq_vector_mutex);
+ 	trace_irq_vector_refcount--;
+ 	if (!trace_irq_vector_refcount) {
+-- 
+2.14.2
+

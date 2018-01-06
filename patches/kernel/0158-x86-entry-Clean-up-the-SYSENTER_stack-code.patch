@@ -1,0 +1,205 @@
+From f9bbe642761e841720222bcb912d920875f6ead2 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Mon, 4 Dec 2017 15:07:28 +0100
+Subject: [PATCH 158/231] x86/entry: Clean up the SYSENTER_stack code
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The existing code was a mess, mainly because C arrays are nasty.  Turn
+SYSENTER_stack into a struct, add a helper to find it, and do all the
+obvious cleanups this enables.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bpetkov@suse.de>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Link: https://lkml.kernel.org/r/20171204150606.653244723@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 0f9a48100fba3f189724ae88a450c2261bf91c80)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit a308af33c794110c52427ad11d3a6d35ffc14b76)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/fixmap.h    |  5 +++++
+ arch/x86/include/asm/processor.h |  6 +++++-
+ arch/x86/kernel/asm-offsets.c    |  6 ++----
+ arch/x86/kernel/cpu/common.c     | 14 +++-----------
+ arch/x86/kernel/dumpstack.c      |  7 +++----
+ arch/x86/entry/entry_32.S        |  4 ++--
+ arch/x86/entry/entry_64.S        |  2 +-
+ 7 files changed, 21 insertions(+), 23 deletions(-)
+
+diff --git a/arch/x86/include/asm/fixmap.h b/arch/x86/include/asm/fixmap.h
+index 953aed54cb5e..56aaffbbffd6 100644
+--- a/arch/x86/include/asm/fixmap.h
++++ b/arch/x86/include/asm/fixmap.h
+@@ -225,5 +225,10 @@ static inline struct cpu_entry_area *get_cpu_entry_area(int cpu)
+ 	return (struct cpu_entry_area *)__fix_to_virt(__get_cpu_entry_area_page_index(cpu, 0));
+ }
+ 
++static inline struct SYSENTER_stack *cpu_SYSENTER_stack(int cpu)
++{
++	return &get_cpu_entry_area(cpu)->tss.SYSENTER_stack;
++}
++
+ #endif /* !__ASSEMBLY__ */
+ #endif /* _ASM_X86_FIXMAP_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 4737d378d7b5..2d489a414a86 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -330,12 +330,16 @@ struct x86_hw_tss {
+ #define IO_BITMAP_OFFSET		(offsetof(struct tss_struct, io_bitmap) - offsetof(struct tss_struct, x86_tss))
+ #define INVALID_IO_BITMAP_OFFSET	0x8000
+ 
++struct SYSENTER_stack {
++	unsigned long		words[64];
++};
++
+ struct tss_struct {
+ 	/*
+ 	 * Space for the temporary SYSENTER stack, used for SYSENTER
+ 	 * and the entry trampoline as well.
+ 	 */
+-	unsigned long		SYSENTER_stack[64];
++	struct SYSENTER_stack	SYSENTER_stack;
+ 
+ 	/*
+ 	 * The fixed hardware portion.  This must not cross a page boundary
+diff --git a/arch/x86/kernel/asm-offsets.c b/arch/x86/kernel/asm-offsets.c
+index 822be00c85ff..00ea20bfa857 100644
+--- a/arch/x86/kernel/asm-offsets.c
++++ b/arch/x86/kernel/asm-offsets.c
+@@ -93,10 +93,8 @@ void common(void) {
+ 	BLANK();
+ 	DEFINE(PTREGS_SIZE, sizeof(struct pt_regs));
+ 
+-	/* Offset from cpu_tss to SYSENTER_stack */
+-	OFFSET(CPU_TSS_SYSENTER_stack, tss_struct, SYSENTER_stack);
+-	/* Size of SYSENTER_stack */
+-	DEFINE(SIZEOF_SYSENTER_stack, sizeof(((struct tss_struct *)0)->SYSENTER_stack));
++	OFFSET(TSS_STRUCT_SYSENTER_stack, tss_struct, SYSENTER_stack);
++	DEFINE(SIZEOF_SYSENTER_stack, sizeof(struct SYSENTER_stack));
+ 
+ 	/* Layout info for cpu_entry_area */
+ 	OFFSET(CPU_ENTRY_AREA_tss, cpu_entry_area, tss);
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index f487766855d3..f9541c48c290 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -1306,12 +1306,7 @@ void enable_sep_cpu(void)
+ 
+ 	tss->x86_tss.ss1 = __KERNEL_CS;
+ 	wrmsr(MSR_IA32_SYSENTER_CS, tss->x86_tss.ss1, 0);
+-
+-	wrmsr(MSR_IA32_SYSENTER_ESP,
+-	      (unsigned long)&get_cpu_entry_area(cpu)->tss +
+-	      offsetofend(struct tss_struct, SYSENTER_stack),
+-	      0);
+-
++	wrmsr(MSR_IA32_SYSENTER_ESP, (unsigned long)(cpu_SYSENTER_stack(cpu) + 1), 0);
+ 	wrmsr(MSR_IA32_SYSENTER_EIP, (unsigned long)entry_SYSENTER_32, 0);
+ 
+ 	put_cpu();
+@@ -1437,9 +1432,7 @@ void syscall_init(void)
+ 	 * AMD doesn't allow SYSENTER in long mode (either 32- or 64-bit).
+ 	 */
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_CS, (u64)__KERNEL_CS);
+-	wrmsrl_safe(MSR_IA32_SYSENTER_ESP,
+-		    (unsigned long)&get_cpu_entry_area(cpu)->tss +
+-		    offsetofend(struct tss_struct, SYSENTER_stack));
++	wrmsrl_safe(MSR_IA32_SYSENTER_ESP, (unsigned long)(cpu_SYSENTER_stack(cpu) + 1));
+ 	wrmsrl_safe(MSR_IA32_SYSENTER_EIP, (u64)entry_SYSENTER_compat);
+ #else
+ 	wrmsrl(MSR_CSTAR, (unsigned long)ignore_sysret);
+@@ -1653,8 +1646,7 @@ void cpu_init(void)
+ 	 */
+ 	set_tss_desc(cpu, &get_cpu_entry_area(cpu)->tss.x86_tss);
+ 	load_TR_desc();
+-	load_sp0((unsigned long)&get_cpu_entry_area(cpu)->tss +
+-		 offsetofend(struct tss_struct, SYSENTER_stack));
++	load_sp0((unsigned long)(cpu_SYSENTER_stack(cpu) + 1));
+ 
+ 	load_mm_ldt(&init_mm);
+ 
+diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
+index c32c6cce9dcc..b005e5ef6738 100644
+--- a/arch/x86/kernel/dumpstack.c
++++ b/arch/x86/kernel/dumpstack.c
+@@ -45,11 +45,10 @@ bool in_task_stack(unsigned long *stack, struct task_struct *task,
+ 
+ bool in_sysenter_stack(unsigned long *stack, struct stack_info *info)
+ {
+-	int cpu = smp_processor_id();
+-	struct tss_struct *tss = &get_cpu_entry_area(cpu)->tss;
++	struct SYSENTER_stack *ss = cpu_SYSENTER_stack(smp_processor_id());
+ 
+-	void *begin = &tss->SYSENTER_stack;
+-	void *end = (void *)&tss->SYSENTER_stack + sizeof(tss->SYSENTER_stack);
++	void *begin = ss;
++	void *end = ss + 1;
+ 
+ 	if ((void *)stack < begin || (void *)stack >= end)
+ 		return false;
+diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
+index 41e0e103f090..04abcd3f8e2d 100644
+--- a/arch/x86/entry/entry_32.S
++++ b/arch/x86/entry/entry_32.S
+@@ -949,7 +949,7 @@ ENTRY(debug)
+ 
+ 	/* Are we currently on the SYSENTER stack? */
+ 	movl	PER_CPU_VAR(cpu_entry_area), %ecx
+-	addl	$CPU_ENTRY_AREA_tss + CPU_TSS_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
++	addl	$CPU_ENTRY_AREA_tss + TSS_STRUCT_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
+ 	subl	%eax, %ecx	/* ecx = (end of SYSENTER_stack) - esp */
+ 	cmpl	$SIZEOF_SYSENTER_stack, %ecx
+ 	jb	.Ldebug_from_sysenter_stack
+@@ -993,7 +993,7 @@ ENTRY(nmi)
+ 
+ 	/* Are we currently on the SYSENTER stack? */
+ 	movl	PER_CPU_VAR(cpu_entry_area), %ecx
+-	addl	$CPU_ENTRY_AREA_tss + CPU_TSS_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
++	addl	$CPU_ENTRY_AREA_tss + TSS_STRUCT_SYSENTER_stack + SIZEOF_SYSENTER_stack, %ecx
+ 	subl	%eax, %ecx	/* ecx = (end of SYSENTER_stack) - esp */
+ 	cmpl	$SIZEOF_SYSENTER_stack, %ecx
+ 	jb	.Lnmi_from_sysenter_stack
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index dc100a7052ee..7a5e9edcdaf4 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -153,7 +153,7 @@ END(native_usergs_sysret64)
+ 	_entry_trampoline - CPU_ENTRY_AREA_entry_trampoline(%rip)
+ 
+ /* The top word of the SYSENTER stack is hot and is usable as scratch space. */
+-#define RSP_SCRATCH	CPU_ENTRY_AREA_tss + CPU_TSS_SYSENTER_stack + \
++#define RSP_SCRATCH	CPU_ENTRY_AREA_tss + TSS_STRUCT_SYSENTER_stack + \
+ 			SIZEOF_SYSENTER_stack - 8 + CPU_ENTRY_AREA
+ 
+ ENTRY(entry_SYSCALL_64_trampoline)
+-- 
+2.14.2
+

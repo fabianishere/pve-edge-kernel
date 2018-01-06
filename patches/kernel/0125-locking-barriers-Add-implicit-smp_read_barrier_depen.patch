@@ -1,0 +1,53 @@
+From 8b7859c0d35e5047d60c5e241fa40104b9c96f39 Mon Sep 17 00:00:00 2001
+From: Will Deacon <will.deacon@arm.com>
+Date: Tue, 24 Oct 2017 11:22:47 +0100
+Subject: [PATCH 125/231] locking/barriers: Add implicit
+ smp_read_barrier_depends() to READ_ONCE()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+[ Note, this is a Git cherry-pick of the following commit:
+
+    76ebbe78f739 ("locking/barriers: Add implicit smp_read_barrier_depends() to READ_ONCE()")
+
+  ... for easier x86 PTI code testing and back-porting. ]
+
+In preparation for the removal of lockless_dereference(), which is the
+same as READ_ONCE() on all architectures other than Alpha, add an
+implicit smp_read_barrier_depends() to READ_ONCE() so that it can be
+used to head dependency chains on all architectures.
+
+Signed-off-by: Will Deacon <will.deacon@arm.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/1508840570-22169-3-git-send-email-will.deacon@arm.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit c2bc66082e1048c7573d72e62f597bdc5ce13fea)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 6ef3d843f8f1a8b72ca83d4b1d457c2896278ccd)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/compiler.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/include/linux/compiler.h b/include/linux/compiler.h
+index 043b60de041e..8af8814ebe7a 100644
+--- a/include/linux/compiler.h
++++ b/include/linux/compiler.h
+@@ -314,6 +314,7 @@ static __always_inline void __write_once_size(volatile void *p, void *res, int s
+ 		__read_once_size(&(x), __u.__c, sizeof(x));		\
+ 	else								\
+ 		__read_once_size_nocheck(&(x), __u.__c, sizeof(x));	\
++	smp_read_barrier_depends(); /* Enforce dependency ordering from x */ \
+ 	__u.__val;							\
+ })
+ #define READ_ONCE(x) __READ_ONCE(x, 1)
+-- 
+2.14.2
+

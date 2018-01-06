@@ -1,0 +1,37 @@
+From 3642d7fb8bcab15ab1f82531f8120e22181cd7da Mon Sep 17 00:00:00 2001
+From: Andy Whitcroft <apw@canonical.com>
+Date: Wed, 20 Dec 2017 13:33:50 +0000
+Subject: [PATCH 230/231] UBUNTU: SAUCE: only attempt to use PCID in 64 bit
+ builds
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+[apw@canonical.com: need to review if this is still needed with the
+latest patches.]
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit babace1d1ac19075498675cd787500cfa24d2b55)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/smpboot.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
+index 6ad8391b9866..398e8324fea4 100644
+--- a/arch/x86/kernel/smpboot.c
++++ b/arch/x86/kernel/smpboot.c
+@@ -222,7 +222,7 @@ static void notrace start_secondary(void *unused)
+ 	 * before cpu_init(), SMP booting is too fragile that we want to
+ 	 * limit the things done here to the most necessary things.
+ 	 */
+-	if (boot_cpu_has(X86_FEATURE_PCID))
++	if (IS_ENABLED(CONFIG_X86_64) && boot_cpu_has(X86_FEATURE_PCID))
+ 		__write_cr4(__read_cr4() | X86_CR4_PCIDE);
+ 	cpu_init();
+ 	x86_cpuinit.early_percpu_clock_init();
+-- 
+2.14.2
+

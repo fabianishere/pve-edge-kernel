@@ -1,0 +1,497 @@
+From 99351a96543de29896fdc6e8a41fb60ae97b18e1 Mon Sep 17 00:00:00 2001
+From: Peter Zijlstra <peterz@infradead.org>
+Date: Mon, 4 Dec 2017 15:07:59 +0100
+Subject: [PATCH 209/231] x86/mm: Use/Fix PCID to optimize user/kernel switches
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+We can use PCID to retain the TLBs across CR3 switches; including those now
+part of the user/kernel switch. This increases performance of kernel
+entry/exit at the cost of more expensive/complicated TLB flushing.
+
+Now that we have two address spaces, one for kernel and one for user space,
+we need two PCIDs per mm. We use the top PCID bit to indicate a user PCID
+(just like we use the PFN LSB for the PGD). Since we do TLB invalidation
+from kernel space, the existing code will only invalidate the kernel PCID,
+we augment that by marking the corresponding user PCID invalid, and upon
+switching back to userspace, use a flushing CR3 write for the switch.
+
+In order to access the user_pcid_flush_mask we use PER_CPU storage, which
+means the previously established SWAPGS vs CR3 ordering is now mandatory
+and required.
+
+Having to do this memory access does require additional registers, most
+sites have a functioning stack and we can spill one (RAX), sites without
+functional stack need to otherwise provide the second scratch register.
+
+Note: PCID is generally available on Intel Sandybridge and later CPUs.
+Note: Up until this point TLB flushing was broken in this series.
+
+Based-on-code-from: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Eduardo Valentin <eduval@amazon.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(backported from commit 6fd166aae78c0ab738d49bda653cbd9e3b1491cf)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit ac7471365d49c0a91d4b63453eb848cc19f17589)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/calling.h                    | 72 ++++++++++++++++++-----
+ arch/x86/include/asm/processor-flags.h      |  5 ++
+ arch/x86/include/asm/tlbflush.h             | 91 +++++++++++++++++++++++++----
+ arch/x86/include/uapi/asm/processor-flags.h |  7 ++-
+ arch/x86/kernel/asm-offsets.c               |  4 ++
+ arch/x86/mm/init.c                          |  2 +-
+ arch/x86/mm/tlb.c                           |  1 +
+ arch/x86/entry/entry_64.S                   |  9 +--
+ arch/x86/entry/entry_64_compat.S            |  4 +-
+ 9 files changed, 162 insertions(+), 33 deletions(-)
+
+diff --git a/arch/x86/entry/calling.h b/arch/x86/entry/calling.h
+index bb56f5346ae8..ce5fb309926d 100644
+--- a/arch/x86/entry/calling.h
++++ b/arch/x86/entry/calling.h
+@@ -2,6 +2,9 @@
+ #include <asm/unwind_hints.h>
+ #include <asm/cpufeatures.h>
+ #include <asm/page_types.h>
++#include <asm/percpu.h>
++#include <asm/asm-offsets.h>
++#include <asm/processor-flags.h>
+ 
+ /*
+ 
+@@ -190,17 +193,21 @@ For 32-bit we have the following conventions - kernel is built with
+ 
+ #ifdef CONFIG_PAGE_TABLE_ISOLATION
+ 
+-/* PAGE_TABLE_ISOLATION PGDs are 8k.  Flip bit 12 to switch between the two halves: */
+-#define PTI_SWITCH_MASK (1<<PAGE_SHIFT)
++/*
++ * PAGE_TABLE_ISOLATION PGDs are 8k.  Flip bit 12 to switch between the two
++ * halves:
++ */
++#define PTI_SWITCH_PGTABLES_MASK	(1<<PAGE_SHIFT)
++#define PTI_SWITCH_MASK		(PTI_SWITCH_PGTABLES_MASK|(1<<X86_CR3_PTI_SWITCH_BIT))
+ 
+-.macro ADJUST_KERNEL_CR3 reg:req
+-	/* Clear "PAGE_TABLE_ISOLATION bit", point CR3 at kernel pagetables: */
+-	andq	$(~PTI_SWITCH_MASK), \reg
++.macro SET_NOFLUSH_BIT	reg:req
++	bts	$X86_CR3_PCID_NOFLUSH_BIT, \reg
+ .endm
+ 
+-.macro ADJUST_USER_CR3 reg:req
+-	/* Move CR3 up a page to the user page tables: */
+-	orq	$(PTI_SWITCH_MASK), \reg
++.macro ADJUST_KERNEL_CR3 reg:req
++	ALTERNATIVE "", "SET_NOFLUSH_BIT \reg", X86_FEATURE_PCID
++	/* Clear PCID and "PAGE_TABLE_ISOLATION bit", point CR3 at kernel pagetables: */
++	andq    $(~PTI_SWITCH_MASK), \reg
+ .endm
+ 
+ .macro SWITCH_TO_KERNEL_CR3 scratch_reg:req
+@@ -211,21 +218,58 @@ For 32-bit we have the following conventions - kernel is built with
+ .Lend_\@:
+ .endm
+ 
+-.macro SWITCH_TO_USER_CR3 scratch_reg:req
++#define THIS_CPU_user_pcid_flush_mask   \
++	PER_CPU_VAR(cpu_tlbstate) + TLB_STATE_user_pcid_flush_mask
++
++.macro SWITCH_TO_USER_CR3_NOSTACK scratch_reg:req scratch_reg2:req
+ 	ALTERNATIVE "jmp .Lend_\@", "", X86_FEATURE_PTI
+ 	mov	%cr3, \scratch_reg
+-	ADJUST_USER_CR3 \scratch_reg
++
++	ALTERNATIVE "jmp .Lwrcr3_\@", "", X86_FEATURE_PCID
++
++	/*
++	 * Test if the ASID needs a flush.
++	 */
++	movq	\scratch_reg, \scratch_reg2
++	andq	$(0x7FF), \scratch_reg		/* mask ASID */
++	bt	\scratch_reg, THIS_CPU_user_pcid_flush_mask
++	jnc	.Lnoflush_\@
++
++	/* Flush needed, clear the bit */
++	btr	\scratch_reg, THIS_CPU_user_pcid_flush_mask
++	movq	\scratch_reg2, \scratch_reg
++	jmp	.Lwrcr3_\@
++
++.Lnoflush_\@:
++	movq	\scratch_reg2, \scratch_reg
++	SET_NOFLUSH_BIT \scratch_reg
++
++.Lwrcr3_\@:
++	/* Flip the PGD and ASID to the user version */
++	orq     $(PTI_SWITCH_MASK), \scratch_reg
+ 	mov	\scratch_reg, %cr3
+ .Lend_\@:
+ .endm
+ 
++.macro SWITCH_TO_USER_CR3_STACK	scratch_reg:req
++	pushq	%rax
++	SWITCH_TO_USER_CR3_NOSTACK scratch_reg=\scratch_reg scratch_reg2=%rax
++	popq	%rax
++.endm
++
+ .macro SAVE_AND_SWITCH_TO_KERNEL_CR3 scratch_reg:req save_reg:req
+ 	ALTERNATIVE "jmp .Ldone_\@", "", X86_FEATURE_PTI
+ 	movq	%cr3, \scratch_reg
+ 	movq	\scratch_reg, \save_reg
+ 	/*
+-	 * Is the switch bit zero?  This means the address is
+-	 * up in real PAGE_TABLE_ISOLATION patches in a moment.
++	 * Is the "switch mask" all zero?  That means that both of
++	 * these are zero:
++	 *
++	 *	1. The user/kernel PCID bit, and
++	 *	2. The user/kernel "bit" that points CR3 to the
++	 *	   bottom half of the 8k PGD
++	 *
++	 * That indicates a kernel CR3 value, not a user CR3.
+ 	 */
+ 	testq	$(PTI_SWITCH_MASK), \scratch_reg
+ 	jz	.Ldone_\@
+@@ -250,7 +294,9 @@ For 32-bit we have the following conventions - kernel is built with
+ 
+ .macro SWITCH_TO_KERNEL_CR3 scratch_reg:req
+ .endm
+-.macro SWITCH_TO_USER_CR3 scratch_reg:req
++.macro SWITCH_TO_USER_CR3_NOSTACK scratch_reg:req scratch_reg2:req
++.endm
++.macro SWITCH_TO_USER_CR3_STACK scratch_reg:req
+ .endm
+ .macro SAVE_AND_SWITCH_TO_KERNEL_CR3 scratch_reg:req save_reg:req
+ .endm
+diff --git a/arch/x86/include/asm/processor-flags.h b/arch/x86/include/asm/processor-flags.h
+index 791b60199aa4..fb9708d13761 100644
+--- a/arch/x86/include/asm/processor-flags.h
++++ b/arch/x86/include/asm/processor-flags.h
+@@ -36,6 +36,11 @@
+ #define CR3_ADDR_MASK 0x7FFFFFFFFFFFF000ull
+ #define CR3_PCID_MASK 0xFFFull
+ #define CR3_NOFLUSH (1UL << 63)
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++# define X86_CR3_PTI_SWITCH_BIT	11
++#endif
++
+ #else
+ /*
+  * CR3_ADDR_MASK needs at least bits 31:5 set on PAE systems, and we save
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index 3769ce182eac..2b7b32c243f1 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -9,6 +9,8 @@
+ #include <asm/special_insns.h>
+ #include <asm/smp.h>
+ #include <asm/invpcid.h>
++#include <asm/pti.h>
++#include <asm/processor-flags.h>
+ 
+ static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
+ {
+@@ -23,24 +25,54 @@ static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
+ 
+ /* There are 12 bits of space for ASIDS in CR3 */
+ #define CR3_HW_ASID_BITS		12
++
+ /*
+  * When enabled, PAGE_TABLE_ISOLATION consumes a single bit for
+  * user/kernel switches
+  */
+-#define PTI_CONSUMED_ASID_BITS		0
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++# define PTI_CONSUMED_PCID_BITS	1
++#else
++# define PTI_CONSUMED_PCID_BITS	0
++#endif
++
++#define CR3_AVAIL_PCID_BITS (X86_CR3_PCID_BITS - PTI_CONSUMED_PCID_BITS)
+ 
+-#define CR3_AVAIL_ASID_BITS (CR3_HW_ASID_BITS - PTI_CONSUMED_ASID_BITS)
+ /*
+  * ASIDs are zero-based: 0->MAX_AVAIL_ASID are valid.  -1 below to account
+  * for them being zero-based.  Another -1 is because ASID 0 is reserved for
+  * use by non-PCID-aware users.
+  */
+-#define MAX_ASID_AVAILABLE ((1 << CR3_AVAIL_ASID_BITS) - 2)
++#define MAX_ASID_AVAILABLE ((1 << CR3_AVAIL_PCID_BITS) - 2)
++
++/*
++ * 6 because 6 should be plenty and struct tlb_state will fit in two cache
++ * lines.
++ */
++#define TLB_NR_DYN_ASIDS	6
+ 
+ static inline u16 kern_pcid(u16 asid)
+ {
+ 	VM_WARN_ON_ONCE(asid > MAX_ASID_AVAILABLE);
++
++#ifdef CONFIG_PAGE_TABLE_ISOLATION
++	/*
++	 * Make sure that the dynamic ASID space does not confict with the
++	 * bit we are using to switch between user and kernel ASIDs.
++	 */
++	BUILD_BUG_ON(TLB_NR_DYN_ASIDS >= (1 << X86_CR3_PTI_SWITCH_BIT));
++
+ 	/*
++	 * The ASID being passed in here should have respected the
++	 * MAX_ASID_AVAILABLE and thus never have the switch bit set.
++	 */
++	VM_WARN_ON_ONCE(asid & (1 << X86_CR3_PTI_SWITCH_BIT));
++#endif
++	/*
++	 * The dynamically-assigned ASIDs that get passed in are small
++	 * (<TLB_NR_DYN_ASIDS).  They never have the high switch bit set,
++	 * so do not bother to clear it.
++	 *
+ 	 * If PCID is on, ASID-aware code paths put the ASID+1 into the
+ 	 * PCID bits.  This serves two purposes.  It prevents a nasty
+ 	 * situation in which PCID-unaware code saves CR3, loads some other
+@@ -85,12 +117,6 @@ static inline unsigned long build_cr3_noflush(pgd_t *pgd, u16 asid)
+  */
+ DECLARE_STATIC_KEY_TRUE(tlb_use_lazy_mode);
+ 
+-/*
+- * 6 because 6 should be plenty and struct tlb_state will fit in
+- * two cache lines.
+- */
+-#define TLB_NR_DYN_ASIDS 6
+-
+ struct tlb_context {
+ 	u64 ctx_id;
+ 	u64 tlb_gen;
+@@ -135,6 +161,13 @@ struct tlb_state {
+ 	 */
+ 	bool invalidate_other;
+ 
++	/*
++	 * Mask that contains TLB_NR_DYN_ASIDS+1 bits to indicate
++	 * the corresponding user PCID needs a flush next time we
++	 * switch to it; see SWITCH_TO_USER_CR3.
++	 */
++	unsigned short user_pcid_flush_mask;
++
+ 	/*
+ 	 * Access to this CR4 shadow and to H/W CR4 is protected by
+ 	 * disabling interrupts when modifying either one.
+@@ -238,15 +271,42 @@ static inline void cr4_set_bits_and_update_boot(unsigned long mask)
+ }
+ 
+ 
++/*
++ * Given an ASID, flush the corresponding user ASID.  We can delay this
++ * until the next time we switch to it.
++ *
++ * See SWITCH_TO_USER_CR3.
++ */
++static inline void invalidate_user_asid(u16 asid)
++{
++	/* There is no user ASID if address space separation is off */
++	if (!IS_ENABLED(CONFIG_PAGE_TABLE_ISOLATION))
++		return;
++
++	/*
++	 * We only have a single ASID if PCID is off and the CR3
++	 * write will have flushed it.
++	 */
++	if (!cpu_feature_enabled(X86_FEATURE_PCID))
++		return;
++
++	if (!static_cpu_has(X86_FEATURE_PTI))
++		return;
++
++	__set_bit(kern_pcid(asid),
++		  (unsigned long *)this_cpu_ptr(&cpu_tlbstate.user_pcid_flush_mask));
++}
++
+ /*
+  * flush the entire current user mapping
+  */
+ static inline void __native_flush_tlb(void)
+ {
++	invalidate_user_asid(this_cpu_read(cpu_tlbstate.loaded_mm_asid));
+ 	/*
+-	 * If current->mm == NULL then we borrow a mm which may change during a
+-	 * task switch and therefore we must not be preempted while we write CR3
+-	 * back:
++	 * If current->mm == NULL then we borrow a mm which may change
++	 * during a task switch and therefore we must not be preempted
++	 * while we write CR3 back:
+ 	 */
+ 	preempt_disable();
+ 	native_write_cr3(__native_read_cr3());
+@@ -290,7 +350,14 @@ static inline void __native_flush_tlb_global(void)
+  */
+ static inline void __native_flush_tlb_single(unsigned long addr)
+ {
++	u32 loaded_mm_asid = this_cpu_read(cpu_tlbstate.loaded_mm_asid);
++
+ 	asm volatile("invlpg (%0)" ::"r" (addr) : "memory");
++
++	if (!static_cpu_has(X86_FEATURE_PTI))
++		return;
++
++	invalidate_user_asid(loaded_mm_asid);
+ }
+ 
+ /*
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index 39946d0a1d41..69077da3dbf1 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -77,7 +77,12 @@
+ #define X86_CR3_PWT		_BITUL(X86_CR3_PWT_BIT)
+ #define X86_CR3_PCD_BIT		4 /* Page Cache Disable */
+ #define X86_CR3_PCD		_BITUL(X86_CR3_PCD_BIT)
+-#define X86_CR3_PCID_MASK	_AC(0x00000fff,UL) /* PCID Mask */
++
++#define X86_CR3_PCID_BITS	12
++#define X86_CR3_PCID_MASK	(_AC((1UL << X86_CR3_PCID_BITS) - 1, UL))
++
++#define X86_CR3_PCID_NOFLUSH_BIT 63 /* Preserve old PCID */
++#define X86_CR3_PCID_NOFLUSH    _BITULL(X86_CR3_PCID_NOFLUSH_BIT)
+ 
+ /*
+  * Intel CPU features in CR4
+diff --git a/arch/x86/kernel/asm-offsets.c b/arch/x86/kernel/asm-offsets.c
+index 25b4832e9c28..87c3bafcef2c 100644
+--- a/arch/x86/kernel/asm-offsets.c
++++ b/arch/x86/kernel/asm-offsets.c
+@@ -16,6 +16,7 @@
+ #include <asm/sigframe.h>
+ #include <asm/bootparam.h>
+ #include <asm/suspend.h>
++#include <asm/tlbflush.h>
+ 
+ #ifdef CONFIG_XEN
+ #include <xen/interface/xen.h>
+@@ -93,6 +94,9 @@ void common(void) {
+ 	BLANK();
+ 	DEFINE(PTREGS_SIZE, sizeof(struct pt_regs));
+ 
++	/* TLB state for the entry code */
++	OFFSET(TLB_STATE_user_pcid_flush_mask, tlb_state, user_pcid_flush_mask);
++
+ 	/* Layout info for cpu_entry_area */
+ 	OFFSET(CPU_ENTRY_AREA_tss, cpu_entry_area, tss);
+ 	OFFSET(CPU_ENTRY_AREA_entry_trampoline, cpu_entry_area, entry_trampoline);
+diff --git a/arch/x86/mm/init.c b/arch/x86/mm/init.c
+index af75069fb116..caeb8a7bf0a4 100644
+--- a/arch/x86/mm/init.c
++++ b/arch/x86/mm/init.c
+@@ -855,7 +855,7 @@ void __init zone_sizes_init(void)
+ 	free_area_init_nodes(max_zone_pfns);
+ }
+ 
+-DEFINE_PER_CPU_SHARED_ALIGNED(struct tlb_state, cpu_tlbstate) = {
++__visible DEFINE_PER_CPU_SHARED_ALIGNED(struct tlb_state, cpu_tlbstate) = {
+ 	.loaded_mm = &init_mm,
+ 	.next_asid = 1,
+ 	.cr4 = ~0UL,	/* fail hard if we screw up cr4 shadow initialization */
+diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
+index 353f2f4e1d96..06f3854d0a4f 100644
+--- a/arch/x86/mm/tlb.c
++++ b/arch/x86/mm/tlb.c
+@@ -106,6 +106,7 @@ static void load_new_mm_cr3(pgd_t *pgdir, u16 new_asid, bool need_flush)
+ 	unsigned long new_mm_cr3;
+ 
+ 	if (need_flush) {
++		invalidate_user_asid(new_asid);
+ 		new_mm_cr3 = build_cr3(pgdir, new_asid);
+ 	} else {
+ 		new_mm_cr3 = build_cr3_noflush(pgdir, new_asid);
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 292ccc6ec48d..fb43f14ed299 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -22,7 +22,6 @@
+ #include <asm/segment.h>
+ #include <asm/cache.h>
+ #include <asm/errno.h>
+-#include "calling.h"
+ #include <asm/asm-offsets.h>
+ #include <asm/msr.h>
+ #include <asm/unistd.h>
+@@ -39,6 +38,8 @@
+ #include <asm/frame.h>
+ #include <linux/err.h>
+ 
++#include "calling.h"
++
+ .code64
+ .section .entry.text, "ax"
+ 
+@@ -405,7 +406,7 @@ syscall_return_via_sysret:
+ 	 * We are on the trampoline stack.  All regs except RDI are live.
+ 	 * We can do future final exit work right here.
+ 	 */
+-	SWITCH_TO_USER_CR3 scratch_reg=%rdi
++	SWITCH_TO_USER_CR3_STACK scratch_reg=%rdi
+ 
+ 	popq	%rdi
+ 	popq	%rsp
+@@ -743,7 +744,7 @@ GLOBAL(swapgs_restore_regs_and_return_to_usermode)
+ 	 * We can do future final exit work right here.
+ 	 */
+ 
+-	SWITCH_TO_USER_CR3 scratch_reg=%rdi
++	SWITCH_TO_USER_CR3_STACK scratch_reg=%rdi
+ 
+ 	/* Restore RDI. */
+ 	popq	%rdi
+@@ -856,7 +857,7 @@ native_irq_return_ldt:
+ 	 */
+ 	orq	PER_CPU_VAR(espfix_stack), %rax
+ 
+-	SWITCH_TO_USER_CR3 scratch_reg=%rdi	/* to user CR3 */
++	SWITCH_TO_USER_CR3_STACK scratch_reg=%rdi
+ 	SWAPGS					/* to user GS */
+ 	popq	%rdi				/* Restore user RDI */
+ 
+diff --git a/arch/x86/entry/entry_64_compat.S b/arch/x86/entry/entry_64_compat.S
+index 43f856aeee67..973527e34887 100644
+--- a/arch/x86/entry/entry_64_compat.S
++++ b/arch/x86/entry/entry_64_compat.S
+@@ -274,9 +274,9 @@ sysret32_from_system_call:
+ 	 * switch until after after the last reference to the process
+ 	 * stack.
+ 	 *
+-	 * %r8 is zeroed before the sysret, thus safe to clobber.
++	 * %r8/%r9 are zeroed before the sysret, thus safe to clobber.
+ 	 */
+-	SWITCH_TO_USER_CR3 scratch_reg=%r8
++	SWITCH_TO_USER_CR3_NOSTACK scratch_reg=%r8 scratch_reg2=%r9
+ 
+ 	xorq	%r8, %r8
+ 	xorq	%r9, %r9
+-- 
+2.14.2
+

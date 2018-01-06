@@ -1,0 +1,105 @@
+From 8837585aa116d1aa832e524442a1e9953d17a196 Mon Sep 17 00:00:00 2001
+From: Andy Lutomirski <luto@kernel.org>
+Date: Thu, 2 Nov 2017 00:59:06 -0700
+Subject: [PATCH 094/231] x86/entry/64: Remove the RESTORE_..._REGS
+ infrastructure
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+All users of RESTORE_EXTRA_REGS, RESTORE_C_REGS and such, and
+REMOVE_PT_GPREGS_FROM_STACK are gone.  Delete the macros.
+
+Signed-off-by: Andy Lutomirski <luto@kernel.org>
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/r/c32672f6e47c561893316d48e06c7656b1039a36.1509609304.git.luto@kernel.org
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit c39858de696f0cc160a544455e8403d663d577e9)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d248c62028c5467cd5a5ce06d344e3fb330da3ec)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/calling.h | 52 ------------------------------------------------
+ 1 file changed, 52 deletions(-)
+
+diff --git a/arch/x86/entry/calling.h b/arch/x86/entry/calling.h
+index 0b9dd8123701..1895a685d3dd 100644
+--- a/arch/x86/entry/calling.h
++++ b/arch/x86/entry/calling.h
+@@ -141,16 +141,6 @@ For 32-bit we have the following conventions - kernel is built with
+ 	UNWIND_HINT_REGS offset=\offset
+ 	.endm
+ 
+-	.macro RESTORE_EXTRA_REGS offset=0
+-	movq 0*8+\offset(%rsp), %r15
+-	movq 1*8+\offset(%rsp), %r14
+-	movq 2*8+\offset(%rsp), %r13
+-	movq 3*8+\offset(%rsp), %r12
+-	movq 4*8+\offset(%rsp), %rbp
+-	movq 5*8+\offset(%rsp), %rbx
+-	UNWIND_HINT_REGS offset=\offset extra=0
+-	.endm
+-
+ 	.macro POP_EXTRA_REGS
+ 	popq %r15
+ 	popq %r14
+@@ -172,48 +162,6 @@ For 32-bit we have the following conventions - kernel is built with
+ 	popq %rdi
+ 	.endm
+ 
+-	.macro RESTORE_C_REGS_HELPER rstor_rax=1, rstor_rcx=1, rstor_r11=1, rstor_r8910=1, rstor_rdx=1
+-	.if \rstor_r11
+-	movq 6*8(%rsp), %r11
+-	.endif
+-	.if \rstor_r8910
+-	movq 7*8(%rsp), %r10
+-	movq 8*8(%rsp), %r9
+-	movq 9*8(%rsp), %r8
+-	.endif
+-	.if \rstor_rax
+-	movq 10*8(%rsp), %rax
+-	.endif
+-	.if \rstor_rcx
+-	movq 11*8(%rsp), %rcx
+-	.endif
+-	.if \rstor_rdx
+-	movq 12*8(%rsp), %rdx
+-	.endif
+-	movq 13*8(%rsp), %rsi
+-	movq 14*8(%rsp), %rdi
+-	UNWIND_HINT_IRET_REGS offset=16*8
+-	.endm
+-	.macro RESTORE_C_REGS
+-	RESTORE_C_REGS_HELPER 1,1,1,1,1
+-	.endm
+-	.macro RESTORE_C_REGS_EXCEPT_RAX
+-	RESTORE_C_REGS_HELPER 0,1,1,1,1
+-	.endm
+-	.macro RESTORE_C_REGS_EXCEPT_RCX
+-	RESTORE_C_REGS_HELPER 1,0,1,1,1
+-	.endm
+-	.macro RESTORE_C_REGS_EXCEPT_R11
+-	RESTORE_C_REGS_HELPER 1,1,0,1,1
+-	.endm
+-	.macro RESTORE_C_REGS_EXCEPT_RCX_R11
+-	RESTORE_C_REGS_HELPER 1,0,0,1,1
+-	.endm
+-
+-	.macro REMOVE_PT_GPREGS_FROM_STACK addskip=0
+-	subq $-(15*8+\addskip), %rsp
+-	.endm
+-
+ 	.macro icebp
+ 	.byte 0xf1
+ 	.endm
+-- 
+2.14.2
+

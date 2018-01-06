@@ -1,0 +1,80 @@
+From cac8711a9ba742e97090cc5ec522360f1549c584 Mon Sep 17 00:00:00 2001
+From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Date: Fri, 29 Sep 2017 17:08:19 +0300
+Subject: [PATCH 076/231] x86/xen: Provide pre-built page tables only for
+ CONFIG_XEN_PV=y and CONFIG_XEN_PVH=y
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+Looks like we only need pre-built page tables in the CONFIG_XEN_PV=y and
+CONFIG_XEN_PVH=y cases.
+
+Let's not provide them for other configurations.
+
+Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Reviewed-by: Juergen Gross <jgross@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Borislav Petkov <bp@suse.de>
+Cc: Cyrill Gorcunov <gorcunov@openvz.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-mm@kvack.org
+Link: http://lkml.kernel.org/r/20170929140821.37654-5-kirill.shutemov@linux.intel.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 4375c29985f155d7eb2346615d84e62d1b673682)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit a883ee7f3c1dc64a8c946543ac598399353d1b03)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/head_64.S | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/arch/x86/kernel/head_64.S b/arch/x86/kernel/head_64.S
+index d081bc7a027d..12daaa0b187f 100644
+--- a/arch/x86/kernel/head_64.S
++++ b/arch/x86/kernel/head_64.S
+@@ -37,11 +37,12 @@
+  *
+  */
+ 
+-#define p4d_index(x)	(((x) >> P4D_SHIFT) & (PTRS_PER_P4D-1))
+ #define pud_index(x)	(((x) >> PUD_SHIFT) & (PTRS_PER_PUD-1))
+ 
++#if defined(CONFIG_XEN_PV) || defined(CONFIG_XEN_PVH)
+ PGD_PAGE_OFFSET = pgd_index(__PAGE_OFFSET_BASE)
+ PGD_START_KERNEL = pgd_index(__START_KERNEL_map)
++#endif
+ L3_START_KERNEL = pud_index(__START_KERNEL_map)
+ 
+ 	.text
+@@ -348,10 +349,7 @@ NEXT_PAGE(early_dynamic_pgts)
+ 
+ 	.data
+ 
+-#ifndef CONFIG_XEN
+-NEXT_PAGE(init_top_pgt)
+-	.fill	512,8,0
+-#else
++#if defined(CONFIG_XEN_PV) || defined(CONFIG_XEN_PVH)
+ NEXT_PAGE(init_top_pgt)
+ 	.quad   level3_ident_pgt - __START_KERNEL_map + _KERNPG_TABLE
+ 	.org    init_top_pgt + PGD_PAGE_OFFSET*8, 0
+@@ -368,6 +366,9 @@ NEXT_PAGE(level2_ident_pgt)
+ 	 * Don't set NX because code runs from these pages.
+ 	 */
+ 	PMDS(0, __PAGE_KERNEL_IDENT_LARGE_EXEC, PTRS_PER_PMD)
++#else
++NEXT_PAGE(init_top_pgt)
++	.fill	512,8,0
+ #endif
+ 
+ #ifdef CONFIG_X86_5LEVEL
+-- 
+2.14.2
+

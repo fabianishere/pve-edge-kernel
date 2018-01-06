@@ -1,0 +1,87 @@
+From c7ef01f56951b1c876069387c44e11575288f3d2 Mon Sep 17 00:00:00 2001
+From: Vlastimil Babka <vbabka@suse.cz>
+Date: Tue, 19 Dec 2017 22:33:46 +0100
+Subject: [PATCH 213/231] x86/dumpstack: Indicate in Oops whether PTI is
+ configured and enabled
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+CONFIG_PAGE_TABLE_ISOLATION is relatively new and intrusive feature that may
+still have some corner cases which could take some time to manifest and be
+fixed. It would be useful to have Oops messages indicate whether it was
+enabled for building the kernel, and whether it was disabled during boot.
+
+Example of fully enabled:
+
+	Oops: 0001 [#1] SMP PTI
+
+Example of enabled during build, but disabled during boot:
+
+	Oops: 0001 [#1] SMP NOPTI
+
+We can decide to remove this after the feature has been tested in the field
+long enough.
+
+[ tglx: Made it use boot_cpu_has() as requested by Borislav ]
+
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Eduardo Valentin <eduval@amazon.com>
+Acked-by: Dave Hansen <dave.hansen@intel.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: David Laight <David.Laight@aculab.com>
+Cc: Denys Vlasenko <dvlasenk@redhat.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: aliguori@amazon.com
+Cc: bpetkov@suse.de
+Cc: daniel.gruss@iaik.tugraz.at
+Cc: hughd@google.com
+Cc: jkosina@suse.cz
+Cc: keescook@google.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit 5f26d76c3fd67c48806415ef8b1116c97beff8ba)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 7edb91fcc96589ad6b80446ec3835f83ffabb710)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/dumpstack.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
+index 2bdeb983b9d8..19a936e9b259 100644
+--- a/arch/x86/kernel/dumpstack.c
++++ b/arch/x86/kernel/dumpstack.c
+@@ -298,11 +298,13 @@ int __die(const char *str, struct pt_regs *regs, long err)
+ 	unsigned long sp;
+ #endif
+ 	printk(KERN_DEFAULT
+-	       "%s: %04lx [#%d]%s%s%s%s\n", str, err & 0xffff, ++die_counter,
++	       "%s: %04lx [#%d]%s%s%s%s%s\n", str, err & 0xffff, ++die_counter,
+ 	       IS_ENABLED(CONFIG_PREEMPT) ? " PREEMPT"         : "",
+ 	       IS_ENABLED(CONFIG_SMP)     ? " SMP"             : "",
+ 	       debug_pagealloc_enabled()  ? " DEBUG_PAGEALLOC" : "",
+-	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "");
++	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "",
++	       IS_ENABLED(CONFIG_PAGE_TABLE_ISOLATION) ?
++	       (boot_cpu_has(X86_FEATURE_PTI) ? " PTI" : " NOPTI") : "");
+ 
+ 	if (notify_die(DIE_OOPS, str, regs, err,
+ 			current->thread.trap_nr, SIGSEGV) == NOTIFY_STOP)
+-- 
+2.14.2
+
