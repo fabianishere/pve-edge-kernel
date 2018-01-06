@@ -1,7 +1,7 @@
-From 68783aa6989756cda8e9e305292afbb9f4f5677c Mon Sep 17 00:00:00 2001
+From 3fe5d7c8bcba7d240e74c119c2c4ad1c696f205c Mon Sep 17 00:00:00 2001
 From: Wei Xu <wexu@redhat.com>
 Date: Fri, 1 Dec 2017 05:10:38 -0500
-Subject: [PATCH 10/13] tap: free skb if flags error
+Subject: [PATCH 10/14] tap: free skb if flags error
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

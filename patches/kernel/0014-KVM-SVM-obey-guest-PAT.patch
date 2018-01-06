@@ -1,7 +1,7 @@
-From 08d71587b34c95d5461a6bdd946dc1dd46888bf3 Mon Sep 17 00:00:00 2001
+From a0212ec7cc4bc2f88c4435cca881d21f2b079a80 Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Thu, 26 Oct 2017 09:13:27 +0200
-Subject: [PATCH 10/10] KVM: SVM: obey guest PAT
+Subject: [PATCH 14/14] KVM: SVM: obey guest PAT
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

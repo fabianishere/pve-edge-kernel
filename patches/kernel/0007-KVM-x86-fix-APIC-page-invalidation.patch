@@ -1,7 +1,7 @@
-From 4255a36150de32fd3a21f4030210f87a5f58caf1 Mon Sep 17 00:00:00 2001
+From b6f813dded8f92cf6df31e1bcad4600b11dd4ae3 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Radim=20Kr=C4=8Dm=C3=A1=C5=99?= <rkrcmar@redhat.com>
 Date: Thu, 30 Nov 2017 19:05:45 +0100
-Subject: [PATCH 07/10] KVM: x86: fix APIC page invalidation
+Subject: [PATCH 07/14] KVM: x86: fix APIC page invalidation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

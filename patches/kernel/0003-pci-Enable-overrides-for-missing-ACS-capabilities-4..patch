@@ -1,7 +1,7 @@
-From 3fc2d021182ae384089c4d8e5e0f1528198fdc60 Mon Sep 17 00:00:00 2001
+From 469fd3d2d05583a20c8210354cf0ad6cbd2360f7 Mon Sep 17 00:00:00 2001
 From: Mark Weiman <mark.weiman@markzz.com>
 Date: Sat, 29 Jul 2017 09:15:32 -0400
-Subject: [PATCH 03/10] pci: Enable overrides for missing ACS capabilities
+Subject: [PATCH 03/14] pci: Enable overrides for missing ACS capabilities
  (4.12+)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
