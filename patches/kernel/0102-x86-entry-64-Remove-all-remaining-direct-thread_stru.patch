@@ -1,7 +1,7 @@
 From 50b7c841936979bee6b14253999518e0cf7b3523 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:14 -0700
-Subject: [PATCH 102/232] x86/entry/64: Remove all remaining direct
+Subject: [PATCH 102/233] x86/entry/64: Remove all remaining direct
  thread_struct::sp0 reads
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

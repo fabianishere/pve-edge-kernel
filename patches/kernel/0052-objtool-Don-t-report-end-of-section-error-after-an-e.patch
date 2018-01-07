@@ -1,7 +1,7 @@
 From 985d8e62ef5f1b006da5e175858e552c0dbda771 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:30 -0500
-Subject: [PATCH 052/232] objtool: Don't report end of section error after an
+Subject: [PATCH 052/233] objtool: Don't report end of section error after an
  empty unwind hint
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

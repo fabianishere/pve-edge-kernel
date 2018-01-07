@@ -1,7 +1,7 @@
 From e8354b2be6f97e97515021452082436cec8857ea Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sun, 10 Dec 2017 22:47:20 -0800
-Subject: [PATCH 167/232] x86/vsyscall/64: Warn and fail vsyscall emulation in
+Subject: [PATCH 167/233] x86/vsyscall/64: Warn and fail vsyscall emulation in
  NATIVE mode
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

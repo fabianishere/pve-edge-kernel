@@ -1,7 +1,7 @@
 From 8307fa79c19ddc006d5f816f6eb5127d9064dcd3 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sat, 4 Nov 2017 04:19:51 -0700
-Subject: [PATCH 115/232] selftests/x86/ldt_gdt: Run most existing LDT test
+Subject: [PATCH 115/233] selftests/x86/ldt_gdt: Run most existing LDT test
  cases against the GDT as well
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

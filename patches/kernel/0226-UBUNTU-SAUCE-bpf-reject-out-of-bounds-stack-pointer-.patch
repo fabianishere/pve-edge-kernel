@@ -1,7 +1,7 @@
 From 3c5659ffcc9d2497045dda465a35720f78314e87 Mon Sep 17 00:00:00 2001
 From: Jann Horn <jannh@google.com>
 Date: Thu, 4 Jan 2018 08:01:21 -0600
-Subject: [PATCH 226/232] UBUNTU: SAUCE: bpf: reject out-of-bounds stack
+Subject: [PATCH 226/233] UBUNTU: SAUCE: bpf: reject out-of-bounds stack
  pointer calculation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

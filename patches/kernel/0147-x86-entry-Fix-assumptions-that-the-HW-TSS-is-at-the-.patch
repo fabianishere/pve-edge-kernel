@@ -1,7 +1,7 @@
 From 01e4ee94acbd960e302c23481529a5f5323d9969 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:17 +0100
-Subject: [PATCH 147/232] x86/entry: Fix assumptions that the HW TSS is at the
+Subject: [PATCH 147/233] x86/entry: Fix assumptions that the HW TSS is at the
  beginning of cpu_tss
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

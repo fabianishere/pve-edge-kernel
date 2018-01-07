@@ -1,7 +1,7 @@
 From 883f164f2205159613e17e6550c7ff44cef0ff01 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Wed, 20 Dec 2017 18:02:34 +0100
-Subject: [PATCH 163/232] x86/Kconfig: Limit NR_CPUS on 32-bit to a sane amount
+Subject: [PATCH 163/233] x86/Kconfig: Limit NR_CPUS on 32-bit to a sane amount
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

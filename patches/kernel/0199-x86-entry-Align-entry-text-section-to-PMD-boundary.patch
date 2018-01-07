@@ -1,7 +1,7 @@
 From 1b3d3968bb45b557ce76eaf3edf894aead9e9c03 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:46 +0100
-Subject: [PATCH 199/232] x86/entry: Align entry text section to PMD boundary
+Subject: [PATCH 199/233] x86/entry: Align entry text section to PMD boundary
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

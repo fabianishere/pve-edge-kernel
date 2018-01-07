@@ -1,7 +1,7 @@
 From d03b4d2a3e43228bb98fae4c6f5365d4f9d00f4c Mon Sep 17 00:00:00 2001
 From: Borislav Petkov <bp@suse.de>
 Date: Mon, 4 Dec 2017 15:08:04 +0100
-Subject: [PATCH 215/232] x86/mm/dump_pagetables: Add page table directory to
+Subject: [PATCH 215/233] x86/mm/dump_pagetables: Add page table directory to
  the debugfs VFS hierarchy
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

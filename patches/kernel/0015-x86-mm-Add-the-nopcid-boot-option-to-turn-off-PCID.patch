@@ -1,7 +1,7 @@
 From 95e4ae0f4ad738ff6ec8e44ab9fa5529d4369655 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 29 Jun 2017 08:53:20 -0700
-Subject: [PATCH 015/232] x86/mm: Add the 'nopcid' boot option to turn off PCID
+Subject: [PATCH 015/233] x86/mm: Add the 'nopcid' boot option to turn off PCID
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

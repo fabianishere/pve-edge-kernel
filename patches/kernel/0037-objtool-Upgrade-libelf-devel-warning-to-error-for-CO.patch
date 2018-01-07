@@ -1,7 +1,7 @@
 From 2c9eb7028c0714c3379b58a59c60f7b5b7a5adb0 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Tue, 3 Oct 2017 20:10:36 -0500
-Subject: [PATCH 037/232] objtool: Upgrade libelf-devel warning to error for
+Subject: [PATCH 037/233] objtool: Upgrade libelf-devel warning to error for
  CONFIG_ORC_UNWINDER
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

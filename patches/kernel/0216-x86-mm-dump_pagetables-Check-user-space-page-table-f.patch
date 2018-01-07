@@ -1,7 +1,7 @@
 From 2ed23a29f6f9c736c86dcc8d8ab87cc670593503 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:08:05 +0100
-Subject: [PATCH 216/232] x86/mm/dump_pagetables: Check user space page table
+Subject: [PATCH 216/233] x86/mm/dump_pagetables: Check user space page table
  for WX pages
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

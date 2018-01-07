@@ -1,7 +1,7 @@
 From c2cd64d7bc24a46e3192246a97b30ca5a9692d42 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:21 +0100
-Subject: [PATCH 151/232] x86/entry/64: Separate cpu_current_top_of_stack from
+Subject: [PATCH 151/233] x86/entry/64: Separate cpu_current_top_of_stack from
  TSS.sp0
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

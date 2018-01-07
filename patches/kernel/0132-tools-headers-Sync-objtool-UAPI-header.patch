@@ -1,7 +1,7 @@
 From 6723159121227f7f8d32c09ea4c2237a40266880 Mon Sep 17 00:00:00 2001
 From: Ingo Molnar <mingo@kernel.org>
 Date: Tue, 14 Nov 2017 07:24:22 +0100
-Subject: [PATCH 132/232] tools/headers: Sync objtool UAPI header
+Subject: [PATCH 132/233] tools/headers: Sync objtool UAPI header
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

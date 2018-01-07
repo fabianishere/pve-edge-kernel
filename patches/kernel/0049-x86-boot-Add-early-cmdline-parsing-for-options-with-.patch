@@ -1,7 +1,7 @@
 From 0b7f51014f5219ece1ca55662495bd036f3bd00d Mon Sep 17 00:00:00 2001
 From: Tom Lendacky <thomas.lendacky@amd.com>
 Date: Mon, 17 Jul 2017 16:10:33 -0500
-Subject: [PATCH 049/232] x86/boot: Add early cmdline parsing for options with
+Subject: [PATCH 049/233] x86/boot: Add early cmdline parsing for options with
  arguments
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

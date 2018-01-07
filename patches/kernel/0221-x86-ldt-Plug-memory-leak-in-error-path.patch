@@ -1,7 +1,7 @@
 From f7b3a0038fd5bdc21d05f09002e16db3ea8e6e3b Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sun, 31 Dec 2017 11:24:34 +0100
-Subject: [PATCH 221/232] x86/ldt: Plug memory leak in error path
+Subject: [PATCH 221/233] x86/ldt: Plug memory leak in error path
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 8b7859c0d35e5047d60c5e241fa40104b9c96f39 Mon Sep 17 00:00:00 2001
 From: Will Deacon <will.deacon@arm.com>
 Date: Tue, 24 Oct 2017 11:22:47 +0100
-Subject: [PATCH 125/232] locking/barriers: Add implicit
+Subject: [PATCH 125/233] locking/barriers: Add implicit
  smp_read_barrier_depends() to READ_ONCE()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

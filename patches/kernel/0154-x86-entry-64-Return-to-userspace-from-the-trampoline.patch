@@ -1,7 +1,7 @@
 From eb1bbc0f0023eadafe368704180f4af739aca9a9 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:24 +0100
-Subject: [PATCH 154/232] x86/entry/64: Return to userspace from the trampoline
+Subject: [PATCH 154/233] x86/entry/64: Return to userspace from the trampoline
  stack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

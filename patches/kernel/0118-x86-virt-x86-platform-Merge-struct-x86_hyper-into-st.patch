@@ -1,7 +1,7 @@
 From 59011dc6f59cc32a499fb926d95dad0dabb75a8f Mon Sep 17 00:00:00 2001
 From: Juergen Gross <jgross@suse.com>
 Date: Thu, 9 Nov 2017 14:27:35 +0100
-Subject: [PATCH 118/232] x86/virt, x86/platform: Merge 'struct x86_hyper' into
+Subject: [PATCH 118/233] x86/virt, x86/platform: Merge 'struct x86_hyper' into
  'struct x86_platform' and 'struct x86_init'
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

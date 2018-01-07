@@ -1,7 +1,7 @@
 From 1463b91d69f9e8ce61d264c4d108251192a9afbf Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Wed, 20 Dec 2017 18:51:31 +0100
-Subject: [PATCH 184/232] x86/cpu_entry_area: Move it out of the fixmap
+Subject: [PATCH 184/233] x86/cpu_entry_area: Move it out of the fixmap
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

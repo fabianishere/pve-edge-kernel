@@ -1,0 +1,36 @@
+From a87e8a4126593de7ea94dcc2695f6cd879656c26 Mon Sep 17 00:00:00 2001
+From: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Date: Sat, 6 Jan 2018 17:50:34 -0200
+Subject: [PATCH 233/233] objtool: use sh to invoke sync-check.sh in the
+ Makefile
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+This avoids build failures when building debian packages.
+
+Signed-off-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+(cherry picked from commit 6abf30ed000f0da24985295c206cc6f08a311301)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ tools/objtool/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/objtool/Makefile b/tools/objtool/Makefile
+index 5c71bae01064..fe022f68638d 100644
+--- a/tools/objtool/Makefile
++++ b/tools/objtool/Makefile
+@@ -44,7 +44,7 @@ $(OBJTOOL_IN): fixdep FORCE
+ 	@$(MAKE) $(build)=objtool
+ 
+ $(OBJTOOL): $(LIBSUBCMD) $(OBJTOOL_IN)
+-	@./sync-check.sh
++	@sh ./sync-check.sh
+ 	$(QUIET_LINK)$(CC) $(OBJTOOL_IN) $(LDFLAGS) -o $@
+ 
+ 
+-- 
+2.14.2
+

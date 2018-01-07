@@ -1,7 +1,7 @@
 From c2c378764103c12f96d1e913c8a2ffe3af3b1360 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Sun, 5 Nov 2017 18:27:51 -0800
-Subject: [PATCH 121/232] x86/cpufeature: Add User-Mode Instruction Prevention
+Subject: [PATCH 121/233] x86/cpufeature: Add User-Mode Instruction Prevention
  definitions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

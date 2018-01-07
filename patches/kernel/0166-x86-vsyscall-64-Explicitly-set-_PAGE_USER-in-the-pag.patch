@@ -1,7 +1,7 @@
 From 1150912f8311cdf3d7f394528dcacf0f95d892d6 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sun, 10 Dec 2017 22:47:19 -0800
-Subject: [PATCH 166/232] x86/vsyscall/64: Explicitly set _PAGE_USER in the
+Subject: [PATCH 166/233] x86/vsyscall/64: Explicitly set _PAGE_USER in the
  pagetable hierarchy
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

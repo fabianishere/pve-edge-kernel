@@ -1,7 +1,7 @@
 From 11739f104753550b4d256207c07a75f667b7aae4 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:18 +0100
-Subject: [PATCH 148/232] x86/dumpstack: Handle stack overflow on all stacks
+Subject: [PATCH 148/233] x86/dumpstack: Handle stack overflow on all stacks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 870277eb767ecec9293c5dd5ba5bf1c912251e85 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:15 -0700
-Subject: [PATCH 103/232] x86/entry/32: Fix cpu_current_top_of_stack
+Subject: [PATCH 103/233] x86/entry/32: Fix cpu_current_top_of_stack
  initialization at boot
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

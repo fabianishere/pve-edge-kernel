@@ -1,7 +1,7 @@
 From bb0be747b5ee45f07f5514a214231c9061261b50 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:08 +0100
-Subject: [PATCH 138/232] x86/unwinder/orc: Dont bail on stack overflow
+Subject: [PATCH 138/233] x86/unwinder/orc: Dont bail on stack overflow
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From b6ebe31d563b5fade20c8516eaff92ab3122f1b8 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 6 Nov 2017 07:21:51 -0600
-Subject: [PATCH 130/232] objtool: Move kernel headers/code sync check to a
+Subject: [PATCH 130/233] objtool: Move kernel headers/code sync check to a
  script
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

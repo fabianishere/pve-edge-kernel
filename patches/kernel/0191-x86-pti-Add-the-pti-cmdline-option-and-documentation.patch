@@ -1,7 +1,7 @@
 From d6b6a8fa92efd244f759ab8ded4ccaebac2b762c Mon Sep 17 00:00:00 2001
 From: Borislav Petkov <bp@suse.de>
 Date: Tue, 12 Dec 2017 14:39:52 +0100
-Subject: [PATCH 191/232] x86/pti: Add the pti= cmdline option and
+Subject: [PATCH 191/233] x86/pti: Add the pti= cmdline option and
  documentation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

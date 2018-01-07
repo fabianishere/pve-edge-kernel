@@ -1,7 +1,7 @@
 From c0801cc3935e94f6c9ed132e5d616230b5d9b7d5 Mon Sep 17 00:00:00 2001
 From: Ingo Molnar <mingo@kernel.org>
 Date: Tue, 31 Oct 2017 13:17:22 +0100
-Subject: [PATCH 110/232] x86/cpufeatures: Re-tabulate the X86_FEATURE
+Subject: [PATCH 110/233] x86/cpufeatures: Re-tabulate the X86_FEATURE
  definitions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

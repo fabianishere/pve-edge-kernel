@@ -1,7 +1,7 @@
 From b5143e55b3bf018b3ad2598e677ceb5e155eba6f Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sun, 17 Sep 2017 09:03:49 -0700
-Subject: [PATCH 044/232] x86/mm/64: Stop using CR3.PCID == 0 in ASID-aware
+Subject: [PATCH 044/233] x86/mm/64: Stop using CR3.PCID == 0 in ASID-aware
  code
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

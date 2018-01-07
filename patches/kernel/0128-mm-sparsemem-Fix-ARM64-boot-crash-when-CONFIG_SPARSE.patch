@@ -1,7 +1,7 @@
 From 783e517bb1fd814658cdb26d1d7b5d8f67b448e4 Mon Sep 17 00:00:00 2001
 From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 Date: Tue, 7 Nov 2017 11:33:37 +0300
-Subject: [PATCH 128/232] mm/sparsemem: Fix ARM64 boot crash when
+Subject: [PATCH 128/233] mm/sparsemem: Fix ARM64 boot crash when
  CONFIG_SPARSEMEM_EXTREME=y
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

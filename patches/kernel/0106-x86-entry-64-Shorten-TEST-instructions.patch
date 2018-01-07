@@ -1,7 +1,7 @@
 From de4c79dbea1d23e58752c189586c5f5b751fa142 Mon Sep 17 00:00:00 2001
 From: Borislav Petkov <bp@suse.de>
 Date: Thu, 2 Nov 2017 13:09:26 +0100
-Subject: [PATCH 106/232] x86/entry/64: Shorten TEST instructions
+Subject: [PATCH 106/233] x86/entry/64: Shorten TEST instructions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

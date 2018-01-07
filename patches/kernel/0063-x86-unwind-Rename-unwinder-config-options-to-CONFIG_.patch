@@ -1,7 +1,7 @@
 From dcc61cf4d482d478979471795935733845fe757e Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Fri, 13 Oct 2017 15:02:00 -0500
-Subject: [PATCH 063/232] x86/unwind: Rename unwinder config options to
+Subject: [PATCH 063/233] x86/unwind: Rename unwinder config options to
  'CONFIG_UNWINDER_*'
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
