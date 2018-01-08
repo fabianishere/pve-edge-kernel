@@ -1,3 +1,13 @@
+pve-kernel (4.13.13-35) unstable; urgency=medium
+
+  * KPTI: disable on AMD
+
+  * KPTI: add follow-up fixes
+
+  * update Spectre KVM PoC fix for AMD
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 8 Jan 2018 10:26:58 +0100
+
 pve-kernel (4.13.13-34) unstable; urgency=medium
 
   * cherry-pick / backport of KPTI / Meltdown fixes
