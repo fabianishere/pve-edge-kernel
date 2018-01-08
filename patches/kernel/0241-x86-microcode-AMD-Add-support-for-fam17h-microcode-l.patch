@@ -1,0 +1,52 @@
+From 8329d47141a78a64e8ae6f4a735aceaafe93e098 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Thu, 30 Nov 2017 16:46:40 -0600
+Subject: [PATCH 241/241] x86/microcode/AMD: Add support for fam17h microcode
+ loading
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+commit f4e9b7af0cd58dd039a0fb2cd67d57cea4889abf upstream.
+
+The size for the Microcode Patch Block (MPB) for an AMD family 17h
+processor is 3200 bytes.  Add a #define for fam17h so that it does
+not default to 2048 bytes and fail a microcode load/update.
+
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@alien8.de>
+Link: https://lkml.kernel.org/r/20171130224640.15391.40247.stgit@tlendack-t1.amdoffice.net
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Cc: Alice Ferrazzi <alicef@gentoo.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/cpu/microcode/amd.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/x86/kernel/cpu/microcode/amd.c b/arch/x86/kernel/cpu/microcode/amd.c
+index 21b185793c80..248cad00fee6 100644
+--- a/arch/x86/kernel/cpu/microcode/amd.c
++++ b/arch/x86/kernel/cpu/microcode/amd.c
+@@ -467,6 +467,7 @@ static unsigned int verify_patch_size(u8 family, u32 patch_size,
+ #define F14H_MPB_MAX_SIZE 1824
+ #define F15H_MPB_MAX_SIZE 4096
+ #define F16H_MPB_MAX_SIZE 3458
++#define F17H_MPB_MAX_SIZE 3200
+ 
+ 	switch (family) {
+ 	case 0x14:
+@@ -478,6 +479,9 @@ static unsigned int verify_patch_size(u8 family, u32 patch_size,
+ 	case 0x16:
+ 		max_size = F16H_MPB_MAX_SIZE;
+ 		break;
++	case 0x17:
++		max_size = F17H_MPB_MAX_SIZE;
++		break;
+ 	default:
+ 		max_size = F1XH_MPB_MAX_SIZE;
+ 		break;
+-- 
+2.14.2
+
