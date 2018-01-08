@@ -1,0 +1,144 @@
+From 6d7f23c421d2fc74c052c03fb9735effd98ef035 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Thu, 4 Jan 2018 12:32:03 +0100
+Subject: [PATCH 238/241] x86/kaslr: Fix the vaddr_end mess
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+commit 1dddd25125112ba49706518ac9077a1026a18f37 upstream.
+
+vaddr_end for KASLR is only documented in the KASLR code itself and is
+adjusted depending on config options. So it's not surprising that a change
+of the memory layout causes KASLR to have the wrong vaddr_end. This can map
+arbitrary stuff into other areas causing hard to understand problems.
+
+Remove the whole ifdef magic and define the start of the cpu_entry_area to
+be the end of the KASLR vaddr range.
+
+Add documentation to that effect.
+
+Fixes: 92a0f81d8957 ("x86/cpu_entry_area: Move it out of the fixmap")
+Reported-by: Benjamin Gilbert <benjamin.gilbert@coreos.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Tested-by: Benjamin Gilbert <benjamin.gilbert@coreos.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Garnier <thgarnie@google.com>,
+Cc: Alexander Kuleshov <kuleshovmail@gmail.com>
+Link: https://lkml.kernel.org/r/alpine.DEB.2.20.1801041320360.1771@nanos
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ Documentation/x86/x86_64/mm.txt         |  6 ++++++
+ arch/x86/include/asm/pgtable_64_types.h |  8 +++++++-
+ arch/x86/mm/kaslr.c                     | 32 +++++++++-----------------------
+ 3 files changed, 22 insertions(+), 24 deletions(-)
+
+diff --git a/Documentation/x86/x86_64/mm.txt b/Documentation/x86/x86_64/mm.txt
+index f7dabe1f01e9..ea91cb61a602 100644
+--- a/Documentation/x86/x86_64/mm.txt
++++ b/Documentation/x86/x86_64/mm.txt
+@@ -12,6 +12,7 @@ ffffea0000000000 - ffffeaffffffffff (=40 bits) virtual memory map (1TB)
+ ... unused hole ...
+ ffffec0000000000 - fffffbffffffffff (=44 bits) kasan shadow memory (16TB)
+ ... unused hole ...
++				    vaddr_end for KASLR
+ fffffe0000000000 - fffffe7fffffffff (=39 bits) cpu_entry_area mapping
+ fffffe8000000000 - fffffeffffffffff (=39 bits) LDT remap for PTI
+ ffffff0000000000 - ffffff7fffffffff (=39 bits) %esp fixup stacks
+@@ -37,6 +38,7 @@ ffd4000000000000 - ffd5ffffffffffff (=49 bits) virtual memory map (512TB)
+ ... unused hole ...
+ ffdf000000000000 - fffffc0000000000 (=53 bits) kasan shadow memory (8PB)
+ ... unused hole ...
++				    vaddr_end for KASLR
+ fffffe0000000000 - fffffe7fffffffff (=39 bits) cpu_entry_area mapping
+ ... unused hole ...
+ ffffff0000000000 - ffffff7fffffffff (=39 bits) %esp fixup stacks
+@@ -71,3 +73,7 @@ during EFI runtime calls.
+ Note that if CONFIG_RANDOMIZE_MEMORY is enabled, the direct mapping of all
+ physical memory, vmalloc/ioremap space and virtual memory map are randomized.
+ Their order is preserved but their base will be offset early at boot time.
++
++Be very careful vs. KASLR when changing anything here. The KASLR address
++range must not overlap with anything except the KASAN shadow area, which is
++correct as KASAN disables KASLR.
+diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
+index 0dd48d17a4a1..928d558e7778 100644
+--- a/arch/x86/include/asm/pgtable_64_types.h
++++ b/arch/x86/include/asm/pgtable_64_types.h
+@@ -74,7 +74,13 @@ typedef struct { pteval_t pte; } pte_t;
+ #define PGDIR_SIZE	(_AC(1, UL) << PGDIR_SHIFT)
+ #define PGDIR_MASK	(~(PGDIR_SIZE - 1))
+ 
+-/* See Documentation/x86/x86_64/mm.txt for a description of the memory map. */
++/*
++ * See Documentation/x86/x86_64/mm.txt for a description of the memory map.
++ *
++ * Be very careful vs. KASLR when changing anything here. The KASLR address
++ * range must not overlap with anything except the KASAN shadow area, which
++ * is correct as KASAN disables KASLR.
++ */
+ #define MAXMEM			_AC(__AC(1, UL) << MAX_PHYSMEM_BITS, UL)
+ 
+ #ifdef CONFIG_X86_5LEVEL
+diff --git a/arch/x86/mm/kaslr.c b/arch/x86/mm/kaslr.c
+index af599167fe3c..debc7cc8e152 100644
+--- a/arch/x86/mm/kaslr.c
++++ b/arch/x86/mm/kaslr.c
+@@ -33,25 +33,14 @@
+ #define TB_SHIFT 40
+ 
+ /*
+- * Virtual address start and end range for randomization. The end changes base
+- * on configuration to have the highest amount of space for randomization.
+- * It increases the possible random position for each randomized region.
++ * Virtual address start and end range for randomization.
+  *
+- * You need to add an if/def entry if you introduce a new memory region
+- * compatible with KASLR. Your entry must be in logical order with memory
+- * layout. For example, ESPFIX is before EFI because its virtual address is
+- * before. You also need to add a BUILD_BUG_ON() in kernel_randomize_memory() to
+- * ensure that this order is correct and won't be changed.
++ * The end address could depend on more configuration options to make the
++ * highest amount of space for randomization available, but that's too hard
++ * to keep straight and caused issues already.
+  */
+ static const unsigned long vaddr_start = __PAGE_OFFSET_BASE;
+-
+-#if defined(CONFIG_X86_ESPFIX64)
+-static const unsigned long vaddr_end = ESPFIX_BASE_ADDR;
+-#elif defined(CONFIG_EFI)
+-static const unsigned long vaddr_end = EFI_VA_END;
+-#else
+-static const unsigned long vaddr_end = __START_KERNEL_map;
+-#endif
++static const unsigned long vaddr_end = CPU_ENTRY_AREA_BASE;
+ 
+ /* Default values */
+ unsigned long page_offset_base = __PAGE_OFFSET_BASE;
+@@ -100,15 +89,12 @@ void __init kernel_randomize_memory(void)
+ 	unsigned long remain_entropy;
+ 
+ 	/*
+-	 * All these BUILD_BUG_ON checks ensures the memory layout is
+-	 * consistent with the vaddr_start/vaddr_end variables.
++	 * These BUILD_BUG_ON checks ensure the memory layout is consistent
++	 * with the vaddr_start/vaddr_end variables. These checks are very
++	 * limited....
+ 	 */
+ 	BUILD_BUG_ON(vaddr_start >= vaddr_end);
+-	BUILD_BUG_ON(IS_ENABLED(CONFIG_X86_ESPFIX64) &&
+-		     vaddr_end >= EFI_VA_END);
+-	BUILD_BUG_ON((IS_ENABLED(CONFIG_X86_ESPFIX64) ||
+-		      IS_ENABLED(CONFIG_EFI)) &&
+-		     vaddr_end >= __START_KERNEL_map);
++	BUILD_BUG_ON(vaddr_end != CPU_ENTRY_AREA_BASE);
+ 	BUILD_BUG_ON(vaddr_end > __START_KERNEL_map);
+ 
+ 	if (!kaslr_memory_enabled())
+-- 
+2.14.2
+

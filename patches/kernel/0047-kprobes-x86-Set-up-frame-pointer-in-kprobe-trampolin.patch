@@ -1,7 +1,7 @@
 From f2c1440e8f0b728d48ee8ce295f4dfe495949e1f Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Tue, 3 Oct 2017 08:51:43 -0500
-Subject: [PATCH 047/233] kprobes/x86: Set up frame pointer in kprobe
+Subject: [PATCH 047/241] kprobes/x86: Set up frame pointer in kprobe
  trampoline
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

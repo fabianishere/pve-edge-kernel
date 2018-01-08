@@ -1,7 +1,7 @@
 From 534c2338c3f72069910c06eba7693a4a1d15faf8 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:08:01 +0100
-Subject: [PATCH 211/233] x86/mm: Use INVPCID for __native_flush_tlb_single()
+Subject: [PATCH 211/241] x86/mm: Use INVPCID for __native_flush_tlb_single()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

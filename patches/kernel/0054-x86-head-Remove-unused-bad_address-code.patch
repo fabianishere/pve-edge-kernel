@@ -1,7 +1,7 @@
 From 5ba2d2eca16a62a64166661ea849c4916ae2f44f Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:32 -0500
-Subject: [PATCH 054/233] x86/head: Remove unused 'bad_address' code
+Subject: [PATCH 054/241] x86/head: Remove unused 'bad_address' code
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

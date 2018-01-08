@@ -1,7 +1,7 @@
 From f9bdf4dc3a7719aa39df4abe58efe3db3fb8b037 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:32 +0100
-Subject: [PATCH 162/233] x86/cpufeatures: Make CPU bugs sticky
+Subject: [PATCH 162/241] x86/cpufeatures: Make CPU bugs sticky
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

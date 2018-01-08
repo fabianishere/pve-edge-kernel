@@ -1,7 +1,7 @@
 From 4264307e3e9665cba9220e02ada91ad9b4742711 Mon Sep 17 00:00:00 2001
 From: Ingo Molnar <mingo@kernel.org>
 Date: Tue, 31 Oct 2017 13:17:23 +0100
-Subject: [PATCH 111/233] x86/cpufeatures: Fix various details in the feature
+Subject: [PATCH 111/241] x86/cpufeatures: Fix various details in the feature
  definitions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

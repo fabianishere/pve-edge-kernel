@@ -1,7 +1,7 @@
 From e0cef0182f7d13edb48119653a4fc225b0287b5a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 27 Oct 2017 13:25:29 -0700
-Subject: [PATCH 084/233] x86/boot: Relocate definition of the initial state of
+Subject: [PATCH 084/241] x86/boot: Relocate definition of the initial state of
  CR0
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

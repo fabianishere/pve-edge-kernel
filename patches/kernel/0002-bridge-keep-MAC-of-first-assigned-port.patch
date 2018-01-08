@@ -1,7 +1,7 @@
 From d9166325bf8b4d5a4c7aeb6a15c30c90ffc28347 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
 Date: Thu, 14 Sep 2017 11:02:18 +0200
-Subject: [PATCH 002/233] bridge: keep MAC of first assigned port
+Subject: [PATCH 002/241] bridge: keep MAC of first assigned port
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

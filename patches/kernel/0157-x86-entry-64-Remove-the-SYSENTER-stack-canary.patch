@@ -1,7 +1,7 @@
 From b153f8e687bf0739b113445d3cfe029593e9484a Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:27 +0100
-Subject: [PATCH 157/233] x86/entry/64: Remove the SYSENTER stack canary
+Subject: [PATCH 157/241] x86/entry/64: Remove the SYSENTER stack canary
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

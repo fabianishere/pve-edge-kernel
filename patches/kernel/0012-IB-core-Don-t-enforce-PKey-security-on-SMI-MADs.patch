@@ -1,7 +1,7 @@
 From 72083c18eb8824dd1d0580c1382d23f4fbc4ed33 Mon Sep 17 00:00:00 2001
 From: Daniel Jurgens <danielj@mellanox.com>
 Date: Mon, 20 Nov 2017 16:47:45 -0600
-Subject: [PATCH 012/233] IB/core: Don't enforce PKey security on SMI MADs
+Subject: [PATCH 012/241] IB/core: Don't enforce PKey security on SMI MADs
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

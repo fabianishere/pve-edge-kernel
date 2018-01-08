@@ -1,7 +1,7 @@
 From a5a66a79aadeb0459a3a28adf04d41c42e053436 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Tue, 11 Jul 2017 10:33:42 -0500
-Subject: [PATCH 033/233] objtool: Add ORC unwind table generation
+Subject: [PATCH 033/241] objtool: Add ORC unwind table generation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

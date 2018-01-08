@@ -1,7 +1,7 @@
 From e16f646082d458ec595304dbc2e6906fdc417495 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Wed, 20 Dec 2017 18:07:42 +0100
-Subject: [PATCH 165/233] x86/mm/dump_pagetables: Make the address hints
+Subject: [PATCH 165/241] x86/mm/dump_pagetables: Make the address hints
  correct and readable
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

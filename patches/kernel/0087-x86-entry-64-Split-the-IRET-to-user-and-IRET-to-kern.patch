@@ -1,7 +1,7 @@
 From 6c390918ecf72524840bc174fb5f9d007db5a9a8 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:58:59 -0700
-Subject: [PATCH 087/233] x86/entry/64: Split the IRET-to-user and
+Subject: [PATCH 087/241] x86/entry/64: Split the IRET-to-user and
  IRET-to-kernel paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

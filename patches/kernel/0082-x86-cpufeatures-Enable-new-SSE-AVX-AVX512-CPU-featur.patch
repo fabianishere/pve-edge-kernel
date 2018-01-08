@@ -1,7 +1,7 @@
 From 59557ab0237e7474402d4240c55f119a86dadc7d Mon Sep 17 00:00:00 2001
 From: Gayatri Kammela <gayatri.kammela@intel.com>
 Date: Mon, 30 Oct 2017 18:20:29 -0700
-Subject: [PATCH 082/233] x86/cpufeatures: Enable new SSE/AVX/AVX512 CPU
+Subject: [PATCH 082/241] x86/cpufeatures: Enable new SSE/AVX/AVX512 CPU
  features
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 0e75b184111dbcd07911712bd87991df186c5fd3 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 5 Dec 2017 13:34:52 +0100
-Subject: [PATCH 178/233] x86/mm: Add comments to clarify which TLB-flush
+Subject: [PATCH 178/241] x86/mm: Add comments to clarify which TLB-flush
  functions are supposed to flush what
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

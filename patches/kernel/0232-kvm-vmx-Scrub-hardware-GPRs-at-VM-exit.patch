@@ -1,7 +1,7 @@
 From c59a61438e9a8f24a50171ac9d3b98e8f3719d07 Mon Sep 17 00:00:00 2001
 From: Jim Mattson <jmattson@google.com>
 Date: Wed, 3 Jan 2018 14:31:38 -0800
-Subject: [PATCH 232/233] kvm: vmx: Scrub hardware GPRs at VM-exit
+Subject: [PATCH 232/241] kvm: vmx: Scrub hardware GPRs at VM-exit
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

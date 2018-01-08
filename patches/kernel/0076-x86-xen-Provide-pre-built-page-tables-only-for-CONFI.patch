@@ -1,7 +1,7 @@
 From cac8711a9ba742e97090cc5ec522360f1549c584 Mon Sep 17 00:00:00 2001
 From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 Date: Fri, 29 Sep 2017 17:08:19 +0300
-Subject: [PATCH 076/233] x86/xen: Provide pre-built page tables only for
+Subject: [PATCH 076/241] x86/xen: Provide pre-built page tables only for
  CONFIG_XEN_PV=y and CONFIG_XEN_PVH=y
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 183c7a0eddfea6359e977cc5216972b4cc875e0d Mon Sep 17 00:00:00 2001
 From: Masahiro Yamada <yamada.masahiro@socionext.com>
 Date: Fri, 27 Oct 2017 13:11:10 +0900
-Subject: [PATCH 080/233] x86/build: Beautify build log of syscall headers
+Subject: [PATCH 080/241] x86/build: Beautify build log of syscall headers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

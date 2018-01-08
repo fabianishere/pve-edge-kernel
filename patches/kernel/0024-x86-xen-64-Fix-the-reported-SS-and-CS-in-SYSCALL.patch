@@ -1,7 +1,7 @@
 From 2b0794bbebac81a539dfd405273d61a8a16531d2 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 14 Aug 2017 22:36:19 -0700
-Subject: [PATCH 024/233] x86/xen/64: Fix the reported SS and CS in SYSCALL
+Subject: [PATCH 024/241] x86/xen/64: Fix the reported SS and CS in SYSCALL
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

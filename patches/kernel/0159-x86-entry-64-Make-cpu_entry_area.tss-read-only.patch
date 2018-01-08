@@ -1,7 +1,7 @@
 From a4da7aed31f0355b881bdeeb3d269a20759f16a8 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:29 +0100
-Subject: [PATCH 159/233] x86/entry/64: Make cpu_entry_area.tss read-only
+Subject: [PATCH 159/241] x86/entry/64: Make cpu_entry_area.tss read-only
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 548bfd4d539c4e13eb86236f8f09596e3663c38b Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:26 +0100
-Subject: [PATCH 156/233] x86/entry/64: Move the IST stacks into struct
+Subject: [PATCH 156/241] x86/entry/64: Move the IST stacks into struct
  cpu_entry_area
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

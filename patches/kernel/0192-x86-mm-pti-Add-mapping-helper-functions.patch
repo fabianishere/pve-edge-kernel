@@ -1,7 +1,7 @@
 From 1cb923a3733ac738f0d96fe4738bdf159db86cfd Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:37 +0100
-Subject: [PATCH 192/233] x86/mm/pti: Add mapping helper functions
+Subject: [PATCH 192/241] x86/mm/pti: Add mapping helper functions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

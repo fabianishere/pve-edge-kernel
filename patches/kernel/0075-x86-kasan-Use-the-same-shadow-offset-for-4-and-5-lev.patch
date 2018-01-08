@@ -1,7 +1,7 @@
 From f6bb8e560b2229af5dcf3127fc92e732539b4823 Mon Sep 17 00:00:00 2001
 From: Andrey Ryabinin <aryabinin@virtuozzo.com>
 Date: Fri, 29 Sep 2017 17:08:18 +0300
-Subject: [PATCH 075/233] x86/kasan: Use the same shadow offset for 4- and
+Subject: [PATCH 075/241] x86/kasan: Use the same shadow offset for 4- and
  5-level paging
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From c7ef01f56951b1c876069387c44e11575288f3d2 Mon Sep 17 00:00:00 2001
 From: Vlastimil Babka <vbabka@suse.cz>
 Date: Tue, 19 Dec 2017 22:33:46 +0100
-Subject: [PATCH 213/233] x86/dumpstack: Indicate in Oops whether PTI is
+Subject: [PATCH 213/241] x86/dumpstack: Indicate in Oops whether PTI is
  configured and enabled
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

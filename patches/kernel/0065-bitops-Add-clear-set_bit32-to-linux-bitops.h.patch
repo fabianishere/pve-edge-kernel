@@ -1,7 +1,7 @@
 From 2f76ec868c18486b60f1b76428339a2fa0c2e5d8 Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Fri, 13 Oct 2017 14:56:41 -0700
-Subject: [PATCH 065/233] bitops: Add clear/set_bit32() to linux/bitops.h
+Subject: [PATCH 065/241] bitops: Add clear/set_bit32() to linux/bitops.h
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

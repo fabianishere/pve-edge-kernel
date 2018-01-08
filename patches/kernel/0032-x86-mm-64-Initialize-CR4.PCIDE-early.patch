@@ -1,7 +1,7 @@
 From d9fd6653e5dd9d80c7c75065329250529281e02d Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sun, 10 Sep 2017 17:48:27 -0700
-Subject: [PATCH 032/233] x86/mm/64: Initialize CR4.PCIDE early
+Subject: [PATCH 032/241] x86/mm/64: Initialize CR4.PCIDE early
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

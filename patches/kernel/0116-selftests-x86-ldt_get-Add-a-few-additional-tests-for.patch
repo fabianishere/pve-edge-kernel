@@ -1,7 +1,7 @@
 From 26e89424fe3c13d437f960736a7b925f3953cad6 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sat, 4 Nov 2017 04:19:52 -0700
-Subject: [PATCH 116/233] selftests/x86/ldt_get: Add a few additional tests for
+Subject: [PATCH 116/241] selftests/x86/ldt_get: Add a few additional tests for
  limits
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

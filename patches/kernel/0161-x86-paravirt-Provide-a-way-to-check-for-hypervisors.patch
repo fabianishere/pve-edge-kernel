@@ -1,7 +1,7 @@
 From 75ea12fecab1f4af63b39227509bf706b3faf21d Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:31 +0100
-Subject: [PATCH 161/233] x86/paravirt: Provide a way to check for hypervisors
+Subject: [PATCH 161/241] x86/paravirt: Provide a way to check for hypervisors
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

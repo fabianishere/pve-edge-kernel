@@ -1,7 +1,7 @@
 From 19a0f9475a62580729769eb430d5dd38026f0f02 Mon Sep 17 00:00:00 2001
 From: Borislav Petkov <bp@suse.de>
 Date: Fri, 3 Nov 2017 11:20:28 +0100
-Subject: [PATCH 109/233] x86/mm: Define _PAGE_TABLE using _KERNPG_TABLE
+Subject: [PATCH 109/241] x86/mm: Define _PAGE_TABLE using _KERNPG_TABLE
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

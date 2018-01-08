@@ -1,7 +1,7 @@
 From 4eeffdaf7e8e034633bab44f61c5f92002179d28 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:43 +0100
-Subject: [PATCH 197/233] x86/mm/pti: Force entry through trampoline when PTI
+Subject: [PATCH 197/241] x86/mm/pti: Force entry through trampoline when PTI
  active
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

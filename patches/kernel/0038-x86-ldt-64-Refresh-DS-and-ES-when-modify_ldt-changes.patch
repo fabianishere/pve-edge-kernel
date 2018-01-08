@@ -1,7 +1,7 @@
 From 34aa933a9bce5fb9c88e6ed98b268cbf058e51eb Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Wed, 26 Jul 2017 07:16:30 -0700
-Subject: [PATCH 038/233] x86/ldt/64: Refresh DS and ES when modify_ldt changes
+Subject: [PATCH 038/241] x86/ldt/64: Refresh DS and ES when modify_ldt changes
  an entry
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

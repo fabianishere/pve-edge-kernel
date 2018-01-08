@@ -1,7 +1,7 @@
 From 39f179e9baa1728a99a60c5933b1a4a3db73e617 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:39 +0100
-Subject: [PATCH 194/233] x86/mm/pti: Allocate a separate user PGD
+Subject: [PATCH 194/241] x86/mm/pti: Allocate a separate user PGD
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From c8756c2077aba1a33ec603766211fdb1dad34577 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:12 +0100
-Subject: [PATCH 142/233] x86/entry/64: Allocate and enable the SYSENTER stack
+Subject: [PATCH 142/241] x86/entry/64: Allocate and enable the SYSENTER stack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

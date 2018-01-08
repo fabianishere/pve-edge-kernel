@@ -1,7 +1,7 @@
 From 59b914593681a98524e4f3ba239544f77f03d14a Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Thu, 21 Dec 2017 00:49:14 +0100
-Subject: [PATCH 224/233] kvm: x86: fix RSM when PCID is non-zero
+Subject: [PATCH 224/241] kvm: x86: fix RSM when PCID is non-zero
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

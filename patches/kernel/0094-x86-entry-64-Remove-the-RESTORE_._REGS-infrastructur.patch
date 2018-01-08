@@ -1,7 +1,7 @@
 From 8837585aa116d1aa832e524442a1e9953d17a196 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:06 -0700
-Subject: [PATCH 094/233] x86/entry/64: Remove the RESTORE_..._REGS
+Subject: [PATCH 094/241] x86/entry/64: Remove the RESTORE_..._REGS
  infrastructure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

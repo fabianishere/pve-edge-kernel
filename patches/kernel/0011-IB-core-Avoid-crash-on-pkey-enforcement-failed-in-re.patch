@@ -1,7 +1,7 @@
 From 406a5590ca8c58f0f92927230285a3388e4527e4 Mon Sep 17 00:00:00 2001
 From: Parav Pandit <parav@mellanox.com>
 Date: Fri, 5 Jan 2018 23:51:12 +0100
-Subject: [PATCH 011/233] IB/core: Avoid crash on pkey enforcement failed in
+Subject: [PATCH 011/241] IB/core: Avoid crash on pkey enforcement failed in
  received MADs
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

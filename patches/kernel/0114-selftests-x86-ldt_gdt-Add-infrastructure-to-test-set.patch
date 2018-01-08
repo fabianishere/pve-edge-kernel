@@ -1,7 +1,7 @@
 From 5f1c500617cd1a6f629237471344ee200debaa60 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sat, 4 Nov 2017 04:19:50 -0700
-Subject: [PATCH 114/233] selftests/x86/ldt_gdt: Add infrastructure to test
+Subject: [PATCH 114/241] selftests/x86/ldt_gdt: Add infrastructure to test
  set_thread_area()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

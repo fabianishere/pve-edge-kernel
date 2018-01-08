@@ -1,7 +1,7 @@
 From ac21d052bf1fbdb4162b1fa522703f4f003f37c1 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Thu, 14 Dec 2017 12:27:31 +0100
-Subject: [PATCH 170/233] x86/ldt: Prevent LDT inheritance on exec
+Subject: [PATCH 170/241] x86/ldt: Prevent LDT inheritance on exec
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

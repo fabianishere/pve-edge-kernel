@@ -1,0 +1,99 @@
+From 596ad95567b9dedff8b9f43b5ae18b1e3463da6b Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Thu, 4 Jan 2018 13:01:40 +0100
+Subject: [PATCH 237/241] x86/mm: Map cpu_entry_area at the same place on 4/5
+ level
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+commit f2078904810373211fb15f91888fba14c01a4acc upstream.
+
+There is no reason for 4 and 5 level pagetables to have a different
+layout. It just makes determining vaddr_end for KASLR harder than
+necessary.
+
+Fixes: 92a0f81d8957 ("x86/cpu_entry_area: Move it out of the fixmap")
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Benjamin Gilbert <benjamin.gilbert@coreos.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Garnier <thgarnie@google.com>,
+Cc: Alexander Kuleshov <kuleshovmail@gmail.com>
+Link: https://lkml.kernel.org/r/alpine.DEB.2.20.1801041320360.1771@nanos
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ Documentation/x86/x86_64/mm.txt         | 7 ++++---
+ arch/x86/include/asm/pgtable_64_types.h | 4 ++--
+ arch/x86/mm/dump_pagetables.c           | 2 +-
+ 3 files changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/Documentation/x86/x86_64/mm.txt b/Documentation/x86/x86_64/mm.txt
+index ddd5ffd31bd0..f7dabe1f01e9 100644
+--- a/Documentation/x86/x86_64/mm.txt
++++ b/Documentation/x86/x86_64/mm.txt
+@@ -12,8 +12,8 @@ ffffea0000000000 - ffffeaffffffffff (=40 bits) virtual memory map (1TB)
+ ... unused hole ...
+ ffffec0000000000 - fffffbffffffffff (=44 bits) kasan shadow memory (16TB)
+ ... unused hole ...
+-fffffe0000000000 - fffffe7fffffffff (=39 bits) LDT remap for PTI
+-fffffe8000000000 - fffffeffffffffff (=39 bits) cpu_entry_area mapping
++fffffe0000000000 - fffffe7fffffffff (=39 bits) cpu_entry_area mapping
++fffffe8000000000 - fffffeffffffffff (=39 bits) LDT remap for PTI
+ ffffff0000000000 - ffffff7fffffffff (=39 bits) %esp fixup stacks
+ ... unused hole ...
+ ffffffef00000000 - fffffffeffffffff (=64 GB) EFI region mapping space
+@@ -37,7 +37,8 @@ ffd4000000000000 - ffd5ffffffffffff (=49 bits) virtual memory map (512TB)
+ ... unused hole ...
+ ffdf000000000000 - fffffc0000000000 (=53 bits) kasan shadow memory (8PB)
+ ... unused hole ...
+-fffffe8000000000 - fffffeffffffffff (=39 bits) cpu_entry_area mapping
++fffffe0000000000 - fffffe7fffffffff (=39 bits) cpu_entry_area mapping
++... unused hole ...
+ ffffff0000000000 - ffffff7fffffffff (=39 bits) %esp fixup stacks
+ ... unused hole ...
+ ffffffef00000000 - fffffffeffffffff (=64 GB) EFI region mapping space
+diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
+index c92bd73b1e46..0dd48d17a4a1 100644
+--- a/arch/x86/include/asm/pgtable_64_types.h
++++ b/arch/x86/include/asm/pgtable_64_types.h
+@@ -87,7 +87,7 @@ typedef struct { pteval_t pte; } pte_t;
+ # define VMALLOC_SIZE_TB	_AC(32, UL)
+ # define __VMALLOC_BASE		_AC(0xffffc90000000000, UL)
+ # define __VMEMMAP_BASE		_AC(0xffffea0000000000, UL)
+-# define LDT_PGD_ENTRY		_AC(-4, UL)
++# define LDT_PGD_ENTRY		_AC(-3, UL)
+ # define LDT_BASE_ADDR		(LDT_PGD_ENTRY << PGDIR_SHIFT)
+ #endif
+ 
+@@ -109,7 +109,7 @@ typedef struct { pteval_t pte; } pte_t;
+ #define ESPFIX_PGD_ENTRY	_AC(-2, UL)
+ #define ESPFIX_BASE_ADDR	(ESPFIX_PGD_ENTRY << P4D_SHIFT)
+ 
+-#define CPU_ENTRY_AREA_PGD	_AC(-3, UL)
++#define CPU_ENTRY_AREA_PGD	_AC(-4, UL)
+ #define CPU_ENTRY_AREA_BASE	(CPU_ENTRY_AREA_PGD << P4D_SHIFT)
+ 
+ #define EFI_VA_START		( -4 * (_AC(1, UL) << 30))
+diff --git a/arch/x86/mm/dump_pagetables.c b/arch/x86/mm/dump_pagetables.c
+index 12b93d350480..a764bf6f3473 100644
+--- a/arch/x86/mm/dump_pagetables.c
++++ b/arch/x86/mm/dump_pagetables.c
+@@ -61,10 +61,10 @@ enum address_markers_idx {
+ 	KASAN_SHADOW_START_NR,
+ 	KASAN_SHADOW_END_NR,
+ #endif
++	CPU_ENTRY_AREA_NR,
+ #if defined(CONFIG_MODIFY_LDT_SYSCALL) && !defined(CONFIG_X86_5LEVEL)
+ 	LDT_NR,
+ #endif
+-	CPU_ENTRY_AREA_NR,
+ #ifdef CONFIG_X86_ESPFIX64
+ 	ESPFIX_START_NR,
+ #endif
+-- 
+2.14.2
+

@@ -1,7 +1,7 @@
 From df469cffe07c84906be43e89d33f2a8a5312e60f Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Fri, 13 Oct 2017 14:56:43 -0700
-Subject: [PATCH 067/233] x86/fpu: Parse clearcpuid= as early XSAVE argument
+Subject: [PATCH 067/241] x86/fpu: Parse clearcpuid= as early XSAVE argument
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 0a708f5b66f8b49338f8cf8b6d84d3fdc7b3f67f Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:08:06 +0100
-Subject: [PATCH 217/233] x86/mm/dump_pagetables: Allow dumping current
+Subject: [PATCH 217/241] x86/mm/dump_pagetables: Allow dumping current
  pagetables
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
