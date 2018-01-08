@@ -1,7 +1,7 @@
 From 3642d7fb8bcab15ab1f82531f8120e22181cd7da Mon Sep 17 00:00:00 2001
 From: Andy Whitcroft <apw@canonical.com>
 Date: Wed, 20 Dec 2017 13:33:50 +0000
-Subject: [PATCH 230/241] UBUNTU: SAUCE: only attempt to use PCID in 64 bit
+Subject: [PATCH 230/242] UBUNTU: SAUCE: only attempt to use PCID in 64 bit
  builds
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 22da8888c8168530496ddfc0867181a8910089b3 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:34 +0100
-Subject: [PATCH 188/241] x86/mm/pti: Disable global pages if
+Subject: [PATCH 188/242] x86/mm/pti: Disable global pages if
  PAGE_TABLE_ISOLATION=y
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

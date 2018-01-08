@@ -1,7 +1,7 @@
 From 37d56f22c5e02a6594bdae33e257d9ee420a83df Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 5 Dec 2017 13:34:50 +0100
-Subject: [PATCH 174/241] x86/uv: Use the right TLB-flush API
+Subject: [PATCH 174/242] x86/uv: Use the right TLB-flush API
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

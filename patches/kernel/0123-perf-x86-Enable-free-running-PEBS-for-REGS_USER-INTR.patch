@@ -1,7 +1,7 @@
 From 6e502c25e8279d5c02db5b59e081a5415e1734fe Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Thu, 31 Aug 2017 14:46:30 -0700
-Subject: [PATCH 123/241] perf/x86: Enable free running PEBS for REGS_USER/INTR
+Subject: [PATCH 123/242] perf/x86: Enable free running PEBS for REGS_USER/INTR
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

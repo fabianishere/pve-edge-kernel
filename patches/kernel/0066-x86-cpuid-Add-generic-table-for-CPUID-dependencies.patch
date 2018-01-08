@@ -1,7 +1,7 @@
 From d637e8b6db21d282cfb1fd789ae60807cc87c867 Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Fri, 13 Oct 2017 14:56:42 -0700
-Subject: [PATCH 066/241] x86/cpuid: Add generic table for CPUID dependencies
+Subject: [PATCH 066/242] x86/cpuid: Add generic table for CPUID dependencies
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

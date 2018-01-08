@@ -1,7 +1,7 @@
 From c1f19d153ad69363ac1bc62bbd9be05ca48c526c Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 29 Jun 2017 08:53:16 -0700
-Subject: [PATCH 040/241] x86/mm: Track the TLB's tlb_gen and update the
+Subject: [PATCH 040/242] x86/mm: Track the TLB's tlb_gen and update the
  flushing algorithm
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

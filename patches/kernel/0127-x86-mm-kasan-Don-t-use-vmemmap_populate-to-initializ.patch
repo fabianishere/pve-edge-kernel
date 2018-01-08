@@ -1,7 +1,7 @@
 From 95ee3aee92e32b90ff10f47cb6cfc414e1fd92b2 Mon Sep 17 00:00:00 2001
 From: Andrey Ryabinin <aryabinin@virtuozzo.com>
 Date: Wed, 15 Nov 2017 17:36:35 -0800
-Subject: [PATCH 127/241] x86/mm/kasan: Don't use vmemmap_populate() to
+Subject: [PATCH 127/242] x86/mm/kasan: Don't use vmemmap_populate() to
  initialize shadow
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

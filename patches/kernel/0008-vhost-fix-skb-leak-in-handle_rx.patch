@@ -1,7 +1,7 @@
 From 8ddb7f99e8c2ad80dbe3f9de01e8af5c310ae52d Mon Sep 17 00:00:00 2001
 From: Wei Xu <wexu@redhat.com>
 Date: Fri, 1 Dec 2017 05:10:36 -0500
-Subject: [PATCH 008/241] vhost: fix skb leak in handle_rx()
+Subject: [PATCH 008/242] vhost: fix skb leak in handle_rx()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

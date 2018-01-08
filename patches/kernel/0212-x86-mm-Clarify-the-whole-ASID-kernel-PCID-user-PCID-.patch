@@ -1,7 +1,7 @@
 From c8bd55aa2deb4e7491561567e8e01b71ab61ffe4 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 5 Dec 2017 13:34:53 +0100
-Subject: [PATCH 212/241] x86/mm: Clarify the whole ASID/kernel PCID/user PCID
+Subject: [PATCH 212/242] x86/mm: Clarify the whole ASID/kernel PCID/user PCID
  naming
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

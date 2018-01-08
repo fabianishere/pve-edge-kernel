@@ -1,7 +1,7 @@
 From e0e5d2785d4b282a1f82f36199f52f9196868d6b Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Tue, 12 Dec 2017 07:56:45 -0800
-Subject: [PATCH 205/241] x86/pti: Put the LDT in its own PGD if PTI is on
+Subject: [PATCH 205/242] x86/pti: Put the LDT in its own PGD if PTI is on
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

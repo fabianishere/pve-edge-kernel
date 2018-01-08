@@ -1,7 +1,7 @@
 From 7fe019fa29881889890256644249222a0c93697a Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Tue, 12 Dec 2017 07:56:44 -0800
-Subject: [PATCH 204/241] x86/mm/64: Make a full PGD-entry size hole in the
+Subject: [PATCH 204/242] x86/mm/64: Make a full PGD-entry size hole in the
  memory map
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

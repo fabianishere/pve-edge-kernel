@@ -1,7 +1,7 @@
 From e3d1463a9c719eda9d9c566dd55b287018b320c0 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:35 +0100
-Subject: [PATCH 189/241] x86/mm/pti: Prepare the x86/entry assembly code for
+Subject: [PATCH 189/242] x86/mm/pti: Prepare the x86/entry assembly code for
  entry/exit CR3 switching
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

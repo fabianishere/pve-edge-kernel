@@ -1,7 +1,7 @@
 From 8ae2a4b32fa54630c9b3c2302aa8faeb5a513e98 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 5 Dec 2017 13:34:54 +0100
-Subject: [PATCH 172/241] x86/doc: Remove obvious weirdnesses from the x86 MM
+Subject: [PATCH 172/242] x86/doc: Remove obvious weirdnesses from the x86 MM
  layout documentation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

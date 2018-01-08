@@ -1,7 +1,7 @@
 From befef5ef70f959cd51694298c4370557e5d846cf Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:58:58 -0700
-Subject: [PATCH 086/241] x86/entry/64: Remove the restore_c_regs_and_iret
+Subject: [PATCH 086/242] x86/entry/64: Remove the restore_c_regs_and_iret
  label
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

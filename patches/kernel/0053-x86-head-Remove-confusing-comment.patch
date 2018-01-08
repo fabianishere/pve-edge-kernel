@@ -1,7 +1,7 @@
 From 109bbd8c905806e929b67ca0b2eaf57ff88f10c1 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:31 -0500
-Subject: [PATCH 053/241] x86/head: Remove confusing comment
+Subject: [PATCH 053/242] x86/head: Remove confusing comment
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

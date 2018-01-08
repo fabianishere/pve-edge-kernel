@@ -1,7 +1,7 @@
 From 652c6cabaf30e4c75f7dc2c42a33a8f066d7df2c Mon Sep 17 00:00:00 2001
 From: Jann Horn <jannh@google.com>
 Date: Thu, 4 Jan 2018 08:01:22 -0600
-Subject: [PATCH 227/241] bpf: fix incorrect sign extension in check_alu_op()
+Subject: [PATCH 227/242] bpf: fix incorrect sign extension in check_alu_op()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

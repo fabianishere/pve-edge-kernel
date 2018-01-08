@@ -1,7 +1,7 @@
 From fdde3f3305d4d393f39514cc098d1c4c2dd5634a Mon Sep 17 00:00:00 2001
 From: Juergen Gross <jgross@suse.com>
 Date: Thu, 9 Nov 2017 14:27:36 +0100
-Subject: [PATCH 119/241] x86/virt: Add enum for hypervisors to replace
+Subject: [PATCH 119/242] x86/virt: Add enum for hypervisors to replace
  x86_hyper
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

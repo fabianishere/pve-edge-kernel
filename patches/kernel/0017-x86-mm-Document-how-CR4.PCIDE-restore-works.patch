@@ -1,7 +1,7 @@
 From 20e07f035810f1b2bb3d816e49f48f6b6a37bf64 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Wed, 6 Sep 2017 19:54:54 -0700
-Subject: [PATCH 017/241] x86/mm: Document how CR4.PCIDE restore works
+Subject: [PATCH 017/242] x86/mm: Document how CR4.PCIDE restore works
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

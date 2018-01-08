@@ -1,7 +1,7 @@
 From bd7ec1093f8a0a743215207ebc14cc6947ea23a0 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sat, 4 Nov 2017 04:19:49 -0700
-Subject: [PATCH 113/241] selftests/x86/ldt_gdt: Robustify against
+Subject: [PATCH 113/242] selftests/x86/ldt_gdt: Robustify against
  set_thread_area() and LAR oddities
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

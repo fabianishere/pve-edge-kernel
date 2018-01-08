@@ -1,7 +1,7 @@
 From 2b75ea581156c7f6d53cf736167e2d32c7087af5 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Thu, 4 Jan 2018 22:19:04 +0100
-Subject: [PATCH 234/241] x86/tlb: Drop the _GPL from the cpu_tlbstate export
+Subject: [PATCH 234/242] x86/tlb: Drop the _GPL from the cpu_tlbstate export
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

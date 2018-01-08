@@ -1,7 +1,7 @@
 From 6f359bcacdf28ca9f6bfc29bd0aa4e22489eb34d Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Mon, 18 Sep 2017 21:43:35 -0500
-Subject: [PATCH 057/241] x86/xen: Fix xen head ELF annotations
+Subject: [PATCH 057/242] x86/xen: Fix xen head ELF annotations
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

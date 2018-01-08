@@ -1,7 +1,7 @@
 From 05096d194a52721b3f4add5f854fc62296b82e72 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Fri, 20 Oct 2017 11:21:35 -0500
-Subject: [PATCH 079/241] x86/asm: Don't use the confusing '.ifeq' directive
+Subject: [PATCH 079/242] x86/asm: Don't use the confusing '.ifeq' directive
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 427fbe54a8df451acd3cd31a4d6dbb1753036dee Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:56 +0100
-Subject: [PATCH 181/241] x86/mm: Put MMU to hardware ASID translation in one
+Subject: [PATCH 181/242] x86/mm: Put MMU to hardware ASID translation in one
  place
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

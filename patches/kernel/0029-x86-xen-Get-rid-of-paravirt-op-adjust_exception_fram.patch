@@ -1,7 +1,7 @@
 From e5688fb8c2c243658f3fe754d33c7250c8aed146 Mon Sep 17 00:00:00 2001
 From: Juergen Gross <jgross@suse.com>
 Date: Thu, 31 Aug 2017 19:42:49 +0200
-Subject: [PATCH 029/241] x86/xen: Get rid of paravirt op
+Subject: [PATCH 029/242] x86/xen: Get rid of paravirt op
  adjust_exception_frame
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

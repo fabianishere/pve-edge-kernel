@@ -1,7 +1,7 @@
 From a405dd2b4172c310101f96c2152598bc24e9e6f8 Mon Sep 17 00:00:00 2001
 From: Ingo Molnar <mingo@kernel.org>
 Date: Thu, 12 Oct 2017 09:24:30 +0200
-Subject: [PATCH 061/241] x86/unwinder: Make CONFIG_UNWINDER_ORC=y the default
+Subject: [PATCH 061/242] x86/unwinder: Make CONFIG_UNWINDER_ORC=y the default
  in the 64-bit defconfig
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

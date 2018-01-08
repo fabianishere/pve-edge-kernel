@@ -1,7 +1,7 @@
 From 650929f1bdce50bab031b0886ae91d459edcd18e Mon Sep 17 00:00:00 2001
 From: Andrey Ryabinin <aryabinin@virtuozzo.com>
 Date: Thu, 28 Dec 2017 19:06:20 +0300
-Subject: [PATCH 236/241] x86/mm: Set MODULES_END to 0xffffffffff000000
+Subject: [PATCH 236/242] x86/mm: Set MODULES_END to 0xffffffffff000000
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From 7cc2d98148d5b5be191f4dbf4c29d4d6da93a9f8 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:58 +0100
-Subject: [PATCH 208/241] x86/mm: Abstract switching CR3
+Subject: [PATCH 208/242] x86/mm: Abstract switching CR3
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

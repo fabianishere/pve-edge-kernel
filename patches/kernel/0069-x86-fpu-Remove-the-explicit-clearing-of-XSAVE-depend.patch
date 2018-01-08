@@ -1,7 +1,7 @@
 From 9b2405a12593b1ba7894cf249ddeada92a658463 Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Fri, 13 Oct 2017 14:56:45 -0700
-Subject: [PATCH 069/241] x86/fpu: Remove the explicit clearing of XSAVE
+Subject: [PATCH 069/242] x86/fpu: Remove the explicit clearing of XSAVE
  dependent features
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

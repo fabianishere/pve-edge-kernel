@@ -1,7 +1,7 @@
 From 13df3feb2ec154e844bca62c6bb7b91ced2b067c Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@canonical.com>
 Date: Sat, 6 Jan 2018 10:26:31 +0000
-Subject: [PATCH 231/241] UBUNTU: SAUCE: BODGE: temporarily disable some kprobe
+Subject: [PATCH 231/242] UBUNTU: SAUCE: BODGE: temporarily disable some kprobe
  trace points which are cratering
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

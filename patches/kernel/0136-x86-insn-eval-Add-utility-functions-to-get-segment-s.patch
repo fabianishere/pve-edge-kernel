@@ -1,7 +1,7 @@
 From 27298389d9d09bcebf06ea47206141b22fabcaca Mon Sep 17 00:00:00 2001
 From: Ingo Molnar <mingo@kernel.org>
 Date: Sat, 23 Dec 2017 13:14:25 +0100
-Subject: [PATCH 136/241] x86/insn-eval: Add utility functions to get segment
+Subject: [PATCH 136/242] x86/insn-eval: Add utility functions to get segment
  selector
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

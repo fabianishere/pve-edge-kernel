@@ -1,7 +1,7 @@
 From 6d96a02c961d41d82738bce9806c430d99acc9f8 Mon Sep 17 00:00:00 2001
 From: Kees Cook <keescook@chromium.org>
 Date: Mon, 16 Oct 2017 16:22:31 -0700
-Subject: [PATCH 070/241] x86/platform/UV: Convert timers to use timer_setup()
+Subject: [PATCH 070/242] x86/platform/UV: Convert timers to use timer_setup()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

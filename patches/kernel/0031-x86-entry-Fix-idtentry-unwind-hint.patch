@@ -1,7 +1,7 @@
 From b368fed558634ffc92dba0d7d9e4e631d26cd92f Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Fri, 20 Oct 2017 11:21:33 -0500
-Subject: [PATCH 031/241] x86/entry: Fix idtentry unwind hint
+Subject: [PATCH 031/242] x86/entry: Fix idtentry unwind hint
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

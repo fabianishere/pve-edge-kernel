@@ -1,7 +1,7 @@
 From 3c131c80b6a5a95ab9a24e444ef02eba38710840 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:11 +0100
-Subject: [PATCH 141/241] x86/irq/64: Print the offending IP in the stack
+Subject: [PATCH 141/242] x86/irq/64: Print the offending IP in the stack
  overflow warning
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

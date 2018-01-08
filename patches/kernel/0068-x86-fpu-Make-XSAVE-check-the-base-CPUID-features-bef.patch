@@ -1,7 +1,7 @@
 From 1b88ea4170f72b4fed72e9235c88b6121f153b21 Mon Sep 17 00:00:00 2001
 From: Andi Kleen <ak@linux.intel.com>
 Date: Fri, 13 Oct 2017 14:56:44 -0700
-Subject: [PATCH 068/241] x86/fpu: Make XSAVE check the base CPUID features
+Subject: [PATCH 068/242] x86/fpu: Make XSAVE check the base CPUID features
  before enabling
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

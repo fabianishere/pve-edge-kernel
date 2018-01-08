@@ -1,7 +1,7 @@
 From f16330a748c8b8db495673108d72fcfc2873d377 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:09 -0700
-Subject: [PATCH 097/241] x86/entry/32: Pull the MSR_IA32_SYSENTER_CS update
+Subject: [PATCH 097/242] x86/entry/32: Pull the MSR_IA32_SYSENTER_CS update
  code out of native_load_sp0()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

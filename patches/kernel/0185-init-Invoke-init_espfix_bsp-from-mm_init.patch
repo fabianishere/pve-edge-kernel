@@ -1,7 +1,7 @@
 From a6bd428da9f8bbc467b119ef5dc9ad4a1fb58acc Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sun, 17 Dec 2017 10:56:29 +0100
-Subject: [PATCH 185/241] init: Invoke init_espfix_bsp() from mm_init()
+Subject: [PATCH 185/242] init: Invoke init_espfix_bsp() from mm_init()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

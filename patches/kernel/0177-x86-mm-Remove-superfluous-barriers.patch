@@ -1,7 +1,7 @@
 From bf670c55337b76ab2449abe15d3fd3c11b14c013 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 5 Dec 2017 13:34:46 +0100
-Subject: [PATCH 177/241] x86/mm: Remove superfluous barriers
+Subject: [PATCH 177/242] x86/mm: Remove superfluous barriers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

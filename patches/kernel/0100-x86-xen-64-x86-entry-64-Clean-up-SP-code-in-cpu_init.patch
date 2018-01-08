@@ -1,7 +1,7 @@
 From 232ab20b1af958a04a82fb7290a1e54c3632f771 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:12 -0700
-Subject: [PATCH 100/241] x86/xen/64, x86/entry/64: Clean up SP code in
+Subject: [PATCH 100/242] x86/xen/64, x86/entry/64: Clean up SP code in
  cpu_initialize_context()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
 From 4a112915e611296f0d196bb6cb2baa99af0e9148 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:08 -0700
-Subject: [PATCH 096/241] x86/entry/64: De-Xen-ify our NMI code
+Subject: [PATCH 096/242] x86/entry/64: De-Xen-ify our NMI code
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

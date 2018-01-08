@@ -1,7 +1,7 @@
 From fe5fdc3484283039f5f7477874eeef1a26f2b6be Mon Sep 17 00:00:00 2001
 From: David Woodhouse <dwmw@amazon.co.uk>
 Date: Thu, 4 Jan 2018 14:37:05 +0000
-Subject: [PATCH 239/241] x86/alternatives: Add missing '\n' at end of
+Subject: [PATCH 239/242] x86/alternatives: Add missing '\n' at end of
  ALTERNATIVE inline asm
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

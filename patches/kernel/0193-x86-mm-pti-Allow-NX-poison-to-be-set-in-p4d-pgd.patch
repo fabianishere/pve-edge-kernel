@@ -1,7 +1,7 @@
 From ea96d1e71945047c9e0af526e68b18782acc12c4 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:38 +0100
-Subject: [PATCH 193/241] x86/mm/pti: Allow NX poison to be set in p4d/pgd
+Subject: [PATCH 193/242] x86/mm/pti: Allow NX poison to be set in p4d/pgd
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

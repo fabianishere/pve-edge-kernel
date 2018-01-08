@@ -1,7 +1,7 @@
 From a97c6afa806d4fe6475a2d9215ff57367ee34b72 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:16 -0700
-Subject: [PATCH 104/241] x86/entry/64: Remove thread_struct::sp0
+Subject: [PATCH 104/242] x86/entry/64: Remove thread_struct::sp0
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

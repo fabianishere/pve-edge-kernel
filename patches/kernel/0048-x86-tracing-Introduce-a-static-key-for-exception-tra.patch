@@ -1,7 +1,7 @@
 From 179faefa769caa263bc88b1f7292be7a60df4298 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 28 Aug 2017 08:47:21 +0200
-Subject: [PATCH 048/241] x86/tracing: Introduce a static key for exception
+Subject: [PATCH 048/242] x86/tracing: Introduce a static key for exception
  tracing
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

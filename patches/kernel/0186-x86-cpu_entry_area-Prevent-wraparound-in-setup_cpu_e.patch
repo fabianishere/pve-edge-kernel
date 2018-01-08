@@ -1,7 +1,7 @@
 From 23aa91651cbaf32f10ff75f02c281493ee677dcb Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sat, 23 Dec 2017 19:45:11 +0100
-Subject: [PATCH 186/241] x86/cpu_entry_area: Prevent wraparound in
+Subject: [PATCH 186/242] x86/cpu_entry_area: Prevent wraparound in
  setup_cpu_entry_area_ptes() on 32bit
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

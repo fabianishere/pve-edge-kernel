@@ -1,7 +1,7 @@
 From b37d3e3a9b29caf78e2da6efba8959fc912e47a0 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Thu, 14 Dec 2017 12:27:30 +0100
-Subject: [PATCH 169/241] x86/ldt: Rework locking
+Subject: [PATCH 169/242] x86/ldt: Rework locking
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

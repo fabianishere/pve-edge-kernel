@@ -1,7 +1,7 @@
 From 0f8a85764c86b5ce79e22969f87b2da087b05729 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:30 +0100
-Subject: [PATCH 160/241] x86/paravirt: Dont patch flush_tlb_single
+Subject: [PATCH 160/242] x86/paravirt: Dont patch flush_tlb_single
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

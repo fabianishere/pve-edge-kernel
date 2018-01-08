@@ -1,7 +1,7 @@
 From aa2a95a84f2cbd92b10887f3c99c7858fae9e7e4 Mon Sep 17 00:00:00 2001
 From: Tom Lendacky <thomas.lendacky@amd.com>
 Date: Mon, 17 Jul 2017 16:10:29 -0500
-Subject: [PATCH 021/241] xen/x86: Remove SME feature in PV guests
+Subject: [PATCH 021/242] xen/x86: Remove SME feature in PV guests
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

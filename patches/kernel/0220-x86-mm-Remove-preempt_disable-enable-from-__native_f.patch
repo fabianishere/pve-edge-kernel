@@ -1,7 +1,7 @@
 From 5a86516e393d12bb3965342f1f690db319d01241 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sat, 30 Dec 2017 22:13:54 +0100
-Subject: [PATCH 220/241] x86/mm: Remove preempt_disable/enable() from
+Subject: [PATCH 220/242] x86/mm: Remove preempt_disable/enable() from
  __native_flush_tlb()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

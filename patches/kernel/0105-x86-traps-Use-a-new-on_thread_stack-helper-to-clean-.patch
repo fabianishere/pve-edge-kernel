@@ -1,7 +1,7 @@
 From 18de1b1709a3e9bbadd97d2fb033576b24d6f889 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:17 -0700
-Subject: [PATCH 105/241] x86/traps: Use a new on_thread_stack() helper to
+Subject: [PATCH 105/242] x86/traps: Use a new on_thread_stack() helper to
  clean up an assertion
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

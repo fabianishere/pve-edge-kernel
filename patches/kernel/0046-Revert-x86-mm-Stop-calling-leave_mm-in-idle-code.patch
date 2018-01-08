@@ -1,7 +1,7 @@
 From 1ef06119163f106fc0de4990e7ae559e9a5a8169 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sat, 4 Nov 2017 04:16:12 -0700
-Subject: [PATCH 046/241] Revert "x86/mm: Stop calling leave_mm() in idle code"
+Subject: [PATCH 046/242] Revert "x86/mm: Stop calling leave_mm() in idle code"
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

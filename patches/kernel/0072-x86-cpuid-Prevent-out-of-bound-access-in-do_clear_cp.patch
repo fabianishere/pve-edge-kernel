@@ -1,7 +1,7 @@
 From a827c0ac43c2dc1e5e0528ebd4b2ca2d74534e18 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Wed, 18 Oct 2017 19:39:35 +0200
-Subject: [PATCH 072/241] x86/cpuid: Prevent out of bound access in
+Subject: [PATCH 072/242] x86/cpuid: Prevent out of bound access in
  do_clear_cpu_cap()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,0 +1,32 @@
+From b62d6a17e87a8899fe0f9be2517a9ea29972c007 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Mon, 8 Jan 2018 11:49:28 +0100
+Subject: [PATCH 242/242] Revert "scsi: libsas: allow async aborts"
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This reverts commit 909657615d9b3ce709be4fd95b9a9e8c8c7c2be6.
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/scsi/libsas/sas_scsi_host.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/scsi/libsas/sas_scsi_host.c b/drivers/scsi/libsas/sas_scsi_host.c
+index 87e5079d816b..137fb586aa64 100644
+--- a/drivers/scsi/libsas/sas_scsi_host.c
++++ b/drivers/scsi/libsas/sas_scsi_host.c
+@@ -491,6 +491,9 @@ int sas_eh_abort_handler(struct scsi_cmnd *cmd)
+ 	struct Scsi_Host *host = cmd->device->host;
+ 	struct sas_internal *i = to_sas_internal(host->transportt);
+ 
++	if (current != host->ehandler)
++		return FAILED;
++
+ 	if (!i->dft->lldd_abort_task)
+ 		return FAILED;
+ 
+-- 
+2.14.2
+

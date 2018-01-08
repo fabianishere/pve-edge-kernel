@@ -1,7 +1,7 @@
 From d9170f22073657aceba14c49e8df535df4409a6c Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:13 -0700
-Subject: [PATCH 101/241] x86/entry/64: Stop initializing TSS.sp0 at boot
+Subject: [PATCH 101/242] x86/entry/64: Stop initializing TSS.sp0 at boot
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
 From d1feee4957a5cb314ec0b3c4ca86ba79ccaeceb8 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Fri, 15 Dec 2017 20:35:11 +0100
-Subject: [PATCH 218/241] x86/ldt: Make the LDT mapping RO
+Subject: [PATCH 218/242] x86/ldt: Make the LDT mapping RO
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
