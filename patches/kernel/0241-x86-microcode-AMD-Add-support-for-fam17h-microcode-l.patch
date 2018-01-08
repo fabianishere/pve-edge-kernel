@@ -1,4 +1,4 @@
-From 8329d47141a78a64e8ae6f4a735aceaafe93e098 Mon Sep 17 00:00:00 2001
+From 674b72ef0eb73751e4f838dc789e4c393d225834 Mon Sep 17 00:00:00 2001
 From: Tom Lendacky <thomas.lendacky@amd.com>
 Date: Thu, 30 Nov 2017 16:46:40 -0600
 Subject: [PATCH 241/241] x86/microcode/AMD: Add support for fam17h microcode

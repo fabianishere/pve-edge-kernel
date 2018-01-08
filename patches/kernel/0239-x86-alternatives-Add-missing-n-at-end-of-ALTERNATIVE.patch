@@ -1,4 +1,4 @@
-From 732d51fab3401054c84be53feec624c6c992fb3f Mon Sep 17 00:00:00 2001
+From fe5fdc3484283039f5f7477874eeef1a26f2b6be Mon Sep 17 00:00:00 2001
 From: David Woodhouse <dwmw@amazon.co.uk>
 Date: Thu, 4 Jan 2018 14:37:05 +0000
 Subject: [PATCH 239/241] x86/alternatives: Add missing '\n' at end of

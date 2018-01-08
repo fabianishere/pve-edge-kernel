@@ -1,4 +1,4 @@
-From 5462db3d070845ecc34929b6f25a87efda023aae Mon Sep 17 00:00:00 2001
+From 309461b2f634fc18271468b4396551ddf6a1dba8 Mon Sep 17 00:00:00 2001
 From: Tom Lendacky <thomas.lendacky@amd.com>
 Date: Tue, 26 Dec 2017 23:43:54 -0600
 Subject: [PATCH 240/241] x86/cpu, x86/pti: Do not enable PTI on AMD processors
