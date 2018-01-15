@@ -1,3 +1,11 @@
+pve-kernel (4.13.13-36) unstable; urgency=medium
+
+  * cherry-pick (partial) SPECTRE fixes for CPUs supporting IBRS/IBPB
+
+  * follow-up fixes for KPTI
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 15 Jan 2018 12:36:49 +0100
+
 pve-kernel (4.13.13-35) unstable; urgency=medium
 
   * KPTI: disable on AMD
