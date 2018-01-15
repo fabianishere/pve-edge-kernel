@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Wed, 8 Nov 2017 16:30:06 -0800
+Subject: [PATCH] x86/entry: Use retpoline for syscall's indirect calls
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d2e0236f395e876f5303fb5021e4fe6eea881402)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/entry_64.S | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 1118a6256c69..be7196967f9f 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -276,7 +276,15 @@ entry_SYSCALL_64_fastpath:
+ 	 * It might end up jumping to the slow path.  If it jumps, RAX
+ 	 * and all argument registers are clobbered.
+ 	 */
+-	call	*sys_call_table(, %rax, 8)
++	movq	sys_call_table(, %rax, 8), %r10
++	jmp     1f
++4:	callq   2f
++3:	nop
++	jmp     3b
++2:	mov     %r10, (%rsp)
++	retq
++1:	callq   4b
++
+ .Lentry_SYSCALL_64_after_fastpath_call:
+ 
+ 	movq	%rax, RAX(%rsp)
+-- 
+2.14.2
+

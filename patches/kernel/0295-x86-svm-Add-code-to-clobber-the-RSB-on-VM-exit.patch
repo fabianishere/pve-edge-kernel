@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Wed, 20 Dec 2017 10:55:47 +0000
+Subject: [PATCH] x86/svm: Add code to clobber the RSB on VM exit
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Add code to overwrite the local CPU RSB entries from the previous less
+privileged mode.
+
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 9392e24469b71ff665cdbc3d81db215f9383219d)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kvm/svm.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index fade4869856a..e99bdfcc6b01 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -5008,6 +5008,8 @@ static void svm_vcpu_run(struct kvm_vcpu *vcpu)
+ 			wrmsrl(MSR_IA32_SPEC_CTRL, FEATURE_ENABLE_IBRS);
+ 	}
+ 
++	stuff_RSB();
++
+ #ifdef CONFIG_X86_64
+ 	wrmsrl(MSR_GS_BASE, svm->host.gs_base);
+ #else
+-- 
+2.14.2
+

@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nick Desaulniers <ndesaulniers@google.com>
+Date: Wed, 3 Jan 2018 12:39:52 -0800
+Subject: [PATCH] x86/process: Define cpu_tss_rw in same section as declaration
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+cpu_tss_rw is declared with DECLARE_PER_CPU_PAGE_ALIGNED
+but then defined with DEFINE_PER_CPU_SHARED_ALIGNED
+leading to section mismatch warnings.
+
+Use DEFINE_PER_CPU_PAGE_ALIGNED consistently. This is necessary because
+it's mapped to the cpu entry area and must be page aligned.
+
+[ tglx: Massaged changelog a bit ]
+
+Fixes: 1a935bc3d4ea ("x86/entry: Move SYSENTER_stack to the beginning of struct tss_struct")
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Nick Desaulniers <ndesaulniers@google.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: thomas.lendacky@amd.com
+Cc: Borislav Petkov <bpetkov@suse.de>
+Cc: tklauser@distanz.ch
+Cc: minipli@googlemail.com
+Cc: me@kylehuey.com
+Cc: namit@vmware.com
+Cc: luto@kernel.org
+Cc: jpoimboe@redhat.com
+Cc: tj@kernel.org
+Cc: cl@linux.com
+Cc: bp@suse.de
+Cc: thgarnie@google.com
+Cc: kirill.shutemov@linux.intel.com
+Cc: stable@vger.kernel.org
+Link: https://lkml.kernel.org/r/20180103203954.183360-1-ndesaulniers@google.com
+
+(cherry picked from commit 2fd9c41aea47f4ad071accf94b94f94f2c4d31eb)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit f45e574914ae47825d2eea46abc9d6fbabe55e56)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/process.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 3688a7b9d055..07e6218ad7d9 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -46,7 +46,7 @@
+  * section. Since TSS's are completely CPU-local, we want them
+  * on exact cacheline boundaries, to eliminate cacheline ping-pong.
+  */
+-__visible DEFINE_PER_CPU_SHARED_ALIGNED(struct tss_struct, cpu_tss_rw) = {
++__visible DEFINE_PER_CPU_PAGE_ALIGNED(struct tss_struct, cpu_tss_rw) = {
+ 	.x86_tss = {
+ 		/*
+ 		 * .sp0 is only used when entering ring 0 from a lower
+-- 
+2.14.2
+

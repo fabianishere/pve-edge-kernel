@@ -1,0 +1,202 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Tue, 14 Nov 2017 17:16:30 -0800
+Subject: [PATCH] x86/entry: Stuff RSB for entry to kernel for non-SMEP
+ platform
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Stuff RSB to prevent RSB underflow on non-SMEP platform.
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit b82785ac1d33ce219c77d72b7bd80a21e1441ac8)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/spec_ctrl.h | 71 ++++++++++++++++++++++++++++++++++++++++
+ arch/x86/entry/entry_64.S        | 18 ++++++++--
+ arch/x86/entry/entry_64_compat.S |  4 +++
+ 3 files changed, 91 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/spec_ctrl.h b/arch/x86/include/asm/spec_ctrl.h
+index 7f8bb09b6acb..55ee1f36bda2 100644
+--- a/arch/x86/include/asm/spec_ctrl.h
++++ b/arch/x86/include/asm/spec_ctrl.h
+@@ -35,6 +35,73 @@
+ 	popq %rdx;				\
+ 	popq %rcx;				\
+ 	popq %rax
++#define __ASM_STUFF_RSB				\
++	call	1f;				\
++	pause;					\
++1:	call	2f;				\
++	pause;					\
++2:	call	3f;				\
++	pause;					\
++3:	call	4f;				\
++	pause;					\
++4:	call	5f;				\
++	pause;					\
++5:	call	6f;				\
++	pause;					\
++6:	call	7f;				\
++	pause;					\
++7:	call	8f;				\
++	pause;					\
++8:	call	9f;				\
++	pause;					\
++9:	call	10f;				\
++	pause;					\
++10:	call	11f;				\
++	pause;					\
++11:	call	12f;				\
++	pause;					\
++12:	call	13f;				\
++	pause;					\
++13:	call	14f;				\
++	pause;					\
++14:	call	15f;				\
++	pause;					\
++15:	call	16f;				\
++	pause;					\
++16:	call	17f;				\
++	pause;					\
++17:	call	18f;				\
++	pause;					\
++18:	call	19f;				\
++	pause;					\
++19:	call	20f;				\
++	pause;					\
++20:	call	21f;				\
++	pause;					\
++21:	call	22f;				\
++	pause;					\
++22:	call	23f;				\
++	pause;					\
++23:	call	24f;				\
++	pause;					\
++24:	call	25f;				\
++	pause;					\
++25:	call	26f;				\
++	pause;					\
++26:	call	27f;				\
++	pause;					\
++27:	call	28f;				\
++	pause;					\
++28:	call	29f;				\
++	pause;					\
++29:	call	30f;				\
++	pause;					\
++30:	call	31f;				\
++	pause;					\
++31:	call	32f;				\
++	pause;					\
++32:						\
++	add $(32*8), %rsp;
+ 
+ .macro ENABLE_IBRS
+ ALTERNATIVE "", __stringify(__ASM_ENABLE_IBRS), X86_FEATURE_SPEC_CTRL
+@@ -48,5 +115,9 @@ ALTERNATIVE "", __stringify(__ASM_ENABLE_IBRS_CLOBBER), X86_FEATURE_SPEC_CTRL
+ ALTERNATIVE "", __stringify(__ASM_DISABLE_IBRS), X86_FEATURE_SPEC_CTRL
+ .endm
+ 
++.macro STUFF_RSB
++ALTERNATIVE __stringify(__ASM_STUFF_RSB), "", X86_FEATURE_SMEP
++.endm
++
+ #endif /* __ASSEMBLY__ */
+ #endif /* _ASM_X86_SPEC_CTRL_H */
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 5f898c3c1dad..f6ec4ad5b114 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -214,8 +214,6 @@ ENTRY(entry_SYSCALL_64)
+ 	movq	%rsp, PER_CPU_VAR(rsp_scratch)
+ 	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
+ 
+-	TRACE_IRQS_OFF
+-
+ 	/* Construct struct pt_regs on stack */
+ 	pushq	$__USER_DS			/* pt_regs->ss */
+ 	pushq	PER_CPU_VAR(rsp_scratch)	/* pt_regs->sp */
+@@ -238,6 +236,10 @@ GLOBAL(entry_SYSCALL_64_after_hwframe)
+ 
+ 	ENABLE_IBRS
+ 
++	STUFF_RSB
++
++	TRACE_IRQS_OFF
++
+ 	/*
+ 	 * If we need to do entry work or if we guess we'll need to do
+ 	 * exit work, go straight to the slow path.
+@@ -658,6 +660,13 @@ END(irq_entries_start)
+ 	ALLOC_PT_GPREGS_ON_STACK
+ 	SAVE_C_REGS
+ 	SAVE_EXTRA_REGS
++
++	/*
++	 * Have to do stuffing before encoding frame pointer.
++	 * Could add some unnecessary RSB clearing if coming
++	 * from kernel for non-SMEP platform.
++	 */
++	STUFF_RSB
+ 	ENCODE_FRAME_POINTER
+ 
+ 	testb	$3, CS(%rsp)
+@@ -1276,6 +1285,10 @@ ENTRY(paranoid_entry)
+ 	cld
+ 	SAVE_C_REGS 8
+ 	SAVE_EXTRA_REGS 8
++	/*
++	 * Do the stuffing unconditionally from user/kernel to be safe
++	 */
++	STUFF_RSB
+ 	ENCODE_FRAME_POINTER 8
+ 	movl	$1, %ebx
+ 	movl	$MSR_GS_BASE, %ecx
+@@ -1329,6 +1342,7 @@ ENTRY(error_entry)
+ 	cld
+ 	SAVE_C_REGS 8
+ 	SAVE_EXTRA_REGS 8
++	STUFF_RSB
+ 	ENCODE_FRAME_POINTER 8
+ 	xorl	%ebx, %ebx
+ 	testb	$3, CS+8(%rsp)
+diff --git a/arch/x86/entry/entry_64_compat.S b/arch/x86/entry/entry_64_compat.S
+index ee4f3edb3c50..1480222bae02 100644
+--- a/arch/x86/entry/entry_64_compat.S
++++ b/arch/x86/entry/entry_64_compat.S
+@@ -97,6 +97,7 @@ ENTRY(entry_SYSENTER_compat)
+ 	cld
+ 
+ 	ENABLE_IBRS
++	STUFF_RSB
+ 
+ 	/*
+ 	 * SYSENTER doesn't filter flags, so we need to clear NT and AC
+@@ -227,6 +228,8 @@ GLOBAL(entry_SYSCALL_compat_after_hwframe)
+ 	pushq   $0			/* pt_regs->r14 = 0 */
+ 	pushq   $0			/* pt_regs->r15 = 0 */
+ 
++	STUFF_RSB
++
+ 	/*
+ 	 * User mode is traced as though IRQs are on, and SYSENTER
+ 	 * turned them off.
+@@ -354,6 +357,7 @@ ENTRY(entry_INT80_compat)
+ 	cld
+ 
+ 	ENABLE_IBRS
++	STUFF_RSB
+ 
+ 	/*
+ 	 * User mode is traced as though IRQs are on, and the interrupt
+-- 
+2.14.2
+

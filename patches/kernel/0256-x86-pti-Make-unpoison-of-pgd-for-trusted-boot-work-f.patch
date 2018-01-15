@@ -1,0 +1,83 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Wed, 10 Jan 2018 14:49:39 -0800
+Subject: [PATCH] x86/pti: Make unpoison of pgd for trusted boot work for real
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The inital fix for trusted boot and PTI potentially misses the pgd clearing
+if pud_alloc() sets a PGD.  It probably works in *practice* because for two
+adjacent calls to map_tboot_page() that share a PGD entry, the first will
+clear NX, *then* allocate and set the PGD (without NX clear).  The second
+call will *not* allocate but will clear the NX bit.
+
+Defer the NX clearing to a point after it is known that all top-level
+allocations have occurred.  Add a comment to clarify why.
+
+[ tglx: Massaged changelog ]
+
+Fixes: 262b6b30087 ("x86/tboot: Unbreak tboot with PTI enabled")
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Jon Masters <jcm@redhat.com>
+Cc: "Tim Chen" <tim.c.chen@linux.intel.com>
+Cc: gnomes@lxorguk.ukuu.org.uk
+Cc: peterz@infradead.org
+Cc: ning.sun@intel.com
+Cc: tboot-devel@lists.sourceforge.net
+Cc: andi@firstfloor.org
+Cc: luto@kernel.org
+Cc: law@redhat.com
+Cc: pbonzini@redhat.com
+Cc: torvalds@linux-foundation.org
+Cc: gregkh@linux-foundation.org
+Cc: dwmw@amazon.co.uk
+Cc: nickc@redhat.com
+Cc: stable@vger.kernel.org
+Link: https://lkml.kernel.org/r/20180110224939.2695CD47@viggo.jf.intel.com
+(cherry picked from commit 8a931d1e24bacf01f00a35d43bfe7917256c5c49)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 9935124a5c771c004a578423275633232fb7a006)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/tboot.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/tboot.c b/arch/x86/kernel/tboot.c
+index 75869a4b6c41..a2486f444073 100644
+--- a/arch/x86/kernel/tboot.c
++++ b/arch/x86/kernel/tboot.c
+@@ -127,7 +127,6 @@ static int map_tboot_page(unsigned long vaddr, unsigned long pfn,
+ 	p4d = p4d_alloc(&tboot_mm, pgd, vaddr);
+ 	if (!p4d)
+ 		return -1;
+-	pgd->pgd &= ~_PAGE_NX;
+ 	pud = pud_alloc(&tboot_mm, p4d, vaddr);
+ 	if (!pud)
+ 		return -1;
+@@ -139,6 +138,17 @@ static int map_tboot_page(unsigned long vaddr, unsigned long pfn,
+ 		return -1;
+ 	set_pte_at(&tboot_mm, vaddr, pte, pfn_pte(pfn, prot));
+ 	pte_unmap(pte);
++
++	/*
++	 * PTI poisons low addresses in the kernel page tables in the
++	 * name of making them unusable for userspace.  To execute
++	 * code at such a low address, the poison must be cleared.
++	 *
++	 * Note: 'pgd' actually gets set in p4d_alloc() _or_
++	 * pud_alloc() depending on 4/5-level paging.
++	 */
++	pgd->pgd &= ~_PAGE_NX;
++
+ 	return 0;
+ }
+ 
+-- 
+2.14.2
+

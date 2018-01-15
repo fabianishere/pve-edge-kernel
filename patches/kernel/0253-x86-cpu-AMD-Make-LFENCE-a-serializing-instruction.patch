@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Mon, 8 Jan 2018 16:09:21 -0600
+Subject: [PATCH] x86/cpu/AMD: Make LFENCE a serializing instruction
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+To aid in speculation control, make LFENCE a serializing instruction
+since it has less overhead than MFENCE.  This is done by setting bit 1
+of MSR 0xc0011029 (DE_CFG).  Some families that support LFENCE do not
+have this MSR.  For these families, the LFENCE instruction is already
+serializing.
+
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Greg Kroah-Hartman <gregkh@linux-foundation.org>
+Cc: David Woodhouse <dwmw@amazon.co.uk>
+Cc: Paul Turner <pjt@google.com>
+Link: https://lkml.kernel.org/r/20180108220921.12580.71694.stgit@tlendack-t1.amdoffice.net
+
+(cherry picked from commit e4d0e84e490790798691aaa0f2e598637f1867ec)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit bde943193168fe9a3814badaa0cae3422029dce5)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/msr-index.h |  2 ++
+ arch/x86/kernel/cpu/amd.c        | 10 ++++++++++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index 5573c75f8e4c..25147df4acfc 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -351,6 +351,8 @@
+ #define FAM10H_MMIO_CONF_BASE_MASK	0xfffffffULL
+ #define FAM10H_MMIO_CONF_BASE_SHIFT	20
+ #define MSR_FAM10H_NODE_ID		0xc001100c
++#define MSR_F10H_DECFG			0xc0011029
++#define MSR_F10H_DECFG_LFENCE_SERIALIZE_BIT	1
+ 
+ /* K8 MSRs */
+ #define MSR_K8_TOP_MEM1			0xc001001a
+diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
+index 2a5328cc03a6..c9a4e4db7860 100644
+--- a/arch/x86/kernel/cpu/amd.c
++++ b/arch/x86/kernel/cpu/amd.c
+@@ -785,6 +785,16 @@ static void init_amd(struct cpuinfo_x86 *c)
+ 		set_cpu_cap(c, X86_FEATURE_K8);
+ 
+ 	if (cpu_has(c, X86_FEATURE_XMM2)) {
++		/*
++		 * A serializing LFENCE has less overhead than MFENCE, so
++		 * use it for execution serialization.  On families which
++		 * don't have that MSR, LFENCE is already serializing.
++		 * msr_set_bit() uses the safe accessors, too, even if the MSR
++		 * is not present.
++		 */
++		msr_set_bit(MSR_F10H_DECFG,
++			    MSR_F10H_DECFG_LFENCE_SERIALIZE_BIT);
++
+ 		/* MFENCE stops RDTSC speculation */
+ 		set_cpu_cap(c, X86_FEATURE_MFENCE_RDTSC);
+ 	}
+-- 
+2.14.2
+

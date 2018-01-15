@@ -1,0 +1,171 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Fri, 13 Oct 2017 14:25:00 -0700
+Subject: [PATCH] x86/enter: Use IBRS on syscall and interrupts
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Set IBRS upon kernel entrance via syscall and interrupts. Clear it upon exit.
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d7eb5f9ed26dbdc39df793491bdcc9f80d41325e)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/entry_64.S        | 18 +++++++++++++++++-
+ arch/x86/entry/entry_64_compat.S |  7 +++++++
+ 2 files changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index b48f2c78a9bf..5f898c3c1dad 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -36,6 +36,7 @@
+ #include <asm/pgtable_types.h>
+ #include <asm/export.h>
+ #include <asm/frame.h>
++#include <asm/spec_ctrl.h>
+ #include <linux/err.h>
+ 
+ #include "calling.h"
+@@ -235,6 +236,8 @@ GLOBAL(entry_SYSCALL_64_after_hwframe)
+ 	sub	$(6*8), %rsp			/* pt_regs->bp, bx, r12-15 not saved */
+ 	UNWIND_HINT_REGS extra=0
+ 
++	ENABLE_IBRS
++
+ 	/*
+ 	 * If we need to do entry work or if we guess we'll need to do
+ 	 * exit work, go straight to the slow path.
+@@ -286,6 +289,7 @@ entry_SYSCALL_64_fastpath:
+ 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
+ 	movq	RIP(%rsp), %rcx
+ 	movq	EFLAGS(%rsp), %r11
++	DISABLE_IBRS
+ 	addq	$6*8, %rsp	/* skip extra regs -- they were preserved */
+ 	UNWIND_HINT_EMPTY
+ 	jmp	.Lpop_c_regs_except_rcx_r11_and_sysret
+@@ -379,6 +383,8 @@ return_from_SYSCALL_64:
+ 	 * perf profiles. Nothing jumps here.
+ 	 */
+ syscall_return_via_sysret:
++	DISABLE_IBRS
++
+ 	/* rcx and r11 are already restored (see code above) */
+ 	UNWIND_HINT_EMPTY
+ 	POP_EXTRA_REGS
+@@ -660,6 +666,10 @@ END(irq_entries_start)
+ 	/*
+ 	 * IRQ from user mode.
+ 	 *
++	 */
++	ENABLE_IBRS
++
++	/*
+ 	 * We need to tell lockdep that IRQs are off.  We can't do this until
+ 	 * we fix gsbase, and we should do it before enter_from_user_mode
+ 	 * (which can take locks).  Since TRACE_IRQS_OFF idempotent,
+@@ -743,7 +753,7 @@ GLOBAL(swapgs_restore_regs_and_return_to_usermode)
+ 	 * We are on the trampoline stack.  All regs except RDI are live.
+ 	 * We can do future final exit work right here.
+ 	 */
+-
++	DISABLE_IBRS
+ 	SWITCH_TO_USER_CR3_STACK scratch_reg=%rdi
+ 
+ 	/* Restore RDI. */
+@@ -1277,6 +1287,7 @@ ENTRY(paranoid_entry)
+ 
+ 1:
+ 	SAVE_AND_SWITCH_TO_KERNEL_CR3 scratch_reg=%rax save_reg=%r14
++	ENABLE_IBRS_CLOBBER
+ 
+ 	ret
+ END(paranoid_entry)
+@@ -1331,6 +1342,8 @@ ENTRY(error_entry)
+ 	/* We have user CR3.  Change to kernel CR3. */
+ 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rax
+ 
++	ENABLE_IBRS
++
+ .Lerror_entry_from_usermode_after_swapgs:
+ 	/* Put us onto the real thread stack. */
+ 	popq	%r12				/* save return addr in %12 */
+@@ -1377,6 +1390,7 @@ ENTRY(error_entry)
+ 	 */
+ 	SWAPGS
+ 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rax
++	ENABLE_IBRS_CLOBBER
+ 	jmp .Lerror_entry_done
+ 
+ .Lbstep_iret:
+@@ -1391,6 +1405,7 @@ ENTRY(error_entry)
+ 	 */
+ 	SWAPGS
+ 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rax
++	ENABLE_IBRS_CLOBBER
+ 
+ 	/*
+ 	 * Pretend that the exception came from user mode: set up pt_regs
+@@ -1518,6 +1533,7 @@ ENTRY(nmi)
+ 	UNWIND_HINT_REGS
+ 	ENCODE_FRAME_POINTER
+ 
++	ENABLE_IBRS
+ 	/*
+ 	 * At this point we no longer need to worry about stack damage
+ 	 * due to nesting -- we're on the normal thread stack and we're
+diff --git a/arch/x86/entry/entry_64_compat.S b/arch/x86/entry/entry_64_compat.S
+index 2b5e7685823c..ee4f3edb3c50 100644
+--- a/arch/x86/entry/entry_64_compat.S
++++ b/arch/x86/entry/entry_64_compat.S
+@@ -13,6 +13,7 @@
+ #include <asm/irqflags.h>
+ #include <asm/asm.h>
+ #include <asm/smap.h>
++#include <asm/spec_ctrl.h>
+ #include <linux/linkage.h>
+ #include <linux/err.h>
+ 
+@@ -95,6 +96,8 @@ ENTRY(entry_SYSENTER_compat)
+ 	pushq   $0			/* pt_regs->r15 = 0 */
+ 	cld
+ 
++	ENABLE_IBRS
++
+ 	/*
+ 	 * SYSENTER doesn't filter flags, so we need to clear NT and AC
+ 	 * ourselves.  To save a few cycles, we can check whether
+@@ -194,6 +197,7 @@ ENTRY(entry_SYSCALL_compat)
+ 
+ 	/* Use %rsp as scratch reg. User ESP is stashed in r8 */
+ 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rsp
++	ENABLE_IBRS
+ 
+ 	/* Switch to the kernel stack */
+ 	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
+@@ -249,6 +253,7 @@ sysret32_from_system_call:
+ 	popq	%rsi			/* pt_regs->si */
+ 	popq	%rdi			/* pt_regs->di */
+ 
++	DISABLE_IBRS
+         /*
+          * USERGS_SYSRET32 does:
+          *  GSBASE = user's GS base
+@@ -348,6 +353,8 @@ ENTRY(entry_INT80_compat)
+ 	pushq   %r15                    /* pt_regs->r15 */
+ 	cld
+ 
++	ENABLE_IBRS
++
+ 	/*
+ 	 * User mode is traced as though IRQs are on, and the interrupt
+ 	 * gate turned them off.
+-- 
+2.14.2
+

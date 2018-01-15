@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Mon, 4 Sep 2017 13:11:56 +0300
+Subject: [PATCH] udf: prevent speculative execution
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Real commit text tbd
+
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit f575840dd363aa80a14faacddf90b95db1185e2c)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ fs/udf/misc.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/fs/udf/misc.c b/fs/udf/misc.c
+index 3949c4bec3a3..4bd10b2e8540 100644
+--- a/fs/udf/misc.c
++++ b/fs/udf/misc.c
+@@ -104,6 +104,8 @@ struct genericFormat *udf_add_extendedattr(struct inode *inode, uint32_t size,
+ 					iinfo->i_lenEAttr) {
+ 				uint32_t aal =
+ 					le32_to_cpu(eahd->appAttrLocation);
++
++				gmb();
+ 				memmove(&ea[offset - aal + size],
+ 					&ea[aal], offset - aal);
+ 				offset -= aal;
+@@ -114,6 +116,8 @@ struct genericFormat *udf_add_extendedattr(struct inode *inode, uint32_t size,
+ 					iinfo->i_lenEAttr) {
+ 				uint32_t ial =
+ 					le32_to_cpu(eahd->impAttrLocation);
++
++				gmb();
+ 				memmove(&ea[offset - ial + size],
+ 					&ea[ial], offset - ial);
+ 				offset -= ial;
+@@ -125,6 +129,8 @@ struct genericFormat *udf_add_extendedattr(struct inode *inode, uint32_t size,
+ 					iinfo->i_lenEAttr) {
+ 				uint32_t aal =
+ 					le32_to_cpu(eahd->appAttrLocation);
++
++				gmb();
+ 				memmove(&ea[offset - aal + size],
+ 					&ea[aal], offset - aal);
+ 				offset -= aal;
+-- 
+2.14.2
+

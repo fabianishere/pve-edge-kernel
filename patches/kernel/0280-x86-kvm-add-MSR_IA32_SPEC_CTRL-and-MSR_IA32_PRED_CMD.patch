@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wei Wang <wei.w.wang@intel.com>
+Date: Tue, 7 Nov 2017 16:47:53 +0800
+Subject: [PATCH] x86/kvm: add MSR_IA32_SPEC_CTRL and MSR_IA32_PRED_CMD to kvm
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Add field to access guest MSR_IA332_SPEC_CTRL and MSR_IA32_PRED_CMD state.
+
+Signed-off-by: Wei Wang <wei.w.wang@intel.com>
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 15eb187f47ee2be44d34313bc89cfb719d82cb21)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/kvm_host.h |  2 ++
+ arch/x86/kvm/vmx.c              | 10 ++++++++++
+ arch/x86/kvm/x86.c              |  2 +-
+ 3 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index b69af3df978a..1953c0a5b972 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -628,6 +628,8 @@ struct kvm_vcpu_arch {
+ 	u64 mcg_ext_ctl;
+ 	u64 *mce_banks;
+ 
++	u64 spec_ctrl;
++
+ 	/* Cache MMIO info */
+ 	u64 mmio_gva;
+ 	unsigned access;
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index 9b4256fd589a..daff9962c90a 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -50,6 +50,7 @@
+ #include <asm/apic.h>
+ #include <asm/irq_remapping.h>
+ #include <asm/mmu_context.h>
++#include <asm/microcode.h>
+ 
+ #include "trace.h"
+ #include "pmu.h"
+@@ -3247,6 +3248,9 @@ static int vmx_get_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+ 	case MSR_IA32_TSC:
+ 		msr_info->data = guest_read_tsc(vcpu);
+ 		break;
++	case MSR_IA32_SPEC_CTRL:
++		msr_info->data = vcpu->arch.spec_ctrl;
++		break;
+ 	case MSR_IA32_SYSENTER_CS:
+ 		msr_info->data = vmcs_read32(GUEST_SYSENTER_CS);
+ 		break;
+@@ -3351,6 +3355,9 @@ static int vmx_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+ 	case MSR_IA32_TSC:
+ 		kvm_write_tsc(vcpu, msr_info);
+ 		break;
++	case MSR_IA32_SPEC_CTRL:
++		vcpu->arch.spec_ctrl = msr_info->data;
++		break;
+ 	case MSR_IA32_CR_PAT:
+ 		if (vmcs_config.vmentry_ctrl & VM_ENTRY_LOAD_IA32_PAT) {
+ 			if (!kvm_mtrr_valid(vcpu, MSR_IA32_CR_PAT, data))
+@@ -6146,6 +6153,7 @@ static int handle_rdmsr(struct kvm_vcpu *vcpu)
+ 
+ 	msr_info.index = ecx;
+ 	msr_info.host_initiated = false;
++
+ 	if (vmx_get_msr(vcpu, &msr_info)) {
+ 		trace_kvm_msr_read_ex(ecx);
+ 		kvm_inject_gp(vcpu, 0);
+@@ -6699,6 +6707,8 @@ static __init int hardware_setup(void)
+ 	vmx_disable_intercept_for_msr(MSR_IA32_SYSENTER_CS, false);
+ 	vmx_disable_intercept_for_msr(MSR_IA32_SYSENTER_ESP, false);
+ 	vmx_disable_intercept_for_msr(MSR_IA32_SYSENTER_EIP, false);
++	vmx_disable_intercept_for_msr(MSR_IA32_SPEC_CTRL, false);
++	vmx_disable_intercept_for_msr(MSR_IA32_PRED_CMD, false);
+ 
+ 	memcpy(vmx_msr_bitmap_legacy_x2apic_apicv,
+ 			vmx_msr_bitmap_legacy, PAGE_SIZE);
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 703cd4171921..eae4aecf3cfe 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -983,7 +983,7 @@ static u32 msrs_to_save[] = {
+ 	MSR_CSTAR, MSR_KERNEL_GS_BASE, MSR_SYSCALL_MASK, MSR_LSTAR,
+ #endif
+ 	MSR_IA32_TSC, MSR_IA32_CR_PAT, MSR_VM_HSAVE_PA,
+-	MSR_IA32_FEATURE_CONTROL, MSR_IA32_BNDCFGS, MSR_TSC_AUX,
++	MSR_IA32_FEATURE_CONTROL, MSR_IA32_BNDCFGS, MSR_TSC_AUX, MSR_IA32_SPEC_CTRL,
+ };
+ 
+ static unsigned num_msrs_to_save;
+-- 
+2.14.2
+

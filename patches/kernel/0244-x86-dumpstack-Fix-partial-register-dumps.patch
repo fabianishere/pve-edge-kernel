@@ -1,0 +1,172 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Date: Sun, 31 Dec 2017 10:18:06 -0600
+Subject: [PATCH] x86/dumpstack: Fix partial register dumps
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The show_regs_safe() logic is wrong.  When there's an iret stack frame,
+it prints the entire pt_regs -- most of which is random stack data --
+instead of just the five registers at the end.
+
+show_regs_safe() is also poorly named: the on_stack() checks aren't for
+safety.  Rename the function to show_regs_if_on_stack() and add a
+comment to explain why the checks are needed.
+
+These issues were introduced with the "partial register dump" feature of
+the following commit:
+
+  b02fcf9ba121 ("x86/unwinder: Handle stack overflows more gracefully")
+
+That patch had gone through a few iterations of development, and the
+above issues were artifacts from a previous iteration of the patch where
+'regs' pointed directly to the iret frame rather than to the (partially
+empty) pt_regs.
+
+Tested-by: Alexander Tsoy <alexander@tsoy.me>
+Signed-off-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Toralf Förster <toralf.foerster@gmx.de>
+Cc: stable@vger.kernel.org
+Fixes: b02fcf9ba121 ("x86/unwinder: Handle stack overflows more gracefully")
+Link: http://lkml.kernel.org/r/5b05b8b344f59db2d3d50dbdeba92d60f2304c54.1514736742.git.jpoimboe@redhat.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit a9cdbe72c4e8bf3b38781c317a79326e2e1a230d)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 3f159d02ecca1ffe81dc467767833dd6d0345147)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/unwind.h | 17 +++++++++++++----
+ arch/x86/kernel/dumpstack.c   | 28 ++++++++++++++++++++--------
+ arch/x86/kernel/stacktrace.c  |  2 +-
+ 3 files changed, 34 insertions(+), 13 deletions(-)
+
+diff --git a/arch/x86/include/asm/unwind.h b/arch/x86/include/asm/unwind.h
+index 38fa6154e382..e1c1cb5019bc 100644
+--- a/arch/x86/include/asm/unwind.h
++++ b/arch/x86/include/asm/unwind.h
+@@ -55,18 +55,27 @@ void unwind_start(struct unwind_state *state, struct task_struct *task,
+ 
+ #if defined(CONFIG_UNWINDER_ORC) || defined(CONFIG_UNWINDER_FRAME_POINTER)
+ /*
+- * WARNING: The entire pt_regs may not be safe to dereference.  In some cases,
+- * only the iret frame registers are accessible.  Use with caution!
++ * If 'partial' returns true, only the iret frame registers are valid.
+  */
+-static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state)
++static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state,
++						    bool *partial)
+ {
+ 	if (unwind_done(state))
+ 		return NULL;
+ 
++	if (partial) {
++#ifdef CONFIG_UNWINDER_ORC
++		*partial = !state->full_regs;
++#else
++		*partial = false;
++#endif
++	}
++
+ 	return state->regs;
+ }
+ #else
+-static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state)
++static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state,
++						    bool *partial)
+ {
+ 	return NULL;
+ }
+diff --git a/arch/x86/kernel/dumpstack.c b/arch/x86/kernel/dumpstack.c
+index 19a936e9b259..8da5b487919f 100644
+--- a/arch/x86/kernel/dumpstack.c
++++ b/arch/x86/kernel/dumpstack.c
+@@ -76,12 +76,23 @@ void show_iret_regs(struct pt_regs *regs)
+ 		regs->sp, regs->flags);
+ }
+ 
+-static void show_regs_safe(struct stack_info *info, struct pt_regs *regs)
++static void show_regs_if_on_stack(struct stack_info *info, struct pt_regs *regs,
++				  bool partial)
+ {
+-	if (on_stack(info, regs, sizeof(*regs)))
++	/*
++	 * These on_stack() checks aren't strictly necessary: the unwind code
++	 * has already validated the 'regs' pointer.  The checks are done for
++	 * ordering reasons: if the registers are on the next stack, we don't
++	 * want to print them out yet.  Otherwise they'll be shown as part of
++	 * the wrong stack.  Later, when show_trace_log_lvl() switches to the
++	 * next stack, this function will be called again with the same regs so
++	 * they can be printed in the right context.
++	 */
++	if (!partial && on_stack(info, regs, sizeof(*regs))) {
+ 		__show_regs(regs, 0);
+-	else if (on_stack(info, (void *)regs + IRET_FRAME_OFFSET,
+-			  IRET_FRAME_SIZE)) {
++
++	} else if (partial && on_stack(info, (void *)regs + IRET_FRAME_OFFSET,
++				       IRET_FRAME_SIZE)) {
+ 		/*
+ 		 * When an interrupt or exception occurs in entry code, the
+ 		 * full pt_regs might not have been saved yet.  In that case
+@@ -98,6 +109,7 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 	struct stack_info stack_info = {0};
+ 	unsigned long visit_mask = 0;
+ 	int graph_idx = 0;
++	bool partial;
+ 
+ 	printk("%sCall Trace:\n", log_lvl);
+ 
+@@ -140,7 +152,7 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 			printk("%s <%s>\n", log_lvl, stack_name);
+ 
+ 		if (regs)
+-			show_regs_safe(&stack_info, regs);
++			show_regs_if_on_stack(&stack_info, regs, partial);
+ 
+ 		/*
+ 		 * Scan the stack, printing any text addresses we find.  At the
+@@ -164,7 +176,7 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 
+ 			/*
+ 			 * Don't print regs->ip again if it was already printed
+-			 * by show_regs_safe() below.
++			 * by show_regs_if_on_stack().
+ 			 */
+ 			if (regs && stack == &regs->ip) {
+ 				unwind_next_frame(&state);
+@@ -200,9 +212,9 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 			unwind_next_frame(&state);
+ 
+ 			/* if the frame has entry regs, print them */
+-			regs = unwind_get_entry_regs(&state);
++			regs = unwind_get_entry_regs(&state, &partial);
+ 			if (regs)
+-				show_regs_safe(&stack_info, regs);
++				show_regs_if_on_stack(&stack_info, regs, partial);
+ 		}
+ 
+ 		if (stack_name)
+diff --git a/arch/x86/kernel/stacktrace.c b/arch/x86/kernel/stacktrace.c
+index 8dabd7bf1673..60244bfaf88f 100644
+--- a/arch/x86/kernel/stacktrace.c
++++ b/arch/x86/kernel/stacktrace.c
+@@ -98,7 +98,7 @@ static int __save_stack_trace_reliable(struct stack_trace *trace,
+ 	for (unwind_start(&state, task, NULL, NULL); !unwind_done(&state);
+ 	     unwind_next_frame(&state)) {
+ 
+-		regs = unwind_get_entry_regs(&state);
++		regs = unwind_get_entry_regs(&state, NULL);
+ 		if (regs) {
+ 			/*
+ 			 * Kernel mode registers on the stack indicate an
+-- 
+2.14.2
+

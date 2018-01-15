@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Wed, 20 Dec 2017 10:55:47 +0000
+Subject: [PATCH] KVM: SVM: Do not intercept new speculative control MSRs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Allow guest access to the speculative control MSRs without being
+intercepted.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit ccaa77a824fd3e21f0b8ae6b5a66fc1ee7e35b14)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kvm/svm.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index 92cd94d51e1f..94adf6becc2e 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -248,6 +248,8 @@ static const struct svm_direct_access_msrs {
+ 	{ .index = MSR_CSTAR,				.always = true  },
+ 	{ .index = MSR_SYSCALL_MASK,			.always = true  },
+ #endif
++	{ .index = MSR_IA32_SPEC_CTRL,			.always = true },
++	{ .index = MSR_IA32_PRED_CMD,			.always = true },
+ 	{ .index = MSR_IA32_LASTBRANCHFROMIP,		.always = false },
+ 	{ .index = MSR_IA32_LASTBRANCHTOIP,		.always = false },
+ 	{ .index = MSR_IA32_LASTINTFROMIP,		.always = false },
+-- 
+2.14.2
+

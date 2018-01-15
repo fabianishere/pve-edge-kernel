@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Fri, 13 Oct 2017 14:31:46 -0700
+Subject: [PATCH] x86/kvm: Set IBPB when switching VM
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Set IBPB (Indirect branch prediction barrier) when switching VM.
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 665076ad780e8620505c742cfcb4b0f3fb99324a)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kvm/vmx.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index daff9962c90a..8df195bbb41d 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -1488,6 +1488,7 @@ static void vmcs_load(struct vmcs *vmcs)
+ 	if (error)
+ 		printk(KERN_ERR "kvm: vmptrld %p/%llx failed\n",
+ 		       vmcs, phys_addr);
++
+ }
+ 
+ #ifdef CONFIG_KEXEC_CORE
+@@ -2268,6 +2269,8 @@ static void vmx_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+ 	if (per_cpu(current_vmcs, cpu) != vmx->loaded_vmcs->vmcs) {
+ 		per_cpu(current_vmcs, cpu) = vmx->loaded_vmcs->vmcs;
+ 		vmcs_load(vmx->loaded_vmcs->vmcs);
++		if (boot_cpu_has(X86_FEATURE_SPEC_CTRL))
++			native_wrmsrl(MSR_IA32_PRED_CMD, FEATURE_SET_IBPB);
+ 	}
+ 
+ 	if (!already_loaded) {
+-- 
+2.14.2
+

@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Wed, 3 Jan 2018 15:18:44 +0100
+Subject: [PATCH] x86/pti: Enable PTI by default
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+This really want's to be enabled by default. Users who know what they are
+doing can disable it either in the config or on the kernel command line.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable@vger.kernel.org
+(cherry picked from commit 87faa0d9b43b4755ff6963a22d1fd1bee1aa3b39)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 436cdbfed2112bea7943f4a0f6dfabf54088c8c6)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ security/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/security/Kconfig b/security/Kconfig
+index 91cb8f611a0d..529dccc22ce5 100644
+--- a/security/Kconfig
++++ b/security/Kconfig
+@@ -98,6 +98,7 @@ config SECURITY_NETWORK
+ 
+ config PAGE_TABLE_ISOLATION
+ 	bool "Remove the kernel mapping in user mode"
++	default y
+ 	depends on X86_64 && !UML
+ 	help
+ 	  This feature reduces the number of hardware side channels by
+-- 
+2.14.2
+

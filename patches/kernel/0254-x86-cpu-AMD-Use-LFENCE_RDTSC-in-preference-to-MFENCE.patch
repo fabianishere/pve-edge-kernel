@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Mon, 8 Jan 2018 16:09:32 -0600
+Subject: [PATCH] x86/cpu/AMD: Use LFENCE_RDTSC in preference to MFENCE_RDTSC
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+With LFENCE now a serializing instruction, use LFENCE_RDTSC in preference
+to MFENCE_RDTSC.  However, since the kernel could be running under a
+hypervisor that does not support writing that MSR, read the MSR back and
+verify that the bit has been set successfully.  If the MSR can be read
+and the bit is set, then set the LFENCE_RDTSC feature, otherwise set the
+MFENCE_RDTSC feature.
+
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Reviewed-by: Borislav Petkov <bp@suse.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Greg Kroah-Hartman <gregkh@linux-foundation.org>
+Cc: David Woodhouse <dwmw@amazon.co.uk>
+Cc: Paul Turner <pjt@google.com>
+Link: https://lkml.kernel.org/r/20180108220932.12580.52458.stgit@tlendack-t1.amdoffice.net
+
+(cherry picked from commit 9c6a73c75864ad9fa49e5fa6513e4c4071c0e29f)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit dc39f26bf11d270cb4cfd251919afb16d98d6c2b)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/msr-index.h |  1 +
+ arch/x86/kernel/cpu/amd.c        | 18 ++++++++++++++++--
+ 2 files changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index 25147df4acfc..db88b7f852b4 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -353,6 +353,7 @@
+ #define MSR_FAM10H_NODE_ID		0xc001100c
+ #define MSR_F10H_DECFG			0xc0011029
+ #define MSR_F10H_DECFG_LFENCE_SERIALIZE_BIT	1
++#define MSR_F10H_DECFG_LFENCE_SERIALIZE		BIT_ULL(MSR_F10H_DECFG_LFENCE_SERIALIZE_BIT)
+ 
+ /* K8 MSRs */
+ #define MSR_K8_TOP_MEM1			0xc001001a
+diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
+index c9a4e4db7860..99eef4a09fd9 100644
+--- a/arch/x86/kernel/cpu/amd.c
++++ b/arch/x86/kernel/cpu/amd.c
+@@ -785,6 +785,9 @@ static void init_amd(struct cpuinfo_x86 *c)
+ 		set_cpu_cap(c, X86_FEATURE_K8);
+ 
+ 	if (cpu_has(c, X86_FEATURE_XMM2)) {
++		unsigned long long val;
++		int ret;
++
+ 		/*
+ 		 * A serializing LFENCE has less overhead than MFENCE, so
+ 		 * use it for execution serialization.  On families which
+@@ -795,8 +798,19 @@ static void init_amd(struct cpuinfo_x86 *c)
+ 		msr_set_bit(MSR_F10H_DECFG,
+ 			    MSR_F10H_DECFG_LFENCE_SERIALIZE_BIT);
+ 
+-		/* MFENCE stops RDTSC speculation */
+-		set_cpu_cap(c, X86_FEATURE_MFENCE_RDTSC);
++		/*
++		 * Verify that the MSR write was successful (could be running
++		 * under a hypervisor) and only then assume that LFENCE is
++		 * serializing.
++		 */
++		ret = rdmsrl_safe(MSR_F10H_DECFG, &val);
++		if (!ret && (val & MSR_F10H_DECFG_LFENCE_SERIALIZE)) {
++			/* A serializing LFENCE stops RDTSC speculation */
++			set_cpu_cap(c, X86_FEATURE_LFENCE_RDTSC);
++		} else {
++			/* MFENCE stops RDTSC speculation */
++			set_cpu_cap(c, X86_FEATURE_MFENCE_RDTSC);
++		}
+ 	}
+ 
+ 	/*
+-- 
+2.14.2
+

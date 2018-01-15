@@ -1,0 +1,151 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jike Song <albcamus@gmail.com>
+Date: Tue, 9 Jan 2018 00:03:41 +0800
+Subject: [PATCH] x86/mm/pti: Remove dead logic in pti_user_pagetable_walk*()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The following code contains dead logic:
+
+ 162 if (pgd_none(*pgd)) {
+ 163         unsigned long new_p4d_page = __get_free_page(gfp);
+ 164         if (!new_p4d_page)
+ 165                 return NULL;
+ 166
+ 167         if (pgd_none(*pgd)) {
+ 168                 set_pgd(pgd, __pgd(_KERNPG_TABLE | __pa(new_p4d_page)));
+ 169                 new_p4d_page = 0;
+ 170         }
+ 171         if (new_p4d_page)
+ 172                 free_page(new_p4d_page);
+ 173 }
+
+There can't be any difference between two pgd_none(*pgd) at L162 and L167,
+so it's always false at L171.
+
+Dave Hansen explained:
+
+ Yes, the double-test was part of an optimization where we attempted to
+ avoid using a global spinlock in the fork() path.  We would check for
+ unallocated mid-level page tables without the lock.  The lock was only
+ taken when we needed to *make* an entry to avoid collisions.
+
+ Now that it is all single-threaded, there is no chance of a collision,
+ no need for a lock, and no need for the re-check.
+
+As all these functions are only called during init, mark them __init as
+well.
+
+Fixes: 03f4424f348e ("x86/mm/pti: Add functions to clone kernel PMDs")
+Signed-off-by: Jike Song <albcamus@gmail.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
+Cc: Andi Kleen <ak@linux.intel.com>
+Cc: Tom Lendacky <thomas.lendacky@amd.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Jiri Koshina <jikos@kernel.org>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Kees Cook <keescook@google.com>
+Cc: Andi Lutomirski <luto@amacapital.net>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Greg KH <gregkh@linux-foundation.org>
+Cc: David Woodhouse <dwmw@amazon.co.uk>
+Cc: Paul Turner <pjt@google.com>
+Cc: stable@vger.kernel.org
+Link: https://lkml.kernel.org/r/20180108160341.3461-1-albcamus@gmail.com
+
+(cherry picked from commit 8d56eff266f3e41a6c39926269c4c3f58f881a8e)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit de8ab6bea570e70d1478af2c1667714bc900ae70)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/mm/pti.c | 32 ++++++--------------------------
+ 1 file changed, 6 insertions(+), 26 deletions(-)
+
+diff --git a/arch/x86/mm/pti.c b/arch/x86/mm/pti.c
+index 43d4a4a29037..ce38f165489b 100644
+--- a/arch/x86/mm/pti.c
++++ b/arch/x86/mm/pti.c
+@@ -149,7 +149,7 @@ pgd_t __pti_set_user_pgd(pgd_t *pgdp, pgd_t pgd)
+  *
+  * Returns a pointer to a P4D on success, or NULL on failure.
+  */
+-static p4d_t *pti_user_pagetable_walk_p4d(unsigned long address)
++static __init p4d_t *pti_user_pagetable_walk_p4d(unsigned long address)
+ {
+ 	pgd_t *pgd = kernel_to_user_pgdp(pgd_offset_k(address));
+ 	gfp_t gfp = (GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO);
+@@ -164,12 +164,7 @@ static p4d_t *pti_user_pagetable_walk_p4d(unsigned long address)
+ 		if (!new_p4d_page)
+ 			return NULL;
+ 
+-		if (pgd_none(*pgd)) {
+-			set_pgd(pgd, __pgd(_KERNPG_TABLE | __pa(new_p4d_page)));
+-			new_p4d_page = 0;
+-		}
+-		if (new_p4d_page)
+-			free_page(new_p4d_page);
++		set_pgd(pgd, __pgd(_KERNPG_TABLE | __pa(new_p4d_page)));
+ 	}
+ 	BUILD_BUG_ON(pgd_large(*pgd) != 0);
+ 
+@@ -182,7 +177,7 @@ static p4d_t *pti_user_pagetable_walk_p4d(unsigned long address)
+  *
+  * Returns a pointer to a PMD on success, or NULL on failure.
+  */
+-static pmd_t *pti_user_pagetable_walk_pmd(unsigned long address)
++static __init pmd_t *pti_user_pagetable_walk_pmd(unsigned long address)
+ {
+ 	gfp_t gfp = (GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO);
+ 	p4d_t *p4d = pti_user_pagetable_walk_p4d(address);
+@@ -194,12 +189,7 @@ static pmd_t *pti_user_pagetable_walk_pmd(unsigned long address)
+ 		if (!new_pud_page)
+ 			return NULL;
+ 
+-		if (p4d_none(*p4d)) {
+-			set_p4d(p4d, __p4d(_KERNPG_TABLE | __pa(new_pud_page)));
+-			new_pud_page = 0;
+-		}
+-		if (new_pud_page)
+-			free_page(new_pud_page);
++		set_p4d(p4d, __p4d(_KERNPG_TABLE | __pa(new_pud_page)));
+ 	}
+ 
+ 	pud = pud_offset(p4d, address);
+@@ -213,12 +203,7 @@ static pmd_t *pti_user_pagetable_walk_pmd(unsigned long address)
+ 		if (!new_pmd_page)
+ 			return NULL;
+ 
+-		if (pud_none(*pud)) {
+-			set_pud(pud, __pud(_KERNPG_TABLE | __pa(new_pmd_page)));
+-			new_pmd_page = 0;
+-		}
+-		if (new_pmd_page)
+-			free_page(new_pmd_page);
++		set_pud(pud, __pud(_KERNPG_TABLE | __pa(new_pmd_page)));
+ 	}
+ 
+ 	return pmd_offset(pud, address);
+@@ -251,12 +236,7 @@ static __init pte_t *pti_user_pagetable_walk_pte(unsigned long address)
+ 		if (!new_pte_page)
+ 			return NULL;
+ 
+-		if (pmd_none(*pmd)) {
+-			set_pmd(pmd, __pmd(_KERNPG_TABLE | __pa(new_pte_page)));
+-			new_pte_page = 0;
+-		}
+-		if (new_pte_page)
+-			free_page(new_pte_page);
++		set_pmd(pmd, __pmd(_KERNPG_TABLE | __pa(new_pte_page)));
+ 	}
+ 
+ 	pte = pte_offset_kernel(pmd, address);
+-- 
+2.14.2
+

@@ -1,0 +1,127 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Tue, 7 Nov 2017 13:52:42 -0800
+Subject: [PATCH] x86/mm: Only set IBPB when the new thread cannot ptrace
+ current thread
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+To reduce overhead of setting IBPB, we only do that when
+the new thread cannot ptrace the current one.  If the new
+thread has ptrace capability on current thread, it is safe.
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 65941af723059ffeeca269b99ab51b3c9e320751)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/ptrace.h |  6 ++++++
+ arch/x86/mm/tlb.c      |  5 ++++-
+ kernel/ptrace.c        | 18 ++++++++++++++----
+ 3 files changed, 24 insertions(+), 5 deletions(-)
+
+diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
+index 0e5fcc11b1b8..d6afefd5465b 100644
+--- a/include/linux/ptrace.h
++++ b/include/linux/ptrace.h
+@@ -63,12 +63,15 @@ extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
+ #define PTRACE_MODE_NOAUDIT	0x04
+ #define PTRACE_MODE_FSCREDS 0x08
+ #define PTRACE_MODE_REALCREDS 0x10
++#define PTRACE_MODE_NOACCESS_CHK 0x20
+ 
+ /* shorthands for READ/ATTACH and FSCREDS/REALCREDS combinations */
+ #define PTRACE_MODE_READ_FSCREDS (PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)
+ #define PTRACE_MODE_READ_REALCREDS (PTRACE_MODE_READ | PTRACE_MODE_REALCREDS)
+ #define PTRACE_MODE_ATTACH_FSCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS)
+ #define PTRACE_MODE_ATTACH_REALCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS)
++#define PTRACE_MODE_IBPB (PTRACE_MODE_ATTACH | PTRACE_MODE_NOAUDIT \
++			| PTRACE_MODE_NOACCESS_CHK | PTRACE_MODE_REALCREDS)
+ 
+ /**
+  * ptrace_may_access - check whether the caller is permitted to access
+@@ -86,6 +89,9 @@ extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
+  */
+ extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
+ 
++extern int ___ptrace_may_access(struct task_struct *cur, struct task_struct *task,
++	unsigned int mode);
++
+ static inline int ptrace_reparented(struct task_struct *child)
+ {
+ 	return !same_thread_group(child->real_parent, child->parent);
+diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
+index bb3ded3a4e5f..301e6efbc514 100644
+--- a/arch/x86/mm/tlb.c
++++ b/arch/x86/mm/tlb.c
+@@ -6,6 +6,7 @@
+ #include <linux/interrupt.h>
+ #include <linux/export.h>
+ #include <linux/cpu.h>
++#include <linux/ptrace.h>
+ 
+ #include <asm/tlbflush.h>
+ #include <asm/mmu_context.h>
+@@ -219,7 +220,9 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 		u16 new_asid;
+ 		bool need_flush;
+ 
+-		if (boot_cpu_has(X86_FEATURE_SPEC_CTRL))
++		/* Null tsk means switching to kernel, so that's safe */
++		if (boot_cpu_has(X86_FEATURE_SPEC_CTRL) && tsk &&
++			___ptrace_may_access(tsk, current, PTRACE_MODE_IBPB))
+ 			native_wrmsrl(MSR_IA32_PRED_CMD, FEATURE_SET_IBPB);
+ 
+ 		if (IS_ENABLED(CONFIG_VMAP_STACK)) {
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 60f356d91060..f2f0f1aeabaf 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -268,9 +268,10 @@ static int ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
+ }
+ 
+ /* Returns 0 on success, -errno on denial. */
+-static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
++int ___ptrace_may_access(struct task_struct *cur, struct task_struct *task,
++		unsigned int mode)
+ {
+-	const struct cred *cred = current_cred(), *tcred;
++	const struct cred *cred = __task_cred(cur), *tcred;
+ 	struct mm_struct *mm;
+ 	kuid_t caller_uid;
+ 	kgid_t caller_gid;
+@@ -290,7 +291,7 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+ 	 */
+ 
+ 	/* Don't let security modules deny introspection */
+-	if (same_thread_group(task, current))
++	if (same_thread_group(task, cur))
+ 		return 0;
+ 	rcu_read_lock();
+ 	if (mode & PTRACE_MODE_FSCREDS) {
+@@ -328,7 +329,16 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+ 	     !ptrace_has_cap(mm->user_ns, mode)))
+ 	    return -EPERM;
+ 
+-	return security_ptrace_access_check(task, mode);
++	if (!(mode & PTRACE_MODE_NOACCESS_CHK))
++		return security_ptrace_access_check(task, mode);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(___ptrace_may_access);
++
++static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
++{
++	return ___ptrace_may_access(current, task, mode);
+ }
+ 
+ bool ptrace_may_access(struct task_struct *task, unsigned int mode)
+-- 
+2.14.2
+

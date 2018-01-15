@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Mon, 4 Sep 2017 13:11:44 +0300
+Subject: [PATCH] bpf: prevent speculative execution in eBPF interpreter
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+This adds a generic memory barrier before LD_IMM_DW and
+LDX_MEM_B/H/W/DW eBPF instructions during eBPF program
+execution in order to prevent speculative execution on out
+of bound BFP_MAP array indexes. This way an arbitary kernel
+memory is not exposed through side channel attacks.
+
+For more details, please see this Google Project Zero report: tbd
+
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit dd13f73106c260dea7a689d33d1457639af820aa)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ kernel/bpf/core.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/kernel/bpf/core.c b/kernel/bpf/core.c
+index 9a1bed1f3029..3f83c60e3e86 100644
+--- a/kernel/bpf/core.c
++++ b/kernel/bpf/core.c
+@@ -33,6 +33,7 @@
+ #include <linux/rcupdate.h>
+ 
+ #include <asm/unaligned.h>
++#include <asm/barrier.h>
+ 
+ /* Registers */
+ #define BPF_R0	regs[BPF_REG_0]
+@@ -920,6 +921,7 @@ static unsigned int ___bpf_prog_run(u64 *regs, const struct bpf_insn *insn,
+ 		DST = IMM;
+ 		CONT;
+ 	LD_IMM_DW:
++		gmb();
+ 		DST = (u64) (u32) insn[0].imm | ((u64) (u32) insn[1].imm) << 32;
+ 		insn++;
+ 		CONT;
+@@ -1133,6 +1135,7 @@ static unsigned int ___bpf_prog_run(u64 *regs, const struct bpf_insn *insn,
+ 		*(SIZE *)(unsigned long) (DST + insn->off) = IMM;	\
+ 		CONT;							\
+ 	LDX_MEM_##SIZEOP:						\
++		gmb();							\
+ 		DST = *(SIZE *)(unsigned long) (SRC + insn->off);	\
+ 		CONT;
+ 
+-- 
+2.14.2
+

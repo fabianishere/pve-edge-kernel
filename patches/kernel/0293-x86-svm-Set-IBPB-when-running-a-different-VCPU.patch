@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Wed, 20 Dec 2017 10:55:47 +0000
+Subject: [PATCH] x86/svm: Set IBPB when running a different VCPU
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Set IBPB (Indirect Branch Prediction Barrier) when the current CPU is
+going to run a VCPU different from what was previously run.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 0ba3eaabbb6666ebd344ee80534e58c375a00810)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kvm/svm.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
+index a1b19e810c49..fade4869856a 100644
+--- a/arch/x86/kvm/svm.c
++++ b/arch/x86/kvm/svm.c
+@@ -518,6 +518,8 @@ struct svm_cpu_data {
+ 	struct kvm_ldttss_desc *tss_desc;
+ 
+ 	struct page *save_area;
++
++	struct vmcb *current_vmcb;
+ };
+ 
+ static DEFINE_PER_CPU(struct svm_cpu_data *, svm_data);
+@@ -1685,11 +1687,19 @@ static void svm_free_vcpu(struct kvm_vcpu *vcpu)
+ 	__free_pages(virt_to_page(svm->nested.msrpm), MSRPM_ALLOC_ORDER);
+ 	kvm_vcpu_uninit(vcpu);
+ 	kmem_cache_free(kvm_vcpu_cache, svm);
++
++	/*
++	 * The VMCB could be recycled, causing a false negative in svm_vcpu_load;
++	 * block speculative execution.
++	 */
++	if (ibpb_inuse)
++		wrmsrl(MSR_IA32_PRED_CMD, FEATURE_SET_IBPB);
+ }
+ 
+ static void svm_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+ {
+ 	struct vcpu_svm *svm = to_svm(vcpu);
++	struct svm_cpu_data *sd = per_cpu(svm_data, cpu);
+ 	int i;
+ 
+ 	if (unlikely(cpu != vcpu->cpu)) {
+@@ -1718,6 +1728,12 @@ static void svm_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+ 	if (static_cpu_has(X86_FEATURE_RDTSCP))
+ 		wrmsrl(MSR_TSC_AUX, svm->tsc_aux);
+ 
++	if (sd->current_vmcb != svm->vmcb) {
++		sd->current_vmcb = svm->vmcb;
++		if (ibpb_inuse)
++			wrmsrl(MSR_IA32_PRED_CMD, FEATURE_SET_IBPB);
++	}
++
+ 	avic_vcpu_load(vcpu, cpu);
+ }
+ 
+-- 
+2.14.2
+

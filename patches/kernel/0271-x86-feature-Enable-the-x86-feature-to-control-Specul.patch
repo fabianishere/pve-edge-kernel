@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Thu, 24 Aug 2017 09:34:41 -0700
+Subject: [PATCH] x86/feature: Enable the x86 feature to control Speculation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+cpuid ax=0x7, return rdx bit 26 to indicate presence of this feature
+IA32_SPEC_CTRL (0x48) and IA32_PRED_CMD (0x49)
+IA32_SPEC_CTRL, bit0 – Indirect Branch Restricted Speculation (IBRS)
+IA32_PRED_CMD,  bit0 – Indirect Branch Prediction Barrier (IBPB)
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit f1f160a92b70c25d6e6e76788463bbec86a73313)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/cpufeatures.h | 1 +
+ arch/x86/include/asm/msr-index.h   | 5 +++++
+ arch/x86/kernel/cpu/scattered.c    | 1 +
+ 3 files changed, 7 insertions(+)
+
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 3928050b51b0..44be8fd069bf 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -208,6 +208,7 @@
+ #define X86_FEATURE_AVX512_4FMAPS	( 7*32+17) /* AVX-512 Multiply Accumulation Single precision */
+ 
+ #define X86_FEATURE_MBA			( 7*32+18) /* Memory Bandwidth Allocation */
++#define X86_FEATURE_SPEC_CTRL		( 7*32+19) /* Control Speculation Control */
+ 
+ /* Virtualization flags: Linux defined, word 8 */
+ #define X86_FEATURE_TPR_SHADOW		( 8*32+ 0) /* Intel TPR Shadow */
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index db88b7f852b4..4e3438a00a50 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -41,6 +41,9 @@
+ #define MSR_PPIN_CTL			0x0000004e
+ #define MSR_PPIN			0x0000004f
+ 
++#define MSR_IA32_SPEC_CTRL		0x00000048
++#define MSR_IA32_PRED_CMD		0x00000049
++
+ #define MSR_IA32_PERFCTR0		0x000000c1
+ #define MSR_IA32_PERFCTR1		0x000000c2
+ #define MSR_FSB_FREQ			0x000000cd
+@@ -437,6 +440,8 @@
+ #define FEATURE_CONTROL_VMXON_ENABLED_INSIDE_SMX	(1<<1)
+ #define FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX	(1<<2)
+ #define FEATURE_CONTROL_LMCE				(1<<20)
++#define FEATURE_ENABLE_IBRS				(1<<0)
++#define FEATURE_SET_IBPB				(1<<0)
+ 
+ #define MSR_IA32_APICBASE		0x0000001b
+ #define MSR_IA32_APICBASE_BSP		(1<<8)
+diff --git a/arch/x86/kernel/cpu/scattered.c b/arch/x86/kernel/cpu/scattered.c
+index 23c23508c012..9651ea395812 100644
+--- a/arch/x86/kernel/cpu/scattered.c
++++ b/arch/x86/kernel/cpu/scattered.c
+@@ -24,6 +24,7 @@ static const struct cpuid_bit cpuid_bits[] = {
+ 	{ X86_FEATURE_INTEL_PT,		CPUID_EBX, 25, 0x00000007, 0 },
+ 	{ X86_FEATURE_AVX512_4VNNIW,    CPUID_EDX,  2, 0x00000007, 0 },
+ 	{ X86_FEATURE_AVX512_4FMAPS,    CPUID_EDX,  3, 0x00000007, 0 },
++	{ X86_FEATURE_SPEC_CTRL,	CPUID_EDX, 26, 0x00000007, 0 },
+ 	{ X86_FEATURE_CAT_L3,		CPUID_EBX,  1, 0x00000010, 0 },
+ 	{ X86_FEATURE_CAT_L2,		CPUID_EBX,  2, 0x00000010, 0 },
+ 	{ X86_FEATURE_CDP_L3,		CPUID_ECX,  2, 0x00000010, 1 },
+-- 
+2.14.2
+

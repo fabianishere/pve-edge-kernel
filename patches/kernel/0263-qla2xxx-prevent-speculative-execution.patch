@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Mon, 4 Sep 2017 13:11:49 +0300
+Subject: [PATCH] qla2xxx: prevent speculative execution
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Real commit text tbd
+
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit d71318e5f16371dbc0e89a786336a521551f8946)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/scsi/qla2xxx/qla_mr.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/scsi/qla2xxx/qla_mr.c b/drivers/scsi/qla2xxx/qla_mr.c
+index 10b742d27e16..ca923d8803f9 100644
+--- a/drivers/scsi/qla2xxx/qla_mr.c
++++ b/drivers/scsi/qla2xxx/qla_mr.c
+@@ -2304,10 +2304,12 @@ qlafx00_status_entry(scsi_qla_host_t *vha, struct rsp_que *rsp, void *pkt)
+ 	req = ha->req_q_map[que];
+ 
+ 	/* Validate handle. */
+-	if (handle < req->num_outstanding_cmds)
++	if (handle < req->num_outstanding_cmds) {
++		gmb();
+ 		sp = req->outstanding_cmds[handle];
+-	else
++	} else {
+ 		sp = NULL;
++	}
+ 
+ 	if (sp == NULL) {
+ 		ql_dbg(ql_dbg_io, vha, 0x3034,
+@@ -2655,10 +2657,12 @@ qlafx00_multistatus_entry(struct scsi_qla_host *vha,
+ 		req = ha->req_q_map[que];
+ 
+ 		/* Validate handle. */
+-		if (handle < req->num_outstanding_cmds)
++		if (handle < req->num_outstanding_cmds) {
++			gmb();
+ 			sp = req->outstanding_cmds[handle];
+-		else
++		} else {
+ 			sp = NULL;
++		}
+ 
+ 		if (sp == NULL) {
+ 			ql_dbg(ql_dbg_io, vha, 0x3044,
+-- 
+2.14.2
+

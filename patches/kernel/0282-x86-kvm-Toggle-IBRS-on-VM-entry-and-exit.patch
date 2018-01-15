@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tim Chen <tim.c.chen@linux.intel.com>
+Date: Fri, 20 Oct 2017 17:04:35 -0700
+Subject: [PATCH] x86/kvm: Toggle IBRS on VM entry and exit
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Restore guest IBRS on VM entry and set it to 1 on VM exit
+back to kernel.
+
+Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 3dc28210342f174270bcefac74ef5d0b52ffd846)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kvm/vmx.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index 8df195bbb41d..57d538fc7c75 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -9101,6 +9101,11 @@ static void __noclone vmx_vcpu_run(struct kvm_vcpu *vcpu)
+ 		__write_pkru(vcpu->arch.pkru);
+ 
+ 	atomic_switch_perf_msrs(vmx);
++
++	if (boot_cpu_has(X86_FEATURE_SPEC_CTRL))
++		add_atomic_switch_msr(vmx, MSR_IA32_SPEC_CTRL,
++			vcpu->arch.spec_ctrl, FEATURE_ENABLE_IBRS);
++
+ 	debugctlmsr = get_debugctlmsr();
+ 
+ 	vmx_arm_hv_timer(vcpu);
+-- 
+2.14.2
+

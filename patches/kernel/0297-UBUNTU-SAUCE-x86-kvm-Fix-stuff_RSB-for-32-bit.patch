@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: William Grant <wgrant@ubuntu.com>
+Date: Thu, 11 Jan 2018 17:05:42 -0600
+Subject: [PATCH] UBUNTU: SAUCE: x86/kvm: Fix stuff_RSB() for 32-bit
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+Signed-off-by: William Grant <wgrant@ubuntu.com>
+Acked-by: Kamal Mostafa <kamal@canonical.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+(cherry picked from commit 306dada4f850bf537dbd8ff06cf1522074b3f327)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/kvm_host.h | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 4117a97228a2..f39bc68efa56 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -223,9 +223,13 @@ static inline void stuff_RSB(void)
+ .label31:	\n\
+ 	call .label32	\n\
+ 	pause	\n\
+-.label32: \n\
+-	add $(32*8), %%rsp 	\n\
+-": : :"memory");
++.label32: \n"
++#ifdef CONFIG_X86_64
++" 	add $(32*8), %%rsp 	\n"
++#else
++" 	add $(32*4), %%esp 	\n"
++#endif
++: : :"memory");
+ }
+ 
+ enum kvm_reg {
+-- 
+2.14.2
+

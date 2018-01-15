@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Borislav Petkov <bp@suse.de>
+Date: Wed, 10 Jan 2018 12:28:16 +0100
+Subject: [PATCH] x86/alternatives: Fix optimize_nops() checking
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5754
+
+The alternatives code checks only the first byte whether it is a NOP, but
+with NOPs in front of the payload and having actual instructions after it
+breaks the "optimized' test.
+
+Make sure to scan all bytes before deciding to optimize the NOPs in there.
+
+Reported-by: David Woodhouse <dwmw2@infradead.org>
+Signed-off-by: Borislav Petkov <bp@suse.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Tom Lendacky <thomas.lendacky@amd.com>
+Cc: Andi Kleen <ak@linux.intel.com>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Jiri Kosina <jikos@kernel.org>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Andi Kleen <andi@firstfloor.org>
+Cc: Andrew Lutomirski <luto@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Greg Kroah-Hartman <gregkh@linux-foundation.org>
+Cc: Paul Turner <pjt@google.com>
+Link: https://lkml.kernel.org/r/20180110112815.mgciyf5acwacphkq@pd.tnic
+
+(cherry picked from commit 612e8e9350fd19cae6900cf36ea0c6892d1a0dca)
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit dc241f68557ee1929a92b9ec6f7a1294bbbd4f00)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/kernel/alternative.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/kernel/alternative.c b/arch/x86/kernel/alternative.c
+index 32e14d137416..5dc05755a044 100644
+--- a/arch/x86/kernel/alternative.c
++++ b/arch/x86/kernel/alternative.c
+@@ -344,9 +344,12 @@ recompute_jump(struct alt_instr *a, u8 *orig_insn, u8 *repl_insn, u8 *insnbuf)
+ static void __init_or_module noinline optimize_nops(struct alt_instr *a, u8 *instr)
+ {
+ 	unsigned long flags;
++	int i;
+ 
+-	if (instr[0] != 0x90)
+-		return;
++	for (i = 0; i < a->padlen; i++) {
++		if (instr[i] != 0x90)
++			return;
++	}
+ 
+ 	local_irq_save(flags);
+ 	add_nops(instr + (a->instrlen - a->padlen), a->padlen);
+-- 
+2.14.2
+

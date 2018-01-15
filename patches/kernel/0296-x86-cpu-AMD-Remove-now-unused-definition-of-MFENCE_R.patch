@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Date: Wed, 20 Dec 2017 10:55:48 +0000
+Subject: [PATCH] x86/cpu/AMD: Remove now unused definition of MFENCE_RDTSC
+ feature
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CVE-2017-5753
+CVE-2017-5715
+
+With the switch to using LFENCE_RDTSC on AMD platforms there is no longer
+a need for the MFENCE_RDTSC feature.  Remove it usage and definition.
+
+Signed-off-by: Tom Lendacky <thomas.lendacky@amd.com>
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+Signed-off-by: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+(cherry picked from commit 6e6c998937329e9d13d4b239233cd058e8a7730f)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/include/asm/barrier.h | 3 +--
+ arch/x86/include/asm/msr.h     | 3 +--
+ arch/x86/net/bpf_jit_comp.c    | 3 ---
+ 3 files changed, 2 insertions(+), 7 deletions(-)
+
+diff --git a/arch/x86/include/asm/barrier.h b/arch/x86/include/asm/barrier.h
+index aae78054cae2..d00432579444 100644
+--- a/arch/x86/include/asm/barrier.h
++++ b/arch/x86/include/asm/barrier.h
+@@ -23,8 +23,7 @@
+ #define wmb()	asm volatile("sfence" ::: "memory")
+ #endif
+ 
+-#define gmb() alternative_2("", "mfence", X86_FEATURE_MFENCE_RDTSC, \
+-				       "lfence", X86_FEATURE_LFENCE_RDTSC);
++#define gmb() alternative("", "lfence", X86_FEATURE_LFENCE_RDTSC);
+ 
+ #ifdef CONFIG_X86_PPRO_FENCE
+ #define dma_rmb()	rmb()
+diff --git a/arch/x86/include/asm/msr.h b/arch/x86/include/asm/msr.h
+index 898dba2e2e2c..3139098269f6 100644
+--- a/arch/x86/include/asm/msr.h
++++ b/arch/x86/include/asm/msr.h
+@@ -213,8 +213,7 @@ static __always_inline unsigned long long rdtsc_ordered(void)
+ 	 * that some other imaginary CPU is updating continuously with a
+ 	 * time stamp.
+ 	 */
+-	alternative_2("", "mfence", X86_FEATURE_MFENCE_RDTSC,
+-			  "lfence", X86_FEATURE_LFENCE_RDTSC);
++	alternative("", "lfence", X86_FEATURE_LFENCE_RDTSC);
+ 	return rdtsc();
+ }
+ 
+diff --git a/arch/x86/net/bpf_jit_comp.c b/arch/x86/net/bpf_jit_comp.c
+index 879dbfefb66d..e20e304320f9 100644
+--- a/arch/x86/net/bpf_jit_comp.c
++++ b/arch/x86/net/bpf_jit_comp.c
+@@ -116,9 +116,6 @@ static void emit_memory_barrier(u8 **pprog)
+ 		if (boot_cpu_has(X86_FEATURE_LFENCE_RDTSC))
+ 			/* x86 LFENCE opcode 0F AE E8 */
+ 			EMIT3(0x0f, 0xae, 0xe8);
+-		else if (boot_cpu_has(X86_FEATURE_MFENCE_RDTSC))
+-			/* AMD MFENCE opcode 0F AE F0 */
+-			EMIT3(0x0f, 0xae, 0xf0);
+ 		else
+ 			/* we should never end up here,
+ 			 * but if we do, better not to emit anything*/
+-- 
+2.14.2
+
