@@ -1,8 +1,8 @@
-From 338c7d8678b82c46668ce3b73f7339f71ab69cc8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Tue, 11 Jul 2017 10:33:43 -0500
-Subject: [PATCH 034/242] objtool, x86: Add facility for asm code to provide
- unwind hints
+Subject: [PATCH] objtool, x86: Add facility for asm code to provide unwind
+ hints
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

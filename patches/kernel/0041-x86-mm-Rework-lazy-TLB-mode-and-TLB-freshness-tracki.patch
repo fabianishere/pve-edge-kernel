@@ -1,8 +1,7 @@
-From caa3549fe709971498eaf080c1710ef627a0df5a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 29 Jun 2017 08:53:17 -0700
-Subject: [PATCH 041/242] x86/mm: Rework lazy TLB mode and TLB freshness
- tracking
+Subject: [PATCH] x86/mm: Rework lazy TLB mode and TLB freshness tracking
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,8 +1,8 @@
-From a76244535c7a04fde0afa6971ee1ecdb8d5b0c22 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Boris Ostrovsky <boris.ostrovsky@oracle.com>
 Date: Mon, 4 Dec 2017 15:07:07 +0100
-Subject: [PATCH 137/242] x86/entry/64/paravirt: Use paravirt-safe macro to
- access eflags
+Subject: [PATCH] x86/entry/64/paravirt: Use paravirt-safe macro to access
+ eflags
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

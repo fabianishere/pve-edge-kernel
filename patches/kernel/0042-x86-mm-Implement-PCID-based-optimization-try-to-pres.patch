@@ -1,8 +1,8 @@
-From e3c7bff633fc1210c6b19dd3ebcafb9f6716d586 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 24 Jul 2017 21:41:38 -0700
-Subject: [PATCH 042/242] x86/mm: Implement PCID based optimization: try to
- preserve old TLB entries using PCID
+Subject: [PATCH] x86/mm: Implement PCID based optimization: try to preserve
+ old TLB entries using PCID
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

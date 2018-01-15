@@ -1,8 +1,7 @@
-From 4047df49cf44e46d8a213373a8bd5949fd4ef4a6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Date: Sat, 6 Jan 2018 17:50:34 -0200
-Subject: [PATCH 233/242] objtool: use sh to invoke sync-check.sh in the
- Makefile
+Subject: [PATCH] objtool: use sh to invoke sync-check.sh in the Makefile
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

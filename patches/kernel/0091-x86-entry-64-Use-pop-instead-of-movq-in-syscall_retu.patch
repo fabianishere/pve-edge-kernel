@@ -1,7 +1,7 @@
-From d4b1f2361974bfffa04a528fb2ad393a55d13841 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:03 -0700
-Subject: [PATCH 091/242] x86/entry/64: Use pop instead of movq in
+Subject: [PATCH] x86/entry/64: Use pop instead of movq in
  syscall_return_via_sysret
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

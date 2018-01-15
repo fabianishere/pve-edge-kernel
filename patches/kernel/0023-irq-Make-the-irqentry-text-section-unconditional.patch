@@ -1,7 +1,7 @@
-From 050fcd1a748bd2f17b540d0147c8a4f3067653ee Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Masami Hiramatsu <mhiramat@kernel.org>
 Date: Thu, 3 Aug 2017 11:38:21 +0900
-Subject: [PATCH 023/242] irq: Make the irqentry text section unconditional
+Subject: [PATCH] irq: Make the irqentry text section unconditional
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

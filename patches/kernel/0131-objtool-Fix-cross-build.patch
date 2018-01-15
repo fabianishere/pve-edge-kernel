@@ -1,7 +1,7 @@
-From 2a83e03f3415c542956fac4f7c43ea75a44aba1d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Josh Poimboeuf <jpoimboe@redhat.com>
 Date: Tue, 7 Nov 2017 21:01:52 -0600
-Subject: [PATCH 131/242] objtool: Fix cross-build
+Subject: [PATCH] objtool: Fix cross-build
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

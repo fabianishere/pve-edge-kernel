@@ -1,8 +1,8 @@
-From 181d224dabca9a9061a6955cf3d49a4eba7294bf Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:11 -0700
-Subject: [PATCH 099/242] x86/entry: Add task_top_of_stack() to find the top of
- a task's stack
+Subject: [PATCH] x86/entry: Add task_top_of_stack() to find the top of a
+ task's stack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

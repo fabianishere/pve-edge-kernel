@@ -1,7 +1,7 @@
-From fd143ce57a7cfaf015f1c0274b9f071f4046696a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Tue, 12 Dec 2017 07:56:43 -0800
-Subject: [PATCH 171/242] x86/mm/64: Improve the memory map documentation
+Subject: [PATCH] x86/mm/64: Improve the memory map documentation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

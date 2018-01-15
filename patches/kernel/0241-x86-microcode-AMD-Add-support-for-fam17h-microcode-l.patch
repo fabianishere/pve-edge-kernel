@@ -1,8 +1,7 @@
-From 674b72ef0eb73751e4f838dc789e4c393d225834 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tom Lendacky <thomas.lendacky@amd.com>
 Date: Thu, 30 Nov 2017 16:46:40 -0600
-Subject: [PATCH 241/242] x86/microcode/AMD: Add support for fam17h microcode
- loading
+Subject: [PATCH] x86/microcode/AMD: Add support for fam17h microcode loading
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

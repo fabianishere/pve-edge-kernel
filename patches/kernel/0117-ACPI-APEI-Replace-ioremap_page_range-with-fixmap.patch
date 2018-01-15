@@ -1,7 +1,7 @@
-From c18bf2e2bd1efc5430965d0110a8dfc4a25d84ad Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: James Morse <james.morse@arm.com>
 Date: Mon, 6 Nov 2017 18:44:24 +0000
-Subject: [PATCH 117/242] ACPI / APEI: Replace ioremap_page_range() with fixmap
+Subject: [PATCH] ACPI / APEI: Replace ioremap_page_range() with fixmap
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

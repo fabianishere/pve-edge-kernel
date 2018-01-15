@@ -1,8 +1,7 @@
-From 9ec7ffb2871c23d5c0961f0241bd118ca2395edb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Thu, 4 Jan 2018 13:01:40 +0100
-Subject: [PATCH 237/242] x86/mm: Map cpu_entry_area at the same place on 4/5
- level
+Subject: [PATCH] x86/mm: Map cpu_entry_area at the same place on 4/5 level
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

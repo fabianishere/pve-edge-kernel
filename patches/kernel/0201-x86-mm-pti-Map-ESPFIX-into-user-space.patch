@@ -1,7 +1,7 @@
-From 9378cf5830b41fc4659335da883d2a1d52fe0661 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Fri, 15 Dec 2017 22:08:18 +0100
-Subject: [PATCH 201/242] x86/mm/pti: Map ESPFIX into user space
+Subject: [PATCH] x86/mm/pti: Map ESPFIX into user space
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

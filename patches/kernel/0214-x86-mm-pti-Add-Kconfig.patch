@@ -1,7 +1,7 @@
-From 0692cf84257a92f7be9553af55d65c668e2b3bc8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:08:03 +0100
-Subject: [PATCH 214/242] x86/mm/pti: Add Kconfig
+Subject: [PATCH] x86/mm/pti: Add Kconfig
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

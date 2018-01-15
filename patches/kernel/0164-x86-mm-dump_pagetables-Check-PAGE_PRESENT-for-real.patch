@@ -1,7 +1,7 @@
-From d54a0500d55a2856efdea3b427e91d8fcf74ca63 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Sat, 16 Dec 2017 01:14:39 +0100
-Subject: [PATCH 164/242] x86/mm/dump_pagetables: Check PAGE_PRESENT for real
+Subject: [PATCH] x86/mm/dump_pagetables: Check PAGE_PRESENT for real
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

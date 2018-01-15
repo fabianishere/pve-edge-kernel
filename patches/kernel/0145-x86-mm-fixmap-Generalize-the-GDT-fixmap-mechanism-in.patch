@@ -1,8 +1,8 @@
-From 2566b1447443f0dfaf167f43142facebf687c327 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:15 +0100
-Subject: [PATCH 145/242] x86/mm/fixmap: Generalize the GDT fixmap mechanism,
- introduce struct cpu_entry_area
+Subject: [PATCH] x86/mm/fixmap: Generalize the GDT fixmap mechanism, introduce
+ struct cpu_entry_area
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
-From e80edf9b45a0465ce8fbded75f6d5f218039a67c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 5 Dec 2017 13:34:51 +0100
-Subject: [PATCH 175/242] x86/microcode: Dont abuse the TLB-flush interface
+Subject: [PATCH] x86/microcode: Dont abuse the TLB-flush interface
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

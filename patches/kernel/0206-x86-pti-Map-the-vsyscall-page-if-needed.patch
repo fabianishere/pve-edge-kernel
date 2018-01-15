@@ -1,7 +1,7 @@
-From 7505dd405211a42c3abf52ef33b97eea470aaf60 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Tue, 12 Dec 2017 07:56:42 -0800
-Subject: [PATCH 206/242] x86/pti: Map the vsyscall page if needed
+Subject: [PATCH] x86/pti: Map the vsyscall page if needed
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

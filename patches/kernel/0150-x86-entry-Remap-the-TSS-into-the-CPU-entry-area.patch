@@ -1,7 +1,7 @@
-From 4fed46b725eeb81ae0c3aa55167eccb7d9bfae85 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:20 +0100
-Subject: [PATCH 150/242] x86/entry: Remap the TSS into the CPU entry area
+Subject: [PATCH] x86/entry: Remap the TSS into the CPU entry area
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

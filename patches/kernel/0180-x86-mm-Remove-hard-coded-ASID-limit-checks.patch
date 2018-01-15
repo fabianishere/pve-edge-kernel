@@ -1,7 +1,7 @@
-From f847420cd768a0b95c3159ab822c30c909f0e5ee Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Mon, 4 Dec 2017 15:07:55 +0100
-Subject: [PATCH 180/242] x86/mm: Remove hard-coded ASID limit checks
+Subject: [PATCH] x86/mm: Remove hard-coded ASID limit checks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

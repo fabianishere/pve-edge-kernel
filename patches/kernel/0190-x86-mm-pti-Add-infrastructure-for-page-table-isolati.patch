@@ -1,8 +1,7 @@
-From 384e4cfab1886f8abb94fe16abbad2a034612f78 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 4 Dec 2017 15:07:36 +0100
-Subject: [PATCH 190/242] x86/mm/pti: Add infrastructure for page table
- isolation
+Subject: [PATCH] x86/mm/pti: Add infrastructure for page table isolation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

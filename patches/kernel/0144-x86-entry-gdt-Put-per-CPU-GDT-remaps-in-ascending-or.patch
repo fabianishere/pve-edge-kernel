@@ -1,8 +1,7 @@
-From 337719d1c25c12c21a989f26ece1859c8007642f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:14 +0100
-Subject: [PATCH 144/242] x86/entry/gdt: Put per-CPU GDT remaps in ascending
- order
+Subject: [PATCH] x86/entry/gdt: Put per-CPU GDT remaps in ascending order
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

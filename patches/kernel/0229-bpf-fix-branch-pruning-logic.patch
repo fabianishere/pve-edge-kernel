@@ -1,7 +1,7 @@
-From 4cdf7c9d4e0958e38635df638229bba6f562511a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alexei Starovoitov <ast@fb.com>
 Date: Thu, 4 Jan 2018 08:01:24 -0600
-Subject: [PATCH 229/242] bpf: fix branch pruning logic
+Subject: [PATCH] bpf: fix branch pruning logic
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

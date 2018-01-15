@@ -1,7 +1,7 @@
-From 73c945c5114ca89d182b9fbab0b38c8afd2da375 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Masami Hiramatsu <mhiramat@kernel.org>
 Date: Fri, 24 Nov 2017 13:56:30 +0900
-Subject: [PATCH 135/242] x86/decoder: Add new TEST instruction pattern
+Subject: [PATCH] x86/decoder: Add new TEST instruction pattern
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

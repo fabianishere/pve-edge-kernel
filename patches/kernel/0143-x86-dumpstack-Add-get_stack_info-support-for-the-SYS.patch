@@ -1,8 +1,8 @@
-From 45b01b77bd3529e761bca6de0f0ed79549377479 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:13 +0100
-Subject: [PATCH 143/242] x86/dumpstack: Add get_stack_info() support for the
- SYSENTER stack
+Subject: [PATCH] x86/dumpstack: Add get_stack_info() support for the SYSENTER
+ stack
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

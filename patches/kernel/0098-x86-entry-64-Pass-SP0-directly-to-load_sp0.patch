@@ -1,7 +1,7 @@
-From 3868ecbc68a9713951f3008ef3af3b9da7e67e60 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:10 -0700
-Subject: [PATCH 098/242] x86/entry/64: Pass SP0 directly to load_sp0()
+Subject: [PATCH] x86/entry/64: Pass SP0 directly to load_sp0()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

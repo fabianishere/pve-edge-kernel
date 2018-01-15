@@ -1,7 +1,7 @@
-From b62d6a17e87a8899fe0f9be2517a9ea29972c007 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
 Date: Mon, 8 Jan 2018 11:49:28 +0100
-Subject: [PATCH 242/242] Revert "scsi: libsas: allow async aborts"
+Subject: [PATCH] Revert "scsi: libsas: allow async aborts"
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

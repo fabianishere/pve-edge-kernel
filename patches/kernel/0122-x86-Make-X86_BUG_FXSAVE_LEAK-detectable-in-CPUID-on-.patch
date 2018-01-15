@@ -1,8 +1,7 @@
-From 5280fab9bb19e94b1ea5046dc1360f121ec64c0f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Rudolf Marek <r.marek@assembler.cz>
 Date: Tue, 28 Nov 2017 22:01:06 +0100
-Subject: [PATCH 122/242] x86: Make X86_BUG_FXSAVE_LEAK detectable in CPUID on
- AMD
+Subject: [PATCH] x86: Make X86_BUG_FXSAVE_LEAK detectable in CPUID on AMD
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

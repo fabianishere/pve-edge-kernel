@@ -1,7 +1,7 @@
-From 7c5d42f31bf68647dd00ac2fef9057d113e8072d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 Date: Sat, 9 Sep 2017 00:56:03 +0300
-Subject: [PATCH 050/242] mm, x86/mm: Fix performance regression in
+Subject: [PATCH] mm, x86/mm: Fix performance regression in
  get_user_pages_fast()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
-From ddb5e7b381d37d0f8bca61f0b761ae5c3a2f5ee0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Sun, 17 Sep 2017 09:03:48 -0700
-Subject: [PATCH 043/242] x86/mm: Factor out CR3-building code
+Subject: [PATCH] x86/mm: Factor out CR3-building code
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

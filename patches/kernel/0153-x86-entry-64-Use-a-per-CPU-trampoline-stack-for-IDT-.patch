@@ -1,8 +1,7 @@
-From 98a0f7841c6cdd3f882548ed3975df7b22cfa482 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:23 +0100
-Subject: [PATCH 153/242] x86/entry/64: Use a per-CPU trampoline stack for IDT
- entries
+Subject: [PATCH] x86/entry/64: Use a per-CPU trampoline stack for IDT entries
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

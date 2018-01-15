@@ -1,8 +1,7 @@
-From bbb647f65a627420f8c3351b34d14490a9878509 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Juergen Gross <jgross@suse.com>
 Date: Mon, 4 Sep 2017 12:25:27 +0200
-Subject: [PATCH 030/242] x86/paravirt: Remove no longer used paravirt
- functions
+Subject: [PATCH] x86/paravirt: Remove no longer used paravirt functions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

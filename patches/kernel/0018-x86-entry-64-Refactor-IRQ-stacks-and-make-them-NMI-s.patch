@@ -1,8 +1,7 @@
-From 2a767692d6140051e569ab59a1440b3760839e03 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Tue, 11 Jul 2017 10:33:38 -0500
-Subject: [PATCH 018/242] x86/entry/64: Refactor IRQ stacks and make them
- NMI-safe
+Subject: [PATCH] x86/entry/64: Refactor IRQ stacks and make them NMI-safe
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

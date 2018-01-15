@@ -1,8 +1,8 @@
-From fd5a4c6a4fbf0025ebf77092af09530d708a1264 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Mon, 4 Dec 2017 15:07:19 +0100
-Subject: [PATCH 149/242] x86/entry: Move SYSENTER_stack to the beginning of
- struct tss_struct
+Subject: [PATCH] x86/entry: Move SYSENTER_stack to the beginning of struct
+ tss_struct
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

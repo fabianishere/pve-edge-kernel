@@ -1,8 +1,8 @@
-From 35f252cc11a7fc0009caf1a088cbb5d47a60ab50 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Thu, 4 Jan 2018 18:07:12 +0100
-Subject: [PATCH 235/242] x86/events/intel/ds: Use the proper cache flush
- method for mapping ds buffers
+Subject: [PATCH] x86/events/intel/ds: Use the proper cache flush method for
+ mapping ds buffers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

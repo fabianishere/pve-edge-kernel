@@ -1,7 +1,7 @@
-From bbdde34293757490c18c57d8bd9f92e567bbdbcd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 29 Jun 2017 08:53:21 -0700
-Subject: [PATCH 016/242] x86/mm: Enable CR4.PCIDE on supported systems
+Subject: [PATCH] x86/mm: Enable CR4.PCIDE on supported systems
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

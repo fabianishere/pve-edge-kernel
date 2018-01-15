@@ -1,7 +1,7 @@
-From e61177a6feca143d431be190d4758bda23f6174d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Thomas Gleixner <tglx@linutronix.de>
 Date: Mon, 28 Aug 2017 08:47:22 +0200
-Subject: [PATCH 026/242] x86/traps: Simplify pagefault tracing logic
+Subject: [PATCH] x86/traps: Simplify pagefault tracing logic
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

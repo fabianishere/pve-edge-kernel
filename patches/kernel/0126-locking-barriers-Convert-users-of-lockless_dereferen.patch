@@ -1,8 +1,8 @@
-From 9d02a406fe5f64f282832e7d0ab8fcd2631fc15a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Will Deacon <will.deacon@arm.com>
 Date: Tue, 24 Oct 2017 11:22:48 +0100
-Subject: [PATCH 126/242] locking/barriers: Convert users of
- lockless_dereference() to READ_ONCE()
+Subject: [PATCH] locking/barriers: Convert users of lockless_dereference() to
+ READ_ONCE()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

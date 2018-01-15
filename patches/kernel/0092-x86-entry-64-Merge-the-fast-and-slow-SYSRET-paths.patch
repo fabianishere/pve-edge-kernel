@@ -1,7 +1,7 @@
-From c48697564de6da427f1e97a38192f4d456223942 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Andy Lutomirski <luto@kernel.org>
 Date: Thu, 2 Nov 2017 00:59:04 -0700
-Subject: [PATCH 092/242] x86/entry/64: Merge the fast and slow SYSRET paths
+Subject: [PATCH] x86/entry/64: Merge the fast and slow SYSRET paths
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
