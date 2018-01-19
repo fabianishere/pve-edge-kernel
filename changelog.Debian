@@ -1,3 +1,13 @@
+pve-kernel (4.13.13-37) unstable; urgency=medium
+
+  * update ZFS to 0.7.4 + ARC hit rate cherry-pick
+
+  * add tc fixes
+
+  * fix 1622: i40e memory leak
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 19 Jan 2018 12:29:37 +0100
+
 pve-kernel (4.13.13-36) unstable; urgency=medium
 
   * cherry-pick (partial) SPECTRE fixes for CPUs supporting IBRS/IBPB
