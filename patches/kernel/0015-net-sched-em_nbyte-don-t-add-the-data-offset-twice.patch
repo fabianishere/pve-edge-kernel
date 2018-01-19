@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Date: Fri, 19 Jan 2018 11:12:37 +0100
+Subject: [PATCH] net: sched: em_nbyte: don't add the data offset twice
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+'ptr' is shifted by the offset and then validated,
+the memcmp should not add it a second time.
+
+Signed-off-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ net/sched/em_nbyte.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/sched/em_nbyte.c b/net/sched/em_nbyte.c
+index df3110d69585..07c10bac06a0 100644
+--- a/net/sched/em_nbyte.c
++++ b/net/sched/em_nbyte.c
+@@ -51,7 +51,7 @@ static int em_nbyte_match(struct sk_buff *skb, struct tcf_ematch *em,
+ 	if (!tcf_valid_offset(skb, ptr, nbyte->hdr.len))
+ 		return 0;
+ 
+-	return !memcmp(ptr + nbyte->hdr.off, nbyte->pattern, nbyte->hdr.len);
++	return !memcmp(ptr, nbyte->pattern, nbyte->hdr.len);
+ }
+ 
+ static struct tcf_ematch_ops em_nbyte_ops = {
+-- 
+2.14.2
+
