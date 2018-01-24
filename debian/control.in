@@ -1,0 +1,31 @@
+Package: pve-kernel-@KVNAME@
+Version: @KERNEL_VER@-@PKGREL@
+Section: admin
+Priority: optional
+Architecture: @ARCH@
+Provides: linux-image, linux-image-2.6
+Suggests: pve-firmware
+Depends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub-efi-arm64, initramfs-tools, busybox
+Maintainer: Proxmox Support Team <support@proxmox.com>
+Description: The Proxmox PVE Kernel Image
+ This package contains the linux kernel and initial ramdisk used for booting
+
+Package: pve-headers-@KVNAME@
+Version: @KERNEL_VER@-@PKGREL@
+Section: devel
+Priority: optional
+Architecture: @ARCH@
+Provides: linux-headers, linux-headers-2.6
+Depends: coreutils | fileutils (>= 4.0)
+Maintainer: Proxmox Support Team <support@proxmox.com>
+Description: The Proxmox PVE Kernel Headers
+ This package contains the linux kernel headers
+
+Package: linux-tools-4.13
+Architecture: any
+Section: devel
+Priority: optional
+Depends: ${misc:Depends}, ${shlibs:Depends}, linux-base
+Description: Linux kernel version specific tools for version 4.13
+ This package provides the architecture dependent parts for kernel
+ version locked tools (such as perf and x86_energy_perf_policy)
