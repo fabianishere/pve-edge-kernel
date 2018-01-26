@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jay Vosburgh <jay.vosburgh@canonical.com>
+Date: Wed, 24 Jan 2018 21:43:56 -0800
+Subject: [PATCH] UBUNTU: SAUCE: x86/entry: Fix up retpoline assembler labels
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The extant assembler labels in entry_SYSCALL_64_fastpath
+result in the error path incorrectly entering the retpoline logic.
+This results in that logic jumping to whatever address is in %r10,
+which is the fourth system call argument.
+
+This enables a trivial means to instruct the kernel to jump
+to any arbitrary address.  Non-malicious executables making invalid
+system calls may also cause the system to crash.
+
+Resolve this by renumbering the assembler labels as is found
+in other kernels.
+
+CVE-2017-5753
+CVE-2017-5715
+
+Fixes: d2e0236 ("x86/entry: Use retpoline for syscall's indirect calls")
+Signed-off-by: Jay Vosburgh <jay.vosburgh@canonical.com>
+Signed-off-by: Stefan Bader <stefan.bader@canonical.com>
+(cherry picked from commit 57ed6ed2b6284c10b8d2e0072c680d0e6adac2dc)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ arch/x86/entry/entry_64.S | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index be7196967f9f..5a6e41499e67 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -277,13 +277,13 @@ entry_SYSCALL_64_fastpath:
+ 	 * and all argument registers are clobbered.
+ 	 */
+ 	movq	sys_call_table(, %rax, 8), %r10
+-	jmp     1f
+-4:	callq   2f
+-3:	nop
+-	jmp     3b
+-2:	mov     %r10, (%rsp)
++	jmp     1001f
++1004:	callq   1002f
++1003:	nop
++	jmp     1003b
++1002:	mov     %r10, (%rsp)
+ 	retq
+-1:	callq   4b
++1001:	callq   1004b
+ 
+ .Lentry_SYSCALL_64_after_fastpath_call:
+ 
+-- 
+2.14.2
+
