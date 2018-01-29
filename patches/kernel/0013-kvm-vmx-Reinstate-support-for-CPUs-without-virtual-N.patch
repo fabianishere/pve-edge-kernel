@@ -36,10 +36,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 106 insertions(+), 44 deletions(-)
 
 diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
-index 118709e7597d..a2c95522ac99 100644
+index cb044cd17790..d2168203bddc 100644
 --- a/arch/x86/kvm/vmx.c
 +++ b/arch/x86/kvm/vmx.c
-@@ -202,6 +202,10 @@ struct loaded_vmcs {
+@@ -203,6 +203,10 @@ struct loaded_vmcs {
  	bool nmi_known_unmasked;
  	unsigned long vmcs_host_cr3;	/* May not match real cr3 */
  	unsigned long vmcs_host_cr4;	/* May not match real cr4 */
@@ -50,7 +50,7 @@ index 118709e7597d..a2c95522ac99 100644
  	struct list_head loaded_vmcss_on_cpu_link;
  };
  
-@@ -1288,6 +1292,11 @@ static inline bool cpu_has_vmx_invpcid(void)
+@@ -1289,6 +1293,11 @@ static inline bool cpu_has_vmx_invpcid(void)
  		SECONDARY_EXEC_ENABLE_INVPCID;
  }
  
@@ -62,7 +62,7 @@ index 118709e7597d..a2c95522ac99 100644
  static inline bool cpu_has_vmx_wbinvd_exit(void)
  {
  	return vmcs_config.cpu_based_2nd_exec_ctrl &
-@@ -1339,11 +1348,6 @@ static inline bool nested_cpu_has2(struct vmcs12 *vmcs12, u32 bit)
+@@ -1340,11 +1349,6 @@ static inline bool nested_cpu_has2(struct vmcs12 *vmcs12, u32 bit)
  		(vmcs12->secondary_vm_exec_control & bit);
  }
  
@@ -74,7 +74,7 @@ index 118709e7597d..a2c95522ac99 100644
  static inline bool nested_cpu_has_preemption_timer(struct vmcs12 *vmcs12)
  {
  	return vmcs12->pin_based_vm_exec_control &
-@@ -3676,9 +3680,9 @@ static __init int setup_vmcs_config(struct vmcs_config *vmcs_conf)
+@@ -3686,9 +3690,9 @@ static __init int setup_vmcs_config(struct vmcs_config *vmcs_conf)
  				&_vmexit_control) < 0)
  		return -EIO;
  
@@ -87,7 +87,7 @@ index 118709e7597d..a2c95522ac99 100644
  	if (adjust_vmx_controls(min, opt, MSR_IA32_VMX_PINBASED_CTLS,
  				&_pin_based_exec_control) < 0)
  		return -EIO;
-@@ -5538,7 +5542,8 @@ static void enable_irq_window(struct kvm_vcpu *vcpu)
+@@ -5548,7 +5552,8 @@ static void enable_irq_window(struct kvm_vcpu *vcpu)
  
  static void enable_nmi_window(struct kvm_vcpu *vcpu)
  {
@@ -97,7 +97,7 @@ index 118709e7597d..a2c95522ac99 100644
  		enable_irq_window(vcpu);
  		return;
  	}
-@@ -5578,6 +5583,19 @@ static void vmx_inject_nmi(struct kvm_vcpu *vcpu)
+@@ -5588,6 +5593,19 @@ static void vmx_inject_nmi(struct kvm_vcpu *vcpu)
  {
  	struct vcpu_vmx *vmx = to_vmx(vcpu);
  
@@ -117,7 +117,7 @@ index 118709e7597d..a2c95522ac99 100644
  	++vcpu->stat.nmi_injections;
  	vmx->loaded_vmcs->nmi_known_unmasked = false;
  
-@@ -5596,6 +5614,8 @@ static bool vmx_get_nmi_mask(struct kvm_vcpu *vcpu)
+@@ -5606,6 +5624,8 @@ static bool vmx_get_nmi_mask(struct kvm_vcpu *vcpu)
  	struct vcpu_vmx *vmx = to_vmx(vcpu);
  	bool masked;
  
@@ -126,7 +126,7 @@ index 118709e7597d..a2c95522ac99 100644
  	if (vmx->loaded_vmcs->nmi_known_unmasked)
  		return false;
  	masked = vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) & GUEST_INTR_STATE_NMI;
-@@ -5607,13 +5627,20 @@ static void vmx_set_nmi_mask(struct kvm_vcpu *vcpu, bool masked)
+@@ -5617,13 +5637,20 @@ static void vmx_set_nmi_mask(struct kvm_vcpu *vcpu, bool masked)
  {
  	struct vcpu_vmx *vmx = to_vmx(vcpu);
  
@@ -154,7 +154,7 @@ index 118709e7597d..a2c95522ac99 100644
  }
  
  static int vmx_nmi_allowed(struct kvm_vcpu *vcpu)
-@@ -5621,6 +5648,10 @@ static int vmx_nmi_allowed(struct kvm_vcpu *vcpu)
+@@ -5631,6 +5658,10 @@ static int vmx_nmi_allowed(struct kvm_vcpu *vcpu)
  	if (to_vmx(vcpu)->nested.nested_run_pending)
  		return 0;
  
@@ -165,7 +165,7 @@ index 118709e7597d..a2c95522ac99 100644
  	return	!(vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) &
  		  (GUEST_INTR_STATE_MOV_SS | GUEST_INTR_STATE_STI
  		   | GUEST_INTR_STATE_NMI));
-@@ -6348,6 +6379,7 @@ static int handle_ept_violation(struct kvm_vcpu *vcpu)
+@@ -6359,6 +6390,7 @@ static int handle_ept_violation(struct kvm_vcpu *vcpu)
  	 * AAK134, BY25.
  	 */
  	if (!(to_vmx(vcpu)->idt_vectoring_info & VECTORING_INFO_VALID_MASK) &&
@@ -173,7 +173,7 @@ index 118709e7597d..a2c95522ac99 100644
  			(exit_qualification & INTR_INFO_UNBLOCK_NMI))
  		vmcs_set_bits(GUEST_INTERRUPTIBILITY_INFO, GUEST_INTR_STATE_NMI);
  
-@@ -6820,7 +6852,7 @@ static struct loaded_vmcs *nested_get_current_vmcs02(struct vcpu_vmx *vmx)
+@@ -6833,7 +6865,7 @@ static struct loaded_vmcs *nested_get_current_vmcs02(struct vcpu_vmx *vmx)
  	}
  
  	/* Create a new VMCS */
@@ -182,7 +182,7 @@ index 118709e7597d..a2c95522ac99 100644
  	if (!item)
  		return NULL;
  	item->vmcs02.vmcs = alloc_vmcs();
-@@ -7837,6 +7869,7 @@ static int handle_pml_full(struct kvm_vcpu *vcpu)
+@@ -7850,6 +7882,7 @@ static int handle_pml_full(struct kvm_vcpu *vcpu)
  	 * "blocked by NMI" bit has to be set before next VM entry.
  	 */
  	if (!(to_vmx(vcpu)->idt_vectoring_info & VECTORING_INFO_VALID_MASK) &&
@@ -190,7 +190,7 @@ index 118709e7597d..a2c95522ac99 100644
  			(exit_qualification & INTR_INFO_UNBLOCK_NMI))
  		vmcs_set_bits(GUEST_INTERRUPTIBILITY_INFO,
  				GUEST_INTR_STATE_NMI);
-@@ -8554,6 +8587,25 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu)
+@@ -8567,6 +8600,25 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu)
  		return 0;
  	}
  
@@ -216,7 +216,7 @@ index 118709e7597d..a2c95522ac99 100644
  	if (exit_reason < kvm_vmx_max_exit_handlers
  	    && kvm_vmx_exit_handlers[exit_reason])
  		return kvm_vmx_exit_handlers[exit_reason](vcpu);
-@@ -8837,33 +8889,38 @@ static void vmx_recover_nmi_blocking(struct vcpu_vmx *vmx)
+@@ -8850,33 +8902,38 @@ static void vmx_recover_nmi_blocking(struct vcpu_vmx *vmx)
  
  	idtv_info_valid = vmx->idt_vectoring_info & VECTORING_INFO_VALID_MASK;
  
@@ -282,7 +282,7 @@ index 118709e7597d..a2c95522ac99 100644
  }
  
  static void __vmx_complete_interrupts(struct kvm_vcpu *vcpu,
-@@ -8980,6 +9037,11 @@ static void __noclone vmx_vcpu_run(struct kvm_vcpu *vcpu)
+@@ -8993,6 +9050,11 @@ static void __noclone vmx_vcpu_run(struct kvm_vcpu *vcpu)
  	struct vcpu_vmx *vmx = to_vmx(vcpu);
  	unsigned long debugctlmsr, cr3, cr4;
  

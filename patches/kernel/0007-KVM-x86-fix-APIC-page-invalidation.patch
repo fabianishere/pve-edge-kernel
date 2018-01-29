@@ -23,10 +23,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  3 files changed, 25 insertions(+)
 
 diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
-index 92c9032502d8..b69af3df978a 100644
+index 066b51796695..f39bc68efa56 100644
 --- a/arch/x86/include/asm/kvm_host.h
 +++ b/arch/x86/include/asm/kvm_host.h
-@@ -1437,4 +1437,7 @@ static inline int kvm_cpu_get_apicid(int mps_cpu)
+@@ -1546,4 +1546,7 @@ static inline int kvm_cpu_get_apicid(int mps_cpu)
  #endif
  }
  
@@ -35,7 +35,7 @@ index 92c9032502d8..b69af3df978a 100644
 +
  #endif /* _ASM_X86_KVM_HOST_H */
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 7351cdc46cc7..703cd4171921 100644
+index f896c441fc2c..eae4aecf3cfe 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
 @@ -6711,6 +6711,20 @@ static void kvm_vcpu_flush_tlb(struct kvm_vcpu *vcpu)
