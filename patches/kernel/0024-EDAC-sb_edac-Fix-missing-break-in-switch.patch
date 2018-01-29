@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Gustavo A. R. Silva" <garsilva@embeddedor.com>
+Date: Mon, 16 Oct 2017 12:40:29 -0500
+Subject: [PATCH] EDAC, sb_edac: Fix missing break in switch
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add missing break statement in order to prevent the code from falling
+through.
+
+Signed-off-by: Gustavo A. R. Silva <garsilva@embeddedor.com>
+Cc: Qiuxu Zhuo <qiuxu.zhuo@intel.com>
+Cc: linux-edac <linux-edac@vger.kernel.org>
+Link: http://lkml.kernel.org/r/20171016174029.GA19757@embeddedor.com
+Signed-off-by: Borislav Petkov <bp@suse.de>
+(cherry picked from commit a8e9b186f153a44690ad0363a56716e7077ad28c)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/edac/sb_edac.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/edac/sb_edac.c b/drivers/edac/sb_edac.c
+index 7a3b201d51df..fb0264ef83a3 100644
+--- a/drivers/edac/sb_edac.c
++++ b/drivers/edac/sb_edac.c
+@@ -2467,6 +2467,7 @@ static int ibridge_mci_bind_devs(struct mem_ctl_info *mci,
+ 		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0_TA:
+ 		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_TA:
+ 			pvt->pci_ta = pdev;
++			break;
+ 		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0_RAS:
+ 		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_RAS:
+ 			pvt->pci_ras = pdev;
+-- 
+2.14.2
+

@@ -1,0 +1,102 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qiuxu Zhuo <qiuxu.zhuo@intel.com>
+Date: Wed, 13 Sep 2017 18:42:14 +0800
+Subject: [PATCH] EDAC, sb_edac: Don't create a second memory controller if HA1
+ is not present
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Yi Zhang reported the following failure on a 2-socket Haswell (E5-2603v3)
+server (DELL PowerEdge 730xd):
+
+  EDAC sbridge: Some needed devices are missing
+  EDAC MC: Removed device 0 for sb_edac.c Haswell SrcID#0_Ha#0: DEV 0000:7f:12.0
+  EDAC MC: Removed device 1 for sb_edac.c Haswell SrcID#1_Ha#0: DEV 0000:ff:12.0
+  EDAC sbridge: Couldn't find mci handler
+  EDAC sbridge: Couldn't find mci handler
+  EDAC sbridge: Failed to register device with error -19.
+
+The refactored sb_edac driver creates the IMC1 (the 2nd memory
+controller) if any IMC1 device is present. In this case only
+HA1_TA of IMC1 was present, but the driver expected to find
+HA1/HA1_TM/HA1_TAD[0-3] devices too, leading to the above failure.
+
+The document [1] says the 'E5-2603 v3' CPU has 4 memory channels max. Yi
+Zhang inserted one DIMM per channel for each CPU, and did random error
+address injection test with this patch:
+
+      4024  addresses fell in TOLM hole area
+     12715  addresses fell in CPU_SrcID#0_Ha#0_Chan#0_DIMM#0
+     12774  addresses fell in CPU_SrcID#0_Ha#0_Chan#1_DIMM#0
+     12798  addresses fell in CPU_SrcID#0_Ha#0_Chan#2_DIMM#0
+     12913  addresses fell in CPU_SrcID#0_Ha#0_Chan#3_DIMM#0
+     12674  addresses fell in CPU_SrcID#1_Ha#0_Chan#0_DIMM#0
+     12686  addresses fell in CPU_SrcID#1_Ha#0_Chan#1_DIMM#0
+     12882  addresses fell in CPU_SrcID#1_Ha#0_Chan#2_DIMM#0
+     12934  addresses fell in CPU_SrcID#1_Ha#0_Chan#3_DIMM#0
+    106400  addresses were injected totally.
+
+The test result shows that all the 4 channels belong to IMC0 per CPU, so
+the server really only has one IMC per CPU.
+
+In the 1st page of chapter 2 in datasheet [2], it also says 'E5-2600 v3'
+implements either one or two IMCs. For CPUs with one IMC, IMC1 is not
+used and should be ignored.
+
+Thus, do not create a second memory controller if the key HA1 is absent.
+
+[1] http://ark.intel.com/products/83349/Intel-Xeon-Processor-E5-2603-v3-15M-Cache-1_60-GHz
+[2] https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/xeon-e5-v3-datasheet-vol-2.pdf
+
+Reported-and-tested-by: Yi Zhang <yizhan@redhat.com>
+Signed-off-by: Qiuxu Zhuo <qiuxu.zhuo@intel.com>
+Cc: Tony Luck <tony.luck@intel.com>
+Cc: linux-edac <linux-edac@vger.kernel.org>
+Fixes: e2f747b1f42a ("EDAC, sb_edac: Assign EDAC memory controller per h/w controller")
+Link: http://lkml.kernel.org/r/20170913104214.7325-1-qiuxu.zhuo@intel.com
+[ Massage commit message. ]
+Signed-off-by: Borislav Petkov <bp@suse.de>
+(cherry picked from commit 15cc3ae001873845b5d842e212478a6570c7d938)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/edac/sb_edac.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/edac/sb_edac.c b/drivers/edac/sb_edac.c
+index 80d860cb0746..7a3b201d51df 100644
+--- a/drivers/edac/sb_edac.c
++++ b/drivers/edac/sb_edac.c
+@@ -455,6 +455,7 @@ static const struct pci_id_table pci_dev_descr_sbridge_table[] = {
+ static const struct pci_id_descr pci_dev_descr_ibridge[] = {
+ 		/* Processor Home Agent */
+ 	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0,        0, IMC0) },
++	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1,        1, IMC1) },
+ 
+ 		/* Memory controller */
+ 	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0_TA,     0, IMC0) },
+@@ -465,7 +466,6 @@ static const struct pci_id_descr pci_dev_descr_ibridge[] = {
+ 	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0_TAD3,   0, IMC0) },
+ 
+ 		/* Optional, mode 2HA */
+-	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1,        1, IMC1) },
+ 	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_TA,     1, IMC1) },
+ 	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_RAS,    1, IMC1) },
+ 	{ PCI_DESCR(PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_TAD0,   1, IMC1) },
+@@ -2260,6 +2260,13 @@ static int sbridge_get_onedevice(struct pci_dev **prev,
+ next_imc:
+ 	sbridge_dev = get_sbridge_dev(bus, dev_descr->dom, multi_bus, sbridge_dev);
+ 	if (!sbridge_dev) {
++		/* If the HA1 wasn't found, don't create EDAC second memory controller */
++		if (dev_descr->dom == IMC1 && devno != 1) {
++			edac_dbg(0, "Skip IMC1: %04x:%04x (since HA1 was absent)\n",
++				 PCI_VENDOR_ID_INTEL, dev_descr->dev_id);
++			pci_dev_put(pdev);
++			return 0;
++		}
+ 
+ 		if (dev_descr->dom == SOCK)
+ 			goto out_imc;
+-- 
+2.14.2
+
