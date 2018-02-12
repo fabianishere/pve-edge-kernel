@@ -1,3 +1,19 @@
+pve-kernel (4.13.13-39) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-35.39
+
+  * bump Abi to 4.13.13-6.pve
+
+  * fix EDAC issues
+
+  * fix scsi lpfc HBA issue
+
+  * cherry-pick sched/wait bug fix
+
+  * enable full RETPOLINE support
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 14 Feb 2018 12:14:44 +0100
+
 pve-kernel (4.13.13-38) unstable; urgency=medium
 
   * fix syscall retpoline
