@@ -19,7 +19,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 10 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/net/tap.c b/drivers/net/tap.c
-index 3570c7576993..4e04b6094f3c 100644
+index 7a2f6bebfd15..96e5e5b2ae39 100644
 --- a/drivers/net/tap.c
 +++ b/drivers/net/tap.c
 @@ -829,8 +829,11 @@ static ssize_t tap_do_read(struct tap_queue *q,
@@ -35,7 +35,7 @@ index 3570c7576993..4e04b6094f3c 100644
  
  	if (skb)
  		goto put;
-@@ -1155,11 +1158,14 @@ static int tap_recvmsg(struct socket *sock, struct msghdr *m,
+@@ -1157,11 +1160,14 @@ static int tap_recvmsg(struct socket *sock, struct msghdr *m,
  		       size_t total_len, int flags)
  {
  	struct tap_queue *q = container_of(sock, struct tap_queue, sock);

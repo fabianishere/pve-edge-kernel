@@ -23,10 +23,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  3 files changed, 25 insertions(+)
 
 diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
-index 066b51796695..f39bc68efa56 100644
+index 78ec3cda9429..1953c0a5b972 100644
 --- a/arch/x86/include/asm/kvm_host.h
 +++ b/arch/x86/include/asm/kvm_host.h
-@@ -1546,4 +1546,7 @@ static inline int kvm_cpu_get_apicid(int mps_cpu)
+@@ -1439,4 +1439,7 @@ static inline int kvm_cpu_get_apicid(int mps_cpu)
  #endif
  }
  

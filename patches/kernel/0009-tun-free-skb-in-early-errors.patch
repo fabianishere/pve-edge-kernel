@@ -21,7 +21,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 18 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/net/tun.c b/drivers/net/tun.c
-index cb1f7747adad..5143e948d7d1 100644
+index d1cb1ff83251..d58ae8ad0a4e 100644
 --- a/drivers/net/tun.c
 +++ b/drivers/net/tun.c
 @@ -1519,8 +1519,11 @@ static ssize_t tun_do_read(struct tun_struct *tun, struct tun_file *tfile,

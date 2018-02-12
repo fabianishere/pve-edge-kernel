@@ -54,10 +54,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  2 files changed, 111 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 1738d820c56f..e7216bc05b3b 100644
+index 1bbfe73fcd6c..073e3023b515 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -2930,6 +2930,15 @@
+@@ -2935,6 +2935,15 @@
  		nomsi		[MSI] If the PCI_MSI kernel config parameter is
  				enabled, this kernel boot option can be used to
  				disable the use of MSI interrupts system-wide.
@@ -74,7 +74,7 @@ index 1738d820c56f..e7216bc05b3b 100644
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index 02b009426670..c29d89ffc9b2 100644
+index 99eec22d99b7..7576c2b0c913 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
 @@ -3687,6 +3687,107 @@ static int __init pci_apply_final_quirks(void)
@@ -185,7 +185,7 @@ index 02b009426670..c29d89ffc9b2 100644
  /*
   * Following are device-specific reset methods which can be used to
   * reset a single function if other methods (e.g. FLR, PM D0->D3) are
-@@ -4514,6 +4615,7 @@ static const struct pci_dev_acs_enabled {
+@@ -4529,6 +4630,7 @@ static const struct pci_dev_acs_enabled {
  	{ 0x10df, 0x720, pci_quirk_mf_endpoint_acs }, /* Emulex Skyhawk-R */
  	/* Cavium ThunderX */
  	{ PCI_VENDOR_ID_CAVIUM, PCI_ANY_ID, pci_quirk_cavium_acs },

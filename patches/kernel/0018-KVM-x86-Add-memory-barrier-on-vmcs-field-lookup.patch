@@ -22,10 +22,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
-index d2168203bddc..e6fa3df81fd8 100644
+index 146caacd8fdd..80732f87cac0 100644
 --- a/arch/x86/kvm/vmx.c
 +++ b/arch/x86/kvm/vmx.c
-@@ -882,8 +882,16 @@ static inline short vmcs_field_to_offset(unsigned long field)
+@@ -883,8 +883,16 @@ static inline short vmcs_field_to_offset(unsigned long field)
  {
  	BUILD_BUG_ON(ARRAY_SIZE(vmcs_field_to_offset_table) > SHRT_MAX);
  
