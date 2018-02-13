@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Omar Sandoval <osandov@fb.com>
+Date: Tue, 5 Dec 2017 23:15:31 -0800
+Subject: [PATCH] sched/wait: Fix add_wait_queue() behavioral change
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The following cleanup commit:
+
+  50816c48997a ("sched/wait: Standardize internal naming of wait-queue entries")
+
+... unintentionally changed the behavior of add_wait_queue() from
+inserting the wait entry at the head of the wait queue to the tail
+of the wait queue.
+
+Beyond a negative performance impact this change in behavior
+theoretically also breaks wait queues which mix exclusive and
+non-exclusive waiters, as non-exclusive waiters will not be
+woken up if they are queued behind enough exclusive waiters.
+
+Signed-off-by: Omar Sandoval <osandov@fb.com>
+Reviewed-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Peter Zijlstra <peterz@infradead.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: kernel-team@fb.com
+Fixes: ("sched/wait: Standardize internal naming of wait-queue entries")
+Link: http://lkml.kernel.org/r/a16c8ccffd39bd08fdaa45a5192294c784b803a7.1512544324.git.osandov@fb.com
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+(cherry picked from commit c6b9d9a33029014446bd9ed84c1688f6d3d4eab9)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ kernel/sched/wait.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
+index d6afed6d0752..c09ebe92a40a 100644
+--- a/kernel/sched/wait.c
++++ b/kernel/sched/wait.c
+@@ -27,7 +27,7 @@ void add_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq
+ 
+ 	wq_entry->flags &= ~WQ_FLAG_EXCLUSIVE;
+ 	spin_lock_irqsave(&wq_head->lock, flags);
+-	__add_wait_queue_entry_tail(wq_head, wq_entry);
++	__add_wait_queue(wq_head, wq_entry);
+ 	spin_unlock_irqrestore(&wq_head->lock, flags);
+ }
+ EXPORT_SYMBOL(add_wait_queue);
+-- 
+2.14.2
+
