@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Dick Kennedy <dick.kennedy@broadcom.com>
+Date: Wed, 23 Aug 2017 16:55:31 -0700
+Subject: [PATCH] scsi: lpfc: Fix loop mode target discovery
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The driver does not discover targets when in loop mode.
+
+The NLP type is correctly getting set when a fabric connection is
+detected but, not for loop. The unknown NLP type means that the driver
+does not issue a PRLI when in loop topology. Thus target discovery
+fails.
+
+Fix by checking the topology during discovery.  If it is loop, set the
+NLP FC4 type to FCP.
+
+Signed-off-by: Dick Kennedy <dick.kennedy@broadcom.com>
+Signed-off-by: James Smart <james.smart@broadcom.com>
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+(cherry picked from commit 2877cbffb79ed121a6bcc5edbe629d3aba36cd29)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ drivers/scsi/lpfc/lpfc_nportdisc.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/scsi/lpfc/lpfc_nportdisc.c b/drivers/scsi/lpfc/lpfc_nportdisc.c
+index f74cb0142fd4..95b2b43ac37d 100644
+--- a/drivers/scsi/lpfc/lpfc_nportdisc.c
++++ b/drivers/scsi/lpfc/lpfc_nportdisc.c
+@@ -1724,6 +1724,9 @@ lpfc_cmpl_reglogin_reglogin_issue(struct lpfc_vport *vport,
+ 				lpfc_nvme_update_localport(vport);
+ 			}
+ 
++		} else if (phba->fc_topology == LPFC_TOPOLOGY_LOOP) {
++			ndlp->nlp_fc4_type |= NLP_FC4_FCP;
++
+ 		} else if (ndlp->nlp_fc4_type == 0) {
+ 			rc = lpfc_ns_cmd(vport, SLI_CTNS_GFT_ID,
+ 					 0, ndlp->nlp_DID);
+-- 
+2.14.2
+
