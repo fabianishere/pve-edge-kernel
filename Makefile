@@ -31,6 +31,12 @@ export SOURCE_DATE_EPOCH ?= $(shell dpkg-parsechangelog -STimestamp -lchangelog.
 
 SKIPABI=0
 
+ifeq    ($(CC), cc)
+GCC=gcc
+else
+GCC=$(CC)
+endif
+
 TOP=$(shell pwd)
 
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
@@ -100,12 +106,13 @@ ${VIRTUAL_HDR_DEB}: proxmox-ve/pve-headers.control
 	gzip -n --best pve-headers/data/usr/share/doc/${VIRTUALHDRPACKAGE}/changelog.Debian
 	dpkg-deb --build pve-headers/data ${VIRTUAL_HDR_DEB}
 
-check_gcc: 
-ifeq    ($(CC), cc)
-	gcc --version|grep "6\.3" || false
-else
-	$(CC) --version|grep "6\.3" || false
-endif
+check_gcc:
+	$(GCC) --version|grep "6\.3" || false
+	@$(GCC) -Werror -mindirect-branch=thunk-extern -mindirect-branch-register -c -x c /dev/null -o check_gcc.o \
+		|| ( rm -f check_gcc.o; \
+		     echo "Please install gcc-6 packages with indirect thunk / RETPOLINE support"; \
+		     false)
+	@rm -f check_gcc.o
 
 ${DST_DEB}: data control.in prerm.in postinst.in postrm.in copyright changelog.Debian | fwcheck abicheck
 	mkdir -p data/DEBIAN
