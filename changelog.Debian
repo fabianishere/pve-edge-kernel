@@ -1,3 +1,9 @@
+pve-kernel (4.13.13-40) unstable; urgency=medium
+
+  * warn when loading non-RETPOLINE modules
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 16 Feb 2018 09:51:20 +0100
+
 pve-kernel (4.13.13-39) unstable; urgency=medium
 
   * update to Ubuntu-4.13.0-35.39
