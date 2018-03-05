@@ -3,7 +3,7 @@ KERNEL SOURCE:
 
 We currently use the Ubuntu kernel sources, available from:
 
- http://kernel.ubuntu.com/git/ubuntu/ubuntu-xenial.git/
+ http://kernel.ubuntu.com/git/ubuntu/ubuntu-artful.git/
 
 Ubuntu will maintain those kernels till:
 
@@ -17,12 +17,7 @@ Additional/Updated Modules:
 
 - include latest ixgbe driver from intel/sourceforge
 
- - include latest igb driver from intel/sourceforge
-
-# Note: hpsa does not compile with kernel 3.19.8
-#- include latest HPSA driver (HP Smart Array)
-#
-#  * http://sourceforge.net/projects/cciss/
+- include latest igb driver from intel/sourceforge
 
 - include native OpenZFS filesystem kernel modules for Linux
 
@@ -30,43 +25,35 @@ Additional/Updated Modules:
 
   For licensing questions, see: http://open-zfs.org/wiki/Talk:FAQ
 
-- include latest DRBD 9 driver, see http://drbd.linbit.com/home/what-is-drbd/
+
+RELATED PACKAGES:
+=================
+
+proxmox-ve
+----------
+
+top level meta package, depends on current default kernel series meta package.
+
+git clone git://git.proxmox.com/git/proxmox-ve.git
+
+pve-kernel-meta
+---------------
+
+depends on latest kernel and header package within a certain kernel series,
+e.g., pve-kernel-4.13 / pve-headers-4.13
+
+git clone git://git.proxmox.com/git/pve-kernel-meta.git
+
+pve-firmware
+------------
+
+contains the firmware for all released PVE kernels.
+
+git clone git://git.proxmox.com/git/pve-firmware.git
 
 
-FIRMWARE:
-=========
-
-We create our own firmware package, which includes the firmware for
-all proxmox-ve kernels. So far this include
-
-pve-kernel-2.6.18
-pve-kernel-2.6.24
-pve-kernel-2.6.32
-pve-kernel-3.10.0
-pve-kernel-3.19.0
-
-We use 'find-firmware.pl' to extract lists of required firmeware
-files.  The script 'assemble-firmware.pl' is used to read those lists
-and copy the files from various source directory into a target
-directory.
-
-We do not include firmeware for some wireless HW when there is a
-separate debian package for that, for example:
-
-zd1211-firmware
-atmel-firmware
-bluez-firmware 
-
-
-PATCHES:
---------
-
- bridge-patch.diff: Avoid bridge problems with changing MAC
-  see also: http://forum.openvz.org/index.php?t=msg&th=5291
-
-  Behaviour after 2.6.27 has changed slighly - after setting mac address
-  of bridge device, then address won't change. So we could omit
-  that patch, requiring to set hwaddress in /etc/network/interfaces.
+NOTES:
+======
 
 Watchdog blacklist
 ------------------
@@ -80,9 +67,15 @@ Additional information
 ----------------------
 
 We use the default configuration provided by Ubuntu, and apply
-the following modification:
+the following modifications:
 
-see Makefile (PVE_CONFIG_OPTS)
+see debian/rules (PVE_CONFIG_OPTS)
+
+- enable INTEL_MEI_WDT=m (to allow disabling via patch)
+
+- disable CONFIG_SND_PCM_OSS (enabled by default in Ubuntu, not needed)
+
+- switch CONFIG_TRANSPARENT_HUGEPAGE to MADVISE from ALWAYS
 
 - enable CONFIG_CEPH_FS=m (request from user)
 
@@ -106,8 +99,8 @@ see Makefile (PVE_CONFIG_OPTS)
 	 CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
 
 - disable module signatures (CONFIG_MODULE_SIG)
- 
-- enable IBM JFS file system 
+
+- enable IBM JFS file system
 
   This is disabled in RHEL kernel for no real reason, so we enable
   it as requested by users (bug #64)
@@ -127,7 +120,7 @@ see Makefile (PVE_CONFIG_OPTS)
 - enable CONFIG_DEFAULT_SECURITY_APPARMOR
 
   We need this for lxc
-  
+
 - set CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE=y
 
   because if not set, it can give some dynamic memory or cpu frequencies 
@@ -145,8 +138,10 @@ see Makefile (PVE_CONFIG_OPTS)
   Module evbug is not blacklisted on debian, so we simply disable it
   to avoid key-event logs (which is a big security problem)
 
-Testing final kernel with kvm
------------------------------
+- enable CONFIG_MODVERSIONS (needed for ABI tracking)
 
-kvm -kernel data/boot/vmlinuz-3.19.8-1-pve -initrd initrd.img-3.19.8-1-pve -append "vga=791 video=vesafb:ywrap,mtrr" /dev/zero
+- switch default UNWINDER to FRAME_POINTER
 
+  the recently introduced ORC_UNWINDER is not 100% stable yet, especially in combination with ZFS
+
+- enable CONFIG_PAGE_TABLE_ISOLATION (Meltdown mitigation)
