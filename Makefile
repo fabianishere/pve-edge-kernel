@@ -146,7 +146,7 @@ $(ZFSDIR).prepared: ${ZFSSRC}
 
 .PHONY: upload
 upload: ${DEBS}
-	tar cf - ${DEBS}|ssh repoman@repo.proxmox.com -- upload --product pve --dist stretch --arch ${ARCH}
+	tar cf - ${DEBS}|ssh repoman@repo.proxmox.com -- upload --product pve,pmg --dist stretch --arch ${ARCH}
 
 .PHONY: distclean
 distclean: clean
@@ -170,7 +170,3 @@ submodule:
 .PHONY: clean
 clean:
 	rm -rf *~ build *.prepared ${KERNEL_CFG_ORG}
-
-
-
-
