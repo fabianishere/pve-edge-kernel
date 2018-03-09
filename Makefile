@@ -52,7 +52,9 @@ ZFSDIR=pkg-zfs
 ZFSSRC=${ZFSONLINUX_SUBMODULE}/zfs-debian
 
 MODULES=modules
-MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${IXGBEDIR} ${SPLDIR} ${ZFSDIR}
+#intel out-of-tree drivers disabled for now - incompatible with 4.15
+#MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${IXGBEDIR} ${SPLDIR} ${ZFSDIR}
+MODULE_DIRS=${SPLDIR} ${ZFSDIR}
 
 # exported to debian/rules via debian/rules.d/dirs.mk
 DIRS=KERNEL_SRC E1000EDIR IGBDIR IXGBEDIR SPLDIR ZFSDIR MODULES
