@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vasily Averin <vvs@virtuozzo.com>
+Date: Thu, 2 Nov 2017 13:03:42 +0300
+Subject: [PATCH] lockd: lost rollback of set_grace_period() in
+ lockd_down_net()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Commit efda760fe95ea ("lockd: fix lockd shutdown race") is incorrect,
+it removes lockd_manager and disarm grace_period_end for init_net only.
+
+If nfsd was started from another net namespace lockd_up_net() calls
+set_grace_period() that adds lockd_manager into per-netns list
+and queues grace_period_end delayed work.
+
+These action should be reverted in lockd_down_net().
+Otherwise it can lead to double list_add on after restart nfsd in netns,
+and to use-after-free if non-disarmed delayed work will be executed after netns destroy.
+
+Fixes: efda760fe95e ("lockd: fix lockd shutdown race")
+Cc: stable@vger.kernel.org
+Signed-off-by: Vasily Averin <vvs@virtuozzo.com>
+Signed-off-by: J. Bruce Fields <bfields@redhat.com>
+(cherry picked from commit 3a2b19d1ee5633f76ae8a88da7bc039a5d1732aa)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ fs/lockd/svc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/fs/lockd/svc.c b/fs/lockd/svc.c
+index 726b6cecf430..fa8f6effcf00 100644
+--- a/fs/lockd/svc.c
++++ b/fs/lockd/svc.c
+@@ -274,6 +274,8 @@ static void lockd_down_net(struct svc_serv *serv, struct net *net)
+ 	if (ln->nlmsvc_users) {
+ 		if (--ln->nlmsvc_users == 0) {
+ 			nlm_shutdown_hosts_net(net);
++			cancel_delayed_work_sync(&ln->grace_period_end);
++			locks_end_grace(&ln->lockd_manager);
+ 			svc_shutdown_net(serv, net);
+ 			dprintk("lockd_down_net: per-net data destroyed; net=%p\n", net);
+ 		}
+-- 
+2.14.2
+
