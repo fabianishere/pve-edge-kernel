@@ -3,7 +3,7 @@ KERNEL SOURCE:
 
 We currently use the Ubuntu kernel sources, available from:
 
- http://kernel.ubuntu.com/git/ubuntu/ubuntu-artful.git/
+ http://kernel.ubuntu.com/git/ubuntu/ubuntu-bionic.git/
 
 Ubuntu will maintain those kernels till:
 
@@ -40,7 +40,7 @@ pve-kernel-meta
 ---------------
 
 depends on latest kernel and header package within a certain kernel series,
-e.g., pve-kernel-4.13 / pve-headers-4.13
+e.g., pve-kernel-4.15 / pve-headers-4.15
 
 git clone git://git.proxmox.com/git/pve-kernel-meta.git
 

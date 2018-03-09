@@ -1,10 +1,10 @@
 RELEASE=5.1
 
 # also update pve-kernel-meta.git if either of these change
-KERNEL_VER=4.13.13
-KREL=6
+KERNEL_VER=4.15.3
+KREL=1
 
-PKGREL=42
+PKGREL=1
 
 EXTRAVERSION=-${KREL}-pve
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
@@ -32,8 +32,8 @@ endif
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-artful
-KERNEL_SRC_SUBMODULE=submodules/ubuntu-artful
+KERNEL_SRC=ubuntu-bionic
+KERNEL_SRC_SUBMODULE=submodules/ubuntu-bionic
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
 E1000EDIR=e1000e-3.3.6
@@ -59,7 +59,7 @@ DIRS=KERNEL_SRC E1000EDIR IGBDIR IXGBEDIR SPLDIR ZFSDIR MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
-LINUX_TOOLS_DEB=linux-tools-4.13_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
+LINUX_TOOLS_DEB=linux-tools-4.15_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${LINUX_TOOLS_DEB}
 
