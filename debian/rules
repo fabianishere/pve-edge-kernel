@@ -5,11 +5,12 @@
 #export DH_VERBOSE=1
 
 # TODO: check for headers not being installed
+BUILD_DIR=$(shell pwd)
 
 include /usr/share/dpkg/default.mk
+include debian/rules.d/env.mk
 include debian/rules.d/${DEB_BUILD_ARCH}.mk
 
-KVNAME=${DEB_VERSION_UPSTREAM}${EXTRAVERSION}
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}

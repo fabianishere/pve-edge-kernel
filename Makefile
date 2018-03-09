@@ -7,7 +7,7 @@ PKGREL=41
 # the fw package:  fwlist-2.6.32-PREV-pve
 KREL=6
 
-export EXTRAVERSION=-${KREL}-pve
+EXTRAVERSION=-${KREL}-pve
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
 PACKAGE=pve-kernel-${KVNAME}
 HDRPACKAGE=pve-headers-${KVNAME}
@@ -31,32 +31,32 @@ else
 GCC=$(CC)
 endif
 
-TOP=$(shell pwd)
-# TODO: maybe move exported paths to a sourced file in ${BUILD_DIR}?
-export BUILD_DIR=${TOP}/build
+BUILD_DIR=build
 
-export KERNEL_SRC=ubuntu-artful
+KERNEL_SRC=ubuntu-artful
 KERNEL_SRC_SUBMODULE=submodules/ubuntu-artful
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-
-export E1000EDIR=e1000e-3.3.6
+E1000EDIR=e1000e-3.3.6
 E1000ESRC=${E1000EDIR}.tar.gz
 
-export IGBDIR=igb-5.3.5.10
+IGBDIR=igb-5.3.5.10
 IGBSRC=${IGBDIR}.tar.gz
 
-export IXGBEDIR=ixgbe-5.3.3
+IXGBEDIR=ixgbe-5.3.3
 IXGBESRC=${IXGBEDIR}.tar.gz
 
 ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
-export SPLDIR=pkg-spl
+SPLDIR=pkg-spl
 SPLSRC=${ZFSONLINUX_SUBMODULE}/spl-debian
-export ZFSDIR=pkg-zfs
+ZFSDIR=pkg-zfs
 ZFSSRC=${ZFSONLINUX_SUBMODULE}/zfs-debian
 
-export MODULES=modules
+MODULES=modules
 MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${IXGBEDIR} ${SPLDIR} ${ZFSDIR}
+
+# exported to debian/rules via debian/rules.d/dirs.mk
+DIRS=KERNEL_SRC E1000EDIR IGBDIR IXGBEDIR SPLDIR ZFSDIR MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
@@ -77,19 +77,25 @@ check_gcc:
 
 ${LINUX_TOOLS_DEB} ${HDR_DEB}: ${DST_DEB}
 ${DST_DEB}: ${BUILD_DIR}.prepared
-	cd ${BUILD_DIR}; debian/rules debian/control
 	cd ${BUILD_DIR}; dpkg-buildpackage --jobs=auto -b -uc -us
 	lintian ${DST_DEB}
 	#lintian ${HDR_DEB}
 	lintian ${LINUX_TOOLS_DEB}
 
-${BUILD_DIR}.prepared: $(addsuffix .prepared,${KERNEL_SRC} ${MODULES}) debian
-	rm -rf ${BUILD_DIR}/debian
-	cp -a debian ${BUILD_DIR}/debian
+${BUILD_DIR}.prepared: $(addsuffix .prepared,${KERNEL_SRC} ${MODULES} debian)
 	cp -a fwlist-previous ${BUILD_DIR}/
 	cp -a abi-previous ${BUILD_DIR}/
 	cp -a abi-blacklist ${BUILD_DIR}/
+	touch $@
+
+debian.prepared: debian
+	rm -rf ${BUILD_DIR}/debian
+	mkdir -p ${BUILD_DIR}
+	cp -a debian ${BUILD_DIR}/debian
 	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" > ${BUILD_DIR}/debian/SOURCE
+	@$(foreach dir, ${DIRS},echo "${dir}=${${dir}}" >> ${BUILD_DIR}/debian/rules.d/env.mk;)
+	echo "KVNAME=${KVNAME}" >> ${BUILD_DIR}/debian/rules.d/env.mk
+	cd ${BUILD_DIR}; debian/rules debian/control
 	touch $@
 
 ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE} | submodule
