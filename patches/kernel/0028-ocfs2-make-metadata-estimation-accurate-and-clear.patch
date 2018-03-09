@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Changwei Ge <ge.changwei@h3c.com>
+Date: Wed, 31 Jan 2018 16:15:02 -0800
+Subject: [PATCH] ocfs2: make metadata estimation accurate and clear
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Current code assume that ::w_unwritten_list always has only one item on.
+This is not right and hard to get understood.  So improve how to count
+unwritten item.
+
+Link: http://lkml.kernel.org/r/1515479070-32653-1-git-send-email-ge.changwei@h3c.com
+Signed-off-by: Changwei Ge <ge.changwei@h3c.com>
+Reported-by: John Lightsey <john@nixnuts.net>
+Tested-by: John Lightsey <john@nixnuts.net>
+Cc: Mark Fasheh <mfasheh@versity.com>
+Cc: Joseph Qi <jiangqi903@gmail.com>
+Cc: Junxiao Bi <junxiao.bi@oracle.com>
+Cc: Joel Becker <jlbec@evilplan.org>
+Cc: Changwei Ge <ge.changwei@h3c.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+(cherry picked from commit 63de8bd9328bf2a778fc277503da163ae3defa3c)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ fs/ocfs2/aops.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/fs/ocfs2/aops.c b/fs/ocfs2/aops.c
+index 88a31e9340a0..77ec9b495027 100644
+--- a/fs/ocfs2/aops.c
++++ b/fs/ocfs2/aops.c
+@@ -784,6 +784,7 @@ struct ocfs2_write_ctxt {
+ 	struct ocfs2_cached_dealloc_ctxt w_dealloc;
+ 
+ 	struct list_head		w_unwritten_list;
++	unsigned int			w_unwritten_count;
+ };
+ 
+ void ocfs2_unlock_and_free_pages(struct page **pages, int num_pages)
+@@ -1373,6 +1374,7 @@ static int ocfs2_unwritten_check(struct inode *inode,
+ 	desc->c_clear_unwritten = 0;
+ 	list_add_tail(&new->ue_ip_node, &oi->ip_unwritten_list);
+ 	list_add_tail(&new->ue_node, &wc->w_unwritten_list);
++	wc->w_unwritten_count++;
+ 	new = NULL;
+ unlock:
+ 	spin_unlock(&oi->ip_lock);
+@@ -2246,7 +2248,7 @@ static int ocfs2_dio_get_block(struct inode *inode, sector_t iblock,
+ 		ue->ue_phys = desc->c_phys;
+ 
+ 		list_splice_tail_init(&wc->w_unwritten_list, &dwc->dw_zero_list);
+-		dwc->dw_zero_count++;
++		dwc->dw_zero_count += wc->w_unwritten_count;
+ 	}
+ 
+ 	ret = ocfs2_write_end_nolock(inode->i_mapping, pos, len, len, wc);
+-- 
+2.14.2
+
