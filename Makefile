@@ -101,8 +101,7 @@ debian.prepared: debian
 ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE} | submodule
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
-	mkdir ${BUILD_DIR}/${KERNEL_SRC}
-	cp -a ${KERNEL_SRC_SUBMODULE}/* ${BUILD_DIR}/${KERNEL_SRC}/
+	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
 # TODO: split for archs, track and diff in our repository?
 	cat ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cp ${KERNEL_CFG_ORG} ${BUILD_DIR}/${KERNEL_SRC}/.config
