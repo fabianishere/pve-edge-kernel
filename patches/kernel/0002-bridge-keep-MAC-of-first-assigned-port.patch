@@ -18,7 +18,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/net/bridge/br_stp_if.c b/net/bridge/br_stp_if.c
-index 89110319ef0f..5e73fff65f47 100644
+index 808e2b914015..b0ad54384826 100644
 --- a/net/bridge/br_stp_if.c
 +++ b/net/bridge/br_stp_if.c
 @@ -259,10 +259,7 @@ bool br_stp_recalculate_bridge_id(struct net_bridge *br)

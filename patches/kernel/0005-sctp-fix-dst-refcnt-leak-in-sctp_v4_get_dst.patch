@@ -54,7 +54,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 4 insertions(+), 6 deletions(-)
 
 diff --git a/net/sctp/protocol.c b/net/sctp/protocol.c
-index 989a900383b5..e1a3ae4f3cab 100644
+index 6a38c2503649..91813e686c67 100644
 --- a/net/sctp/protocol.c
 +++ b/net/sctp/protocol.c
 @@ -514,22 +514,20 @@ static void sctp_v4_get_dst(struct sctp_transport *t, union sctp_addr *saddr,

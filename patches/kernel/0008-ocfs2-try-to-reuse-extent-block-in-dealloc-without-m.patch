@@ -72,7 +72,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  3 files changed, 203 insertions(+), 10 deletions(-)
 
 diff --git a/fs/ocfs2/alloc.h b/fs/ocfs2/alloc.h
-index 4a5152ec88a3..571692171dd1 100644
+index 27b75cf32cfa..250bcacdf9e9 100644
 --- a/fs/ocfs2/alloc.h
 +++ b/fs/ocfs2/alloc.h
 @@ -61,6 +61,7 @@ struct ocfs2_extent_tree {
@@ -84,7 +84,7 @@ index 4a5152ec88a3..571692171dd1 100644
  
  /*
 diff --git a/fs/ocfs2/alloc.c b/fs/ocfs2/alloc.c
-index 386aecce881d..9b5e7d8ba710 100644
+index ab5105f9767e..2f2c76193f54 100644
 --- a/fs/ocfs2/alloc.c
 +++ b/fs/ocfs2/alloc.c
 @@ -165,6 +165,13 @@ static int ocfs2_dinode_insert_check(struct ocfs2_extent_tree *et,
@@ -109,7 +109,7 @@ index 386aecce881d..9b5e7d8ba710 100644
  
  	et->et_ops->eo_fill_root_el(et);
  	if (!et->et_ops->eo_fill_max_leaf_clusters)
-@@ -1159,7 +1167,7 @@ static int ocfs2_add_branch(handle_t *handle,
+@@ -1158,7 +1166,7 @@ static int ocfs2_add_branch(handle_t *handle,
  			    struct buffer_head **last_eb_bh,
  			    struct ocfs2_alloc_context *meta_ac)
  {
@@ -118,7 +118,7 @@ index 386aecce881d..9b5e7d8ba710 100644
  	u64 next_blkno, new_last_eb_blk;
  	struct buffer_head *bh;
  	struct buffer_head **new_eb_bhs = NULL;
-@@ -1214,11 +1222,31 @@ static int ocfs2_add_branch(handle_t *handle,
+@@ -1213,11 +1221,31 @@ static int ocfs2_add_branch(handle_t *handle,
  		goto bail;
  	}
  
@@ -155,7 +155,7 @@ index 386aecce881d..9b5e7d8ba710 100644
  	}
  
  	/* Note: new_eb_bhs[new_blocks - 1] is the guy which will be
-@@ -1341,15 +1369,25 @@ static int ocfs2_shift_tree_depth(handle_t *handle,
+@@ -1340,15 +1368,25 @@ static int ocfs2_shift_tree_depth(handle_t *handle,
  				  struct ocfs2_alloc_context *meta_ac,
  				  struct buffer_head **ret_new_eb_bh)
  {
@@ -184,7 +184,7 @@ index 386aecce881d..9b5e7d8ba710 100644
  	if (status < 0) {
  		mlog_errno(status);
  		goto bail;
-@@ -1512,7 +1550,7 @@ static int ocfs2_grow_tree(handle_t *handle, struct ocfs2_extent_tree *et,
+@@ -1511,7 +1549,7 @@ static int ocfs2_grow_tree(handle_t *handle, struct ocfs2_extent_tree *et,
  	int depth = le16_to_cpu(el->l_tree_depth);
  	struct buffer_head *bh = NULL;
  
@@ -193,7 +193,7 @@ index 386aecce881d..9b5e7d8ba710 100644
  
  	shift = ocfs2_find_branch_target(et, &bh);
  	if (shift < 0) {
-@@ -6593,6 +6631,154 @@ ocfs2_find_per_slot_free_list(int type,
+@@ -6585,6 +6623,154 @@ ocfs2_find_per_slot_free_list(int type,
  	return fl;
  }
  
@@ -349,10 +349,10 @@ index 386aecce881d..9b5e7d8ba710 100644
  			      int type, int slot, u64 suballoc,
  			      u64 blkno, unsigned int bit)
 diff --git a/fs/ocfs2/aops.c b/fs/ocfs2/aops.c
-index 77ec9b495027..2ff02dda97d8 100644
+index 256986aca8df..e8e205bf2e41 100644
 --- a/fs/ocfs2/aops.c
 +++ b/fs/ocfs2/aops.c
-@@ -2322,6 +2322,12 @@ static int ocfs2_dio_end_io_write(struct inode *inode,
+@@ -2332,6 +2332,12 @@ static int ocfs2_dio_end_io_write(struct inode *inode,
  
  	ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode), di_bh);
  

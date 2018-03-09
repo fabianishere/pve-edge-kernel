@@ -28,10 +28,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/fs/ocfs2/aops.c b/fs/ocfs2/aops.c
-index 88a31e9340a0..77ec9b495027 100644
+index d1516327b787..256986aca8df 100644
 --- a/fs/ocfs2/aops.c
 +++ b/fs/ocfs2/aops.c
-@@ -784,6 +784,7 @@ struct ocfs2_write_ctxt {
+@@ -797,6 +797,7 @@ struct ocfs2_write_ctxt {
  	struct ocfs2_cached_dealloc_ctxt w_dealloc;
  
  	struct list_head		w_unwritten_list;
@@ -39,7 +39,7 @@ index 88a31e9340a0..77ec9b495027 100644
  };
  
  void ocfs2_unlock_and_free_pages(struct page **pages, int num_pages)
-@@ -1373,6 +1374,7 @@ static int ocfs2_unwritten_check(struct inode *inode,
+@@ -1386,6 +1387,7 @@ static int ocfs2_unwritten_check(struct inode *inode,
  	desc->c_clear_unwritten = 0;
  	list_add_tail(&new->ue_ip_node, &oi->ip_unwritten_list);
  	list_add_tail(&new->ue_node, &wc->w_unwritten_list);
@@ -47,7 +47,7 @@ index 88a31e9340a0..77ec9b495027 100644
  	new = NULL;
  unlock:
  	spin_unlock(&oi->ip_lock);
-@@ -2246,7 +2248,7 @@ static int ocfs2_dio_get_block(struct inode *inode, sector_t iblock,
+@@ -2256,7 +2258,7 @@ static int ocfs2_dio_wr_get_block(struct inode *inode, sector_t iblock,
  		ue->ue_phys = desc->c_phys;
  
  		list_splice_tail_init(&wc->w_unwritten_list, &dwc->dw_zero_list);
