@@ -1,3 +1,11 @@
+pve-kernel (4.15.10-2) unstable; urgency=medium
+
+  * update to Ubuntu-4.15.0-13.14
+
+  * bump ABI to 4.15.10-1-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 21 Mar 2018 10:35:07 +0100
+
 pve-kernel (4.15.3-1) unstable; urgency=medium
 
   * switch source to Ubuntu-4.15.0-10.11
