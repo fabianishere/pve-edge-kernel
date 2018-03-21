@@ -208,7 +208,7 @@ abi-${KVNAME}: .compile_mark
 	debian/scripts/abi-generate debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/Module.symvers abi-${KVNAME} ${KVNAME}
 
 .PHONY: abicheck
-abicheck: debian/scripts/abi-check abi-${KVNAME} abi-previous abi-blacklist
-	debian/scripts/abi-check abi-${KVNAME} abi-previous ${SKIPABI}
+abicheck: debian/scripts/abi-check abi-${KVNAME} abi-prev-* abi-blacklist
+	debian/scripts/abi-check abi-${KVNAME} abi-prev-* ${SKIPABI}
 
 .PHONY: clean

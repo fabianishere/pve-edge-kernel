@@ -4,8 +4,14 @@ my $abinew = shift;
 my $abiold = shift;
 my $skipabi = shift;
 
+# to catch multiple abi-prev-* files being passed in
+die "invalid value for skipabi parameter\n"
+	if (defined($skipabi) && $skipabi !~ /^[01]$/);
+
 $abinew =~ /abi-(.*)/;
-my $abinum = $1;
+my $abistr = $1;
+$abiold =~ /abi-prev-(.*)/;
+my $prev_abistr = $1;
 
 my $fail_exit = 1;
 my $EE = "EE:";
@@ -23,12 +29,12 @@ if ($skipabi) {
 	$EE = "WW:";
 }
 
-#if ($prev_abinum != $abinum) {
-#	print "II: Different ABI's, running in no-fail mode\n";
-#	$fail_exit = 0;
-#	$EE = "WW:";
-#}
-#
+if ($prev_abistr ne $abistr) {
+	print "II: Different ABI's, running in no-fail mode\n";
+	$fail_exit = 0;
+	$EE = "WW:";
+}
+
 if (not -f "$abinew" or not -f "$abiold") {
 	print "EE: Previous or current ABI file missing!\n";
 	print "    $abinew\n" if not -f "$abinew";
@@ -83,7 +89,7 @@ sub is_ignored($$) {
 }
 
 # Read new syms first
-print "    Reading new symbols ($abinum)...";
+print "    Reading new symbols ($abistr)...";
 $count = 0;
 open(NEW, "< $abinew") or
 	die "Could not open $abinew";
