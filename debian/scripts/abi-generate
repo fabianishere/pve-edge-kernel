@@ -1,0 +1,37 @@
+#!/usr/bin/perl -w
+
+use PVE::Tools;
+
+use IO::File;
+
+my $input_file = shift;
+my $output_file = shift;
+my $abi = shift;
+my $extract_deb = shift;
+
+die "input file '$input_file' does not exist\n" if ! -e $input_file;
+
+my $modules_symver_fh;
+
+if ($extract_deb) {
+	my $cmd = [];
+	push @$cmd, ['dpkg', '--fsys-tarfile', $input_file];
+	push @$cmd, ['tar', '-xOf', '-', "./usr/src/linux-headers-${abi}/Module.symvers"];
+	$modules_symver_fh = IO::File->new_tmpfile();
+	PVE::Tools::run_command($cmd, output => '>&'.fileno($modules_symver_fh));
+	seek($modules_symver_fh, 0, 0);
+} else {
+	open($modules_symver_fh, '<', $input_file) or die "can't open '$input_file' - $!\n";
+}
+
+my $lines = [];
+while(my $line = <$modules_symver_fh>) {
+	if ($line =~ /^(.+)\s+(.+)\s+(.+)$/) {
+		push @$lines, "$3 $2 $1";
+	} else {
+		warn "malformed symvers line: '$line'\n";
+	}
+}
+close($modules_symver_fh);
+
+PVE::Tools::file_set_contents($output_file, join("\n", sort @$lines));
