@@ -21,10 +21,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/edac/sb_edac.c b/drivers/edac/sb_edac.c
-index 7a3b201d51df..fb0264ef83a3 100644
+index 5c3e707ff3fc..59af590b660c 100644
 --- a/drivers/edac/sb_edac.c
 +++ b/drivers/edac/sb_edac.c
-@@ -2467,6 +2467,7 @@ static int ibridge_mci_bind_devs(struct mem_ctl_info *mci,
+@@ -2454,6 +2454,7 @@ static int ibridge_mci_bind_devs(struct mem_ctl_info *mci,
  		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0_TA:
  		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_TA:
  			pvt->pci_ta = pdev;

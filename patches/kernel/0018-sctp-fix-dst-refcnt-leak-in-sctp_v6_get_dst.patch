@@ -27,7 +27,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/net/sctp/ipv6.c b/net/sctp/ipv6.c
-index a4b6ffb61495..c5a5ad8ac00f 100644
+index edb462b0b73b..e626d72868fe 100644
 --- a/net/sctp/ipv6.c
 +++ b/net/sctp/ipv6.c
 @@ -326,8 +326,10 @@ static void sctp_v6_get_dst(struct sctp_transport *t, union sctp_addr *saddr,
