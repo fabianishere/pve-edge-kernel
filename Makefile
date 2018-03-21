@@ -83,7 +83,7 @@ ${DST_DEB}: ${BUILD_DIR}.prepared
 
 ${BUILD_DIR}.prepared: $(addsuffix .prepared,${KERNEL_SRC} ${MODULES} debian)
 	cp -a fwlist-previous ${BUILD_DIR}/
-	cp -a abi-previous ${BUILD_DIR}/
+	cp -a abi-prev-* ${BUILD_DIR}/
 	cp -a abi-blacklist ${BUILD_DIR}/
 	touch $@
 
