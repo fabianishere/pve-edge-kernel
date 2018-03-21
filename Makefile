@@ -170,6 +170,24 @@ submodule:
 	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init ${ZFSONLINUX_SUBMODULE}
 	(test -f "${ZFSSRC}/debian/changelog" && test -f "${SPLZRC}/debian/changelog") || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
 
+# call after ABI bump with header deb in working directory
+.PHONY: abiupdate
+abiupdate: abi-prev-${KVNAME}
+abi-prev-${KVNAME}: abi-tmp-${KVNAME}
+ifneq ($(strip $(shell git status --untracked-files=no --porcelain -z)),)
+	@echo "working directory unclean, aborting!"
+	@false
+else
+	git rm "abi-prev-*"
+	mv $< $@
+	git add $@
+	git commit -s -m "update ABI file for ${KVNAME}" -m "(generated with debian/scripts/abi-generate)"
+	@echo "update abi-prev-${KVNAME} committed!"
+endif
+
+abi-tmp-${KVNAME}:
+	@ test -e ${HDR_DEB} || (echo "need ${HDR_DEB} to extract ABI data!" && false)
+	debian/scripts/abi-generate ${HDR_DEB} $@ ${KVNAME} 1
 
 .PHONY: clean
 clean:
