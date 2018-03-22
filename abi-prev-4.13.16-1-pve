@@ -13732,7 +13732,6 @@ EXPORT_SYMBOL_GPL drivers/net/phy/bcm-phy-lib 0xbd973b1c	bcm_phy_enable_apd
 EXPORT_SYMBOL_GPL drivers/net/phy/bcm-phy-lib 0xea9a2038	bcm_phy_write_misc
 EXPORT_SYMBOL_GPL drivers/net/phy/bcm-phy-lib 0xf816e911	bcm_phy_get_strings
 EXPORT_SYMBOL_GPL drivers/net/phy/bcm-phy-lib 0xfc71c221	bcm54xx_auxctl_read
-EXPORT_SYMBOL_GPL drivers/net/tap 0x4806f26d	tap_create_cdev
 EXPORT_SYMBOL_GPL drivers/net/tap 0x4d50613f	tap_get_minor
 EXPORT_SYMBOL_GPL drivers/net/tap 0x4dae13e9	tap_handle_frame
 EXPORT_SYMBOL_GPL drivers/net/tap 0x6db4ad7f	tap_destroy_cdev
@@ -13740,6 +13739,7 @@ EXPORT_SYMBOL_GPL drivers/net/tap 0x868ebdab	tap_get_socket
 EXPORT_SYMBOL_GPL drivers/net/tap 0xa76afaf2	tap_free_minor
 EXPORT_SYMBOL_GPL drivers/net/tap 0xb04c299c	tap_del_queues
 EXPORT_SYMBOL_GPL drivers/net/tap 0xcbccbfa3	tap_get_skb_array
+EXPORT_SYMBOL_GPL drivers/net/tap 0xcc0e8c03	tap_create_cdev
 EXPORT_SYMBOL_GPL drivers/net/tap 0xdb2607d9	tap_queue_resize
 EXPORT_SYMBOL_GPL drivers/net/usb/cdc_ether 0x0c2bc167	usbnet_cdc_unbind
 EXPORT_SYMBOL_GPL drivers/net/usb/cdc_ether 0x68267f39	usbnet_generic_cdc_bind
@@ -15804,6 +15804,7 @@ EXPORT_SYMBOL_GPL net/core/devlink 0xf10a2537	devlink_port_register
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x05a2c97c	dccp_reqsk_init
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x0720bca2	dccp_child_process
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x0c6207a5	dccp_death_row
+EXPORT_SYMBOL_GPL net/dccp/dccp 0x192d4d99	dccp_parse_options
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x1d99d49a	dccp_timestamp
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x236f252b	dccp_connect
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x256daffb	dccp_rcv_state_process
@@ -15813,7 +15814,6 @@ EXPORT_SYMBOL_GPL net/dccp/dccp 0x35227dcf	dccp_rcv_established
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x391ba359	dccp_set_state
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x3b960b45	dccp_disconnect
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x41996a9b	dccp_check_req
-EXPORT_SYMBOL_GPL net/dccp/dccp 0x47bfbecc	dccp_parse_options
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x4cdd391d	dccp_feat_list_purge
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x4ec35231	dccp_ackvec_parsed_add
 EXPORT_SYMBOL_GPL net/dccp/dccp 0x55bee6d1	dccp_setsockopt
@@ -20457,6 +20457,7 @@ EXPORT_SYMBOL_GPL vmlinux 0xa0e0b1bb	raw_v6_hashinfo
 EXPORT_SYMBOL_GPL vmlinux 0xa0e4acc2	md_rdev_clear
 EXPORT_SYMBOL_GPL vmlinux 0xa0f1189d	sysfs_rename_link_ns
 EXPORT_SYMBOL_GPL vmlinux 0xa0f334d1	arch_add_memory
+EXPORT_SYMBOL_GPL vmlinux 0xa0f623f3	shash_no_setkey
 EXPORT_SYMBOL_GPL vmlinux 0xa0f6c13e	irq_chip_eoi_parent
 EXPORT_SYMBOL_GPL vmlinux 0xa0f75604	fpu__activate_curr
 EXPORT_SYMBOL_GPL vmlinux 0xa0f8eefe	input_class
@@ -20595,6 +20596,7 @@ EXPORT_SYMBOL_GPL vmlinux 0xa86e4acb	power_supply_put
 EXPORT_SYMBOL_GPL vmlinux 0xa86e700d	devm_hwrng_unregister
 EXPORT_SYMBOL_GPL vmlinux 0xa8854d2e	thermal_zone_get_offset
 EXPORT_SYMBOL_GPL vmlinux 0xa88f15bb	tcp_enter_memory_pressure
+EXPORT_SYMBOL_GPL vmlinux 0xa891f173	skb_gso_validate_mac_len
 EXPORT_SYMBOL_GPL vmlinux 0xa89b6050	task_user_regset_view
 EXPORT_SYMBOL_GPL vmlinux 0xa8bd01b2	acpi_device_fix_up_power
 EXPORT_SYMBOL_GPL vmlinux 0xa8d07f12	crypto_destroy_tfm
