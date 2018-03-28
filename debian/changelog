@@ -1,3 +1,9 @@
+pve-kernel (4.15.10-3) unstable; urgency=medium
+
+  * cherry-pick fix for THP related deadlock
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 28 Mar 2018 11:07:39 +0200
+
 pve-kernel (4.15.10-2) unstable; urgency=medium
 
   * update to Ubuntu-4.15.0-13.14
