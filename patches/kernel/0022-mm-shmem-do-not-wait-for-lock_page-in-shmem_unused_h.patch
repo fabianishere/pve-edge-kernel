@@ -1,0 +1,103 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Date: Fri, 23 Mar 2018 09:19:21 +0100
+Subject: [PATCH] mm/shmem: do not wait for lock_page() in
+ shmem_unused_huge_shrink()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+shmem_unused_huge_shrink() gets called from reclaim path.  Waiting for
+page lock may lead to deadlock there.
+
+There was a bug report that may be attributed to this:
+
+http://lkml.kernel.org/r/alpine.LRH.2.11.1801242349220.30642@mail.ewheeler.net
+
+Replace lock_page() with trylock_page() and skip the page if we failed to
+lock it.  We will get to the page on the next scan.
+
+We can test for the PageTransHuge() outside the page lock as we only need
+protection against splitting the page under us.  Holding pin oni the page
+is enough for this.
+
+Link: http://lkml.kernel.org/r/20180316210830.43738-1-kirill.shutemov@linux.intel.com
+Fixes: 779750d20b93 ("shmem: split huge pages beyond i_size under memory pressure")
+Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Reported-by: Eric Wheeler <linux-mm@lists.ewheeler.net>
+Acked-by: Michal Hocko <mhocko@suse.com>
+Reviewed-by: Andrew Morton <akpm@linux-foundation.org>
+Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+Cc: Hugh Dickins <hughd@google.com>
+Cc: <stable@vger.kernel.org>	[4.8+]
+Signed-off-by: Andrew Morton <>
+(cherry-picked from https://git.kernel.org/pub/scm/linux/kernel/git/mhocko/mm.git/commit/?h=since-4.15&id=73eccc61c701ee7b4223aea2079542a712feeea7)
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ mm/shmem.c | 31 ++++++++++++++++++++-----------
+ 1 file changed, 20 insertions(+), 11 deletions(-)
+
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 859e4c224b80..2aae929eb90b 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -483,36 +483,45 @@ static unsigned long shmem_unused_huge_shrink(struct shmem_sb_info *sbinfo,
+ 		info = list_entry(pos, struct shmem_inode_info, shrinklist);
+ 		inode = &info->vfs_inode;
+ 
+-		if (nr_to_split && split >= nr_to_split) {
+-			iput(inode);
+-			continue;
+-		}
++		if (nr_to_split && split >= nr_to_split)
++			goto leave;
+ 
+-		page = find_lock_page(inode->i_mapping,
++		page = find_get_page(inode->i_mapping,
+ 				(inode->i_size & HPAGE_PMD_MASK) >> PAGE_SHIFT);
+ 		if (!page)
+ 			goto drop;
+ 
++		/* No huge page at the end of the file: nothing to split */
+ 		if (!PageTransHuge(page)) {
+-			unlock_page(page);
+ 			put_page(page);
+ 			goto drop;
+ 		}
+ 
++		/*
++		 * Leave the inode on the list if we failed to lock
++		 * the page at this time.
++		 *
++		 * Waiting for the lock may lead to deadlock in the
++		 * reclaim path.
++		 */
++		if (!trylock_page(page)) {
++			put_page(page);
++			goto leave;
++		}
++
+ 		ret = split_huge_page(page);
+ 		unlock_page(page);
+ 		put_page(page);
+ 
+-		if (ret) {
+-			/* split failed: leave it on the list */
+-			iput(inode);
+-			continue;
+-		}
++		/* If split failed leave the inode on the list */
++		if (ret)
++			goto leave;
+ 
+ 		split++;
+ drop:
+ 		list_del_init(&info->shrinklist);
+ 		removed++;
++leave:
+ 		iput(inode);
+ 	}
+ 
+-- 
+2.14.2
+
