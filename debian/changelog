@@ -1,3 +1,13 @@
+pve-kernel (4.15.15-5) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.15.0-14.15
+
+  * bump ABI to 4.15.15-1-pve
+
+  * update SPL/ZFS to 0.7.7
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 4 Apr 2018 09:50:07 +0200
+
 pve-kernel (4.15.10-4) unstable; urgency=medium
 
   * cherry-pick fix for shmem related deadlock
