@@ -148,6 +148,8 @@ $(ZFSDIR).prepared: ${ZFSSRC}
 	mkdir -p ${BUILD_DIR}/${MODULES}/${ZFSDIR}
 	cp -a ${ZFSSRC}/* ${BUILD_DIR}/${MODULES}/${ZFSDIR}
 	cd ${BUILD_DIR}/${MODULES}/${ZFSDIR}; for patch in ../../../${ZFSSRC}/../zfs-patches/*.patch; do patch -p1 < $${patch}; done
+	# temporarily since patch does not know about permissions, remove after 0.7.7 was merged properly
+	chmod +x ${BUILD_DIR}/${MODULES}/${ZFSDIR}/scripts/enum-extract.pl
 	touch $@
 
 .PHONY: upload
