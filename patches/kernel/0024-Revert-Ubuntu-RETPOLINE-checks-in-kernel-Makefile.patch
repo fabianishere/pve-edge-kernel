@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Mon, 9 Apr 2018 09:33:25 +0200
+Subject: [PATCH] Revert Ubuntu RETPOLINE checks in kernel Makefile
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+these break builds outside of Ubuntu's packaging.
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ scripts/Makefile.build | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index d74c3f9f1fa8..436005392047 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -282,18 +282,11 @@ objtool_dep = $(objtool_obj)					\
+ 	      $(wildcard include/config/orc/unwinder.h		\
+ 			 include/config/stack/validation.h)
+ 
+-ifdef CONFIG_RETPOLINE
+-cmd_ubuntu_retpoline = $(CONFIG_SHELL) $(srctree)/scripts/ubuntu-retpoline-extract-one $(@) $(<) "$(filter -m16 %code16gcc.h,$(a_flags))";
+-else
+-cmd_ubuntu_retpoline =
+-endif
+-
+ define rule_cc_o_c
+ 	$(call echo-cmd,checksrc) $(cmd_checksrc)			  \
+ 	$(call cmd_and_fixdep,cc_o_c)					  \
+ 	$(cmd_modversions_c)						  \
+ 	$(call echo-cmd,objtool) $(cmd_objtool)				  \
+-	$(call echo-cmd,ubuntu-retpoline) $(cmd_ubuntu_retpoline)	  \
+ 	$(call echo-cmd,record_mcount) $(cmd_record_mcount)
+ endef
+ 
+@@ -301,7 +294,6 @@ define rule_as_o_S
+ 	$(call cmd_and_fixdep,as_o_S)					  \
+ 	$(cmd_modversions_S)						  \
+ 	$(call echo-cmd,objtool) $(cmd_objtool)
+-	$(call echo-cmd,ubuntu-retpoline) $(cmd_ubuntu_retpoline)
+ endef
+ 
+ # List module undefined symbols (or empty line if not enabled)
+-- 
+2.14.2
+
