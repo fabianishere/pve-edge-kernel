@@ -1,3 +1,13 @@
+pve-kernel (4.13.16-47) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-39.44
+
+  * bump ABI to 4.13.16-2-pve
+
+  * update ZFS to 0.7.7-pve2
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 9 Apr 2018 09:58:12 +0200
+
 pve-kernel (4.13.16-46) unstable; urgency=medium
 
   * update ZFS/SPL to 0.7.7
