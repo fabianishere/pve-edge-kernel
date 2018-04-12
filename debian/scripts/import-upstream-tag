@@ -1,0 +1,119 @@
+#!/bin/bash
+
+set -e
+
+top=$(pwd)
+
+# parameters
+kernel_submodule=
+kernel_patchdir=
+new_tag=
+rebase=
+
+# generated based on new_tag
+pq_branch=
+# previously checked out in submodule
+old_ref=
+
+function cleanup_pq_branch {
+    if [[ -n $pq_branch ]]; then
+	echo "cleaning up PQ branch '$pq_branch'"
+	cd "${top}/${kernel_submodule}"
+	git checkout --quiet $old_ref
+	git reset --hard
+	git branch -D "$pq_branch"
+    fi
+}
+
+function error_exit {
+    echo "$1"
+    set +e
+
+    cleanup_pq_branch
+
+    cd "${top}"
+
+    exit 1
+}
+
+if [[ "$#" -lt 3 || "$#" -gt 4 ]]; then
+    echo "USAGE: $0 submodule patchdir tag [rebase]"
+    echo "\t fetches and checks out 'tag' in 'submodule'"
+    echo "\t if 'rebase' is given, imports, rebases and exports patchqueue from 'patchdir' as well"
+    exit 1
+fi
+
+kernel_submodule=$1
+if [ ! -d "${kernel_submodule}" ]; then
+    error_exit "'${kernel_submodule}' must be a directory!"
+fi
+
+kernel_patchdir=$2
+if [ ! -d "${kernel_patchdir}" ]; then
+    error_exit "'${kernel_patchdir}' must be a directory!"
+fi
+
+new_tag=$3
+rebase=$4
+
+if [[ -n $(git status --untracked-files=no --porcelain) ]]; then
+    error_exit "working directory unclean, aborting"
+fi
+
+
+cd "${kernel_submodule}"
+## check for tag and fetch if needed
+echo "checking for tag '${new_tag}'"
+if [[ -z $(git tag -l "${new_tag}") ]]; then
+    echo "tag not found, fetching and retrying"
+    git fetch --tags
+fi
+if [[ -z $(git tag -l "${new_tag}") ]]; then
+    error_exit "tag not found, aborting"
+fi
+echo "tag found"
+cd "${top}"
+
+if [[ -n "$rebase" ]]; then
+    echo ""
+    echo "automatic patchqueue rebase enabled"
+    cd "${kernel_submodule}"
+    ## preparing patch queue branch
+    old_ref=$(git rev-parse HEAD)
+    pq_branch="auto_pq/${new_tag}"
+    cd "${top}"
+
+    echo "previous HEAD: ${old_ref}"
+
+    echo ""
+    "${top}/debian/scripts/import-patchqueue" "${kernel_submodule}" "${kernel_patchdir}" "${pq_branch}" || error_exit "failed to import patchqueue"
+
+    cd "${kernel_submodule}"
+    ## rebase patches
+    echo ""
+    echo "rebasing patchqueue on top of '${new_tag}'"
+    git rebase "${new_tag}"
+    cd "${top}"
+
+    ## regenerate exported patch queue
+    echo ""
+    "${top}/debian/scripts/export-patchqueue" "${kernel_submodule}" "${kernel_patchdir}" "${new_tag}" || error_exit "failed to export patchqueue"
+
+    cleanup_pq_branch
+    cd "${top}"
+    pq_branch=
+fi
+
+cd "${kernel_submodule}"
+echo ""
+echo "checking out '${new_tag}' in submodule"
+git checkout --quiet "${new_tag}"
+cd "${top}"
+
+echo ""
+echo "committing results"
+git commit --verbose -s -m "update sources to ${new_tag}" -m "(generated with debian/scripts/import-upstream-tag)" "${kernel_submodule}"
+if [[ -n "$rebase" ]]; then
+    git add "${kernel_patchdir}"
+    git commit --verbose -s -m "rebase patches on top of ${new_tag}" -m "(generated with debian/scripts/import-upstream-tag)" "${kernel_patchdir}"
+fi
