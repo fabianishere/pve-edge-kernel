@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+top=$(pwd)
+
+if [ "$#" -ne 3 ]; then
+    echo "USAGE: $0 repo patchdir ref"
+    echo "\t exports patches from 'repo' to 'patchdir' based on 'ref'"
+    exit 1
+fi
+
+# parameters
+kernel_submodule=$1
+kernel_patchdir=$2
+base_ref=$3
+
+cd "${kernel_submodule}"
+echo "clearing old exported patchqueue"
+rm -f "${top}/${kernel_patchdir}"/*.patch
+echo "exporting patchqueue using 'git format-patch [...] ${base_ref}.."
+git format-patch \
+    --quiet \
+    --no-numbered \
+    --no-cover-letter \
+    --zero-commit \
+    --output-dir \
+    "${top}/${kernel_patchdir}" \
+    "${base_ref}.."
+
+git checkout ${base_ref}
+
+cd "${top}"

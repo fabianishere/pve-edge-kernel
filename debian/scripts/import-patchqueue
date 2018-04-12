@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -e
+
+top=$(pwd)
+
+if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
+    echo "USAGE: $0 repo patchdir [branch]"
+    echo "\t imports patches from 'patchdir' into patchqueue branch 'branch' in 'repo'"
+    exit 1
+fi
+
+
+# parameters
+kernel_submodule=$1
+kernel_patchdir=$2
+if [[ -z "$3" ]]; then
+    pq_branch='pq'
+else
+    pq_branch=$3
+fi
+
+cd "${kernel_submodule}"
+echo "creating patchqeueue branch '${pq_branch}'"
+git checkout -b "${pq_branch}"
+echo "importing patches from '${kernel_patchdir}'"
+git am "${top}/${kernel_patchdir}"/*.patch
+
+cd "${top}"
