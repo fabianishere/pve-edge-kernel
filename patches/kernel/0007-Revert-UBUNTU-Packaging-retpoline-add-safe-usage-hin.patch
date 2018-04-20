@@ -19,7 +19,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 1 insertion(+), 9 deletions(-)
 
 diff --git a/scripts/Makefile.build b/scripts/Makefile.build
-index 9dc3f41f4ff5..36247e983f4b 100644
+index e79e11fbd22c..36247e983f4b 100644
 --- a/scripts/Makefile.build
 +++ b/scripts/Makefile.build
 @@ -297,27 +297,19 @@ objtool_dep = $(objtool_obj)					\
@@ -27,7 +27,7 @@ index 9dc3f41f4ff5..36247e983f4b 100644
  			 include/config/stack/validation.h)
  
 -ifdef CONFIG_RETPOLINE
--cmd_ubuntu_retpoline = $(CONFIG_SHELL) $(srctree)/debian/scripts/retpoline-extract-one $(@) $(<) "$(filter -m16 %code16gcc.h,$(a_flags))";
+-cmd_ubuntu_retpoline = $(CONFIG_SHELL) $(srctree)/scripts/ubuntu-retpoline-extract-one $(@) $(<) "$(filter -m16 %code16gcc.h,$(a_flags))";
 -else
 -cmd_ubuntu_retpoline =
 -endif
