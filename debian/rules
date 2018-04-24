@@ -140,15 +140,26 @@ binary: install
 	mkdir -p debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	install -m 0644 ${KERNEL_SRC}/.config debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC}; find . -path './debian/*' -prune -o -path './include/*' -prune -o -path './Documentation' -prune \
-	  -o -path './scripts' -prune -o -type f \
-	  \( -name 'Makefile*' -o -name 'Kconfig*' -o -name 'Kbuild*' -o \
-	     -name '*.sh' -o -name '*.pl' \) \
-	  -print | cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+	cd ${KERNEL_SRC}; find . -path './debian/*' -prune \
+	    -o -path './include/*' -prune \
+	    -o -path './Documentation' -prune \
+	    -o -path './scripts' -prune \
+	    -o -type f \
+	    \( \
+	        -name 'Makefile*' \
+	        -o -name 'Kconfig*' \
+	        -o -name 'Kbuild*' \
+	        -o -name '*.sh' \
+	        -o -name '*.pl' \
+	    \) \
+	    -print | cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	cd ${KERNEL_SRC}; cp -a include scripts ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC}; (find arch/${KERNEL_HEADER_ARCH} -name include -type d -print | \
-		xargs -n1 -i: find : -type f) | \
-		cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+	cd ${KERNEL_SRC}; \
+	    ( \
+	        find arch/${KERNEL_HEADER_ARCH} -name include -type d -print | \
+	        xargs -n1 -i: find : -type f \
+	    ) | \
+	    cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
 	touch $@
