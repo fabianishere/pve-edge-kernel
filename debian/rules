@@ -126,12 +126,16 @@ binary: install
 .tools_compile_mark: .compile_mark
 	${MAKE} -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_CPLUS_DEMANGLE=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
 	${MAKE} -C ${KERNEL_SRC}/tools/perf man
+	# contained in linux-base
+	rm -f ${KERNEL_SRC}/tools/perf/Documentation/perf.1
 	touch $@
 
 .tools_install_mark: .tools_compile_mark
 	rm -rf debian/${LINUX_TOOLS_PKG}
 	mkdir -p debian/${LINUX_TOOLS_PKG}/usr/bin
+	mkdir -p debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
 	install -m 755 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/perf debian/${LINUX_TOOLS_PKG}/usr/bin/perf_4.13
+	install -m644 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/Documentation/*.1 debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
 	touch $@
 
 .headers_install_mark: .compile_mark .modules_compile_mark
