@@ -77,7 +77,7 @@ install: .install_mark .tools_install_mark .headers_install_mark
 
 binary: install
 	debian/rules fwcheck abicheck
-	dh_strip
+	dh_strip -N${PVE_HEADER_PKG}
 	dh_makeshlibs
 	dh_shlibdeps
 	dh_installdeb
