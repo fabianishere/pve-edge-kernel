@@ -1,0 +1,95 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Wolfgang Bumiller <w.bumiller@proxmox.com>
+Date: Mon, 9 Apr 2018 14:56:29 +0200
+Subject: [PATCH linux] net: fix deadlock while clearing neighbor proxy table
+
+When coming from ndisc_netdev_event() in net/ipv6/ndisc.c,
+neigh_ifdown() is called with &nd_tbl, locking this while
+clearing the proxy neighbor entries when eg. deleting an
+interface. Calling the table's pndisc_destructor() with the
+lock still held, however, can cause a deadlock: When a
+multicast listener is available an IGMP packet of type
+ICMPV6_MGM_REDUCTION may be sent out. When reaching
+ip6_finish_output2(), if no neighbor entry for the target
+address is found, __neigh_create() is called with &nd_tbl,
+which it'll want to lock.
+
+Move the elements into their own list, then unlock the table
+and perform the destruction.
+
+Bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=199289
+Fixes: 6fd6ce2056de ("ipv6: Do not depend on rt->n in ip6_finish_output2().")
+Signed-off-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
+---
+ net/core/neighbour.c | 28 ++++++++++++++++++----------
+ 1 file changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/net/core/neighbour.c b/net/core/neighbour.c
+index 7b7a14abba28..e22d2aefbd78 100644
+--- a/net/core/neighbour.c
++++ b/net/core/neighbour.c
+@@ -55,7 +55,8 @@ static void neigh_timer_handler(struct timer_list *t);
+ static void __neigh_notify(struct neighbour *n, int type, int flags,
+ 			   u32 pid);
+ static void neigh_update_notify(struct neighbour *neigh, u32 nlmsg_pid);
+-static int pneigh_ifdown(struct neigh_table *tbl, struct net_device *dev);
++static int pneigh_ifdown_and_unlock(struct neigh_table *tbl,
++				    struct net_device *dev);
+ 
+ #ifdef CONFIG_PROC_FS
+ static const struct file_operations neigh_stat_seq_fops;
+@@ -291,8 +292,7 @@ int neigh_ifdown(struct neigh_table *tbl, struct net_device *dev)
+ {
+ 	write_lock_bh(&tbl->lock);
+ 	neigh_flush_dev(tbl, dev);
+-	pneigh_ifdown(tbl, dev);
+-	write_unlock_bh(&tbl->lock);
++	pneigh_ifdown_and_unlock(tbl, dev);
+ 
+ 	del_timer_sync(&tbl->proxy_timer);
+ 	pneigh_queue_purge(&tbl->proxy_queue);
+@@ -681,9 +681,10 @@ int pneigh_delete(struct neigh_table *tbl, struct net *net, const void *pkey,
+ 	return -ENOENT;
+ }
+ 
+-static int pneigh_ifdown(struct neigh_table *tbl, struct net_device *dev)
++static int pneigh_ifdown_and_unlock(struct neigh_table *tbl,
++				    struct net_device *dev)
+ {
+-	struct pneigh_entry *n, **np;
++	struct pneigh_entry *n, **np, *freelist = NULL;
+ 	u32 h;
+ 
+ 	for (h = 0; h <= PNEIGH_HASHMASK; h++) {
+@@ -691,16 +692,23 @@ static int pneigh_ifdown(struct neigh_table *tbl, struct net_device *dev)
+ 		while ((n = *np) != NULL) {
+ 			if (!dev || n->dev == dev) {
+ 				*np = n->next;
+-				if (tbl->pdestructor)
+-					tbl->pdestructor(n);
+-				if (n->dev)
+-					dev_put(n->dev);
+-				kfree(n);
++				n->next = freelist;
++				freelist = n;
+ 				continue;
+ 			}
+ 			np = &n->next;
+ 		}
+ 	}
++	write_unlock_bh(&tbl->lock);
++	while ((n = freelist)) {
++		freelist = n->next;
++		n->next = NULL;
++		if (tbl->pdestructor)
++			tbl->pdestructor(n);
++		if (n->dev)
++			dev_put(n->dev);
++		kfree(n);
++	}
+ 	return -ENOENT;
+ }
+ 
+-- 
+2.11.0
+
