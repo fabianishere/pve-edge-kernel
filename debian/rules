@@ -125,7 +125,10 @@ binary: install
 	touch $@
 
 .tools_compile_mark: .compile_mark
-	${MAKE} -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_CPLUS_DEMANGLE=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
+	${MAKE} -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_NO_LIBBFD=1 HAVE_CPLUS_DEMANGLE_SUPPORT=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
+	echo "checking GPL-2 only perf binary for library linkage with incompatible licenses.."
+	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
+	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'
 	${MAKE} -C ${KERNEL_SRC}/tools/perf man
 	# contained in linux-base
 	rm -f ${KERNEL_SRC}/tools/perf/Documentation/perf.1
