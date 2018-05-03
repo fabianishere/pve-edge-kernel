@@ -1,3 +1,11 @@
+pve-kernel (4.15.17-8) unstable; urgency=medium
+
+  * update ZFS to 0.7.8-pve1
+
+  * update sources to Ubuntu-4.15.0-20.21
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 03 May 2018 08:43:38 +0200
+
 pve-kernel (4.15.17-7) unstable; urgency=medium
 
   * update sources to Ubuntu-4.15.0-17.18
