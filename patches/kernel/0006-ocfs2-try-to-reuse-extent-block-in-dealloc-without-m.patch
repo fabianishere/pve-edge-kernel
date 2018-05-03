@@ -66,23 +66,11 @@ Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
 (cherry picked from commit 71a36944042b7d9dd71f6a5d1c5ea1c2353b5d42)
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
 ---
- fs/ocfs2/alloc.h |   1 +
  fs/ocfs2/alloc.c | 206 ++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ fs/ocfs2/alloc.h |   1 +
  fs/ocfs2/aops.c  |   6 ++
  3 files changed, 203 insertions(+), 10 deletions(-)
 
-diff --git a/fs/ocfs2/alloc.h b/fs/ocfs2/alloc.h
-index 27b75cf32cfa..250bcacdf9e9 100644
---- a/fs/ocfs2/alloc.h
-+++ b/fs/ocfs2/alloc.h
-@@ -61,6 +61,7 @@ struct ocfs2_extent_tree {
- 	ocfs2_journal_access_func		et_root_journal_access;
- 	void					*et_object;
- 	unsigned int				et_max_leaf_clusters;
-+	struct ocfs2_cached_dealloc_ctxt	*et_dealloc;
- };
- 
- /*
 diff --git a/fs/ocfs2/alloc.c b/fs/ocfs2/alloc.c
 index ab5105f9767e..2f2c76193f54 100644
 --- a/fs/ocfs2/alloc.c
@@ -348,6 +336,18 @@ index ab5105f9767e..2f2c76193f54 100644
  int ocfs2_cache_block_dealloc(struct ocfs2_cached_dealloc_ctxt *ctxt,
  			      int type, int slot, u64 suballoc,
  			      u64 blkno, unsigned int bit)
+diff --git a/fs/ocfs2/alloc.h b/fs/ocfs2/alloc.h
+index 27b75cf32cfa..250bcacdf9e9 100644
+--- a/fs/ocfs2/alloc.h
++++ b/fs/ocfs2/alloc.h
+@@ -61,6 +61,7 @@ struct ocfs2_extent_tree {
+ 	ocfs2_journal_access_func		et_root_journal_access;
+ 	void					*et_object;
+ 	unsigned int				et_max_leaf_clusters;
++	struct ocfs2_cached_dealloc_ctxt	*et_dealloc;
+ };
+ 
+ /*
 diff --git a/fs/ocfs2/aops.c b/fs/ocfs2/aops.c
 index 256986aca8df..e8e205bf2e41 100644
 --- a/fs/ocfs2/aops.c

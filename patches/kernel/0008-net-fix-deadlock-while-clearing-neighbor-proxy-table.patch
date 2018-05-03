@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Wolfgang Bumiller <w.bumiller@proxmox.com>
 Date: Mon, 9 Apr 2018 14:56:29 +0200
-Subject: [PATCH linux] net: fix deadlock while clearing neighbor proxy table
+Subject: [PATCH] net: fix deadlock while clearing neighbor proxy table
 
 When coming from ndisc_netdev_event() in net/ipv6/ndisc.c,
 neigh_ifdown() is called with &nd_tbl, locking this while
@@ -25,7 +25,7 @@ Signed-off-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
  1 file changed, 18 insertions(+), 10 deletions(-)
 
 diff --git a/net/core/neighbour.c b/net/core/neighbour.c
-index 7b7a14abba28..e22d2aefbd78 100644
+index 7f831711b6e0..ff6c491d92ac 100644
 --- a/net/core/neighbour.c
 +++ b/net/core/neighbour.c
 @@ -55,7 +55,8 @@ static void neigh_timer_handler(struct timer_list *t);
@@ -91,5 +91,5 @@ index 7b7a14abba28..e22d2aefbd78 100644
  }
  
 -- 
-2.11.0
+2.14.2
 
