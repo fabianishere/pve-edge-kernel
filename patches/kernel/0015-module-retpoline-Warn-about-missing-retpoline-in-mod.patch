@@ -34,32 +34,12 @@ Conflicts:
 context changes
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
 ---
- include/linux/module.h     |  9 +++++++++
  arch/x86/kernel/cpu/bugs.c | 19 +++++++++++++++++--
+ include/linux/module.h     |  9 +++++++++
  kernel/module.c            | 11 +++++++++++
  scripts/mod/modpost.c      |  9 +++++++++
  4 files changed, 46 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/module.h b/include/linux/module.h
-index e7bdd549e527..c4fdf7661f82 100644
---- a/include/linux/module.h
-+++ b/include/linux/module.h
-@@ -794,6 +794,15 @@ static inline void module_bug_finalize(const Elf_Ehdr *hdr,
- static inline void module_bug_cleanup(struct module *mod) {}
- #endif	/* CONFIG_GENERIC_BUG */
- 
-+#ifdef RETPOLINE
-+extern bool retpoline_module_ok(bool has_retpoline);
-+#else
-+static inline bool retpoline_module_ok(bool has_retpoline)
-+{
-+	return true;
-+}
-+#endif
-+
- #ifdef CONFIG_MODULE_SIG
- static inline bool module_sig_ok(struct module *module)
- {
 diff --git a/arch/x86/kernel/cpu/bugs.c b/arch/x86/kernel/cpu/bugs.c
 index d5bafcdb4891..e623bd731a74 100644
 --- a/arch/x86/kernel/cpu/bugs.c
@@ -103,6 +83,26 @@ index d5bafcdb4891..e623bd731a74 100644
 +		       spectre_v2_bad_module ? " - vulnerable module loaded" : "");
  }
  #endif
+diff --git a/include/linux/module.h b/include/linux/module.h
+index e7bdd549e527..c4fdf7661f82 100644
+--- a/include/linux/module.h
++++ b/include/linux/module.h
+@@ -794,6 +794,15 @@ static inline void module_bug_finalize(const Elf_Ehdr *hdr,
+ static inline void module_bug_cleanup(struct module *mod) {}
+ #endif	/* CONFIG_GENERIC_BUG */
+ 
++#ifdef RETPOLINE
++extern bool retpoline_module_ok(bool has_retpoline);
++#else
++static inline bool retpoline_module_ok(bool has_retpoline)
++{
++	return true;
++}
++#endif
++
+ #ifdef CONFIG_MODULE_SIG
+ static inline bool module_sig_ok(struct module *module)
+ {
 diff --git a/kernel/module.c b/kernel/module.c
 index e5b878b26906..de7db074f793 100644
 --- a/kernel/module.c
