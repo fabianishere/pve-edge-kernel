@@ -16,6 +16,7 @@ CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}
 PVE_HEADER_PKG=pve-headers-${KVNAME}
 LINUX_TOOLS_PKG=linux-tools-4.15
+KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 
 # TODO: split for archs, move to files?
 PVE_CONFIG_OPTS= \
@@ -85,9 +86,12 @@ binary: install
 	dh_md5sums
 	dh_builddeb
 
-.compile_mark: ${KERNEL_SRC}/.config
+.config_mark:
 	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
 	${MAKE} -C ${KERNEL_SRC} oldconfig
+	touch $@
+
+.compile_mark: .config_mark
 	${MAKE} -C ${KERNEL_SRC} KBUILD_BUILD_VERSION_TIMESTAMP="PVE ${DEB_VERSION} (${CHANGELOG_DATE})"
 	touch $@
 
@@ -142,12 +146,15 @@ binary: install
 	install -m644 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/Documentation/*.1 debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
 	touch $@
 
-.headers_install_mark: .compile_mark .modules_compile_mark
+.headers_prepare_mark: .config_mark
 	rm -rf debian/${PVE_HEADER_PKG}
 	mkdir -p debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	install -m 0644 ${KERNEL_SRC}/.config debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC}; find . -path './debian/*' -prune \
+	# copy to allow building in parallel to kernel/module compilation without interference
+	rm -rf ${KERNEL_SRC_COPY}
+	cp -ar ${KERNEL_SRC} ${KERNEL_SRC_COPY}
+	make -C ${KERNEL_SRC_COPY} mrproper
+	cd ${KERNEL_SRC_COPY}; find . -path './debian/*' -prune \
 	    -o -path './include/*' -prune \
 	    -o -path './Documentation' -prune \
 	    -o -path './scripts' -prune \
@@ -160,13 +167,29 @@ binary: install
 	        -o -name '*.pl' \
 	    \) \
 	    -print | cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC}; cp -a include scripts ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC}; \
+	cd ${KERNEL_SRC_COPY}; cp -a include scripts ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+	cd ${KERNEL_SRC_COPY}; \
 	    ( \
 	        find arch/${KERNEL_HEADER_ARCH} -name include -type d -print | \
 	        xargs -n1 -i: find : -type f \
 	    ) | \
 	    cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+	touch $@
+
+.headers_compile_mark: .headers_prepare_mark
+	# set output to subdir of source to reduce number of hardcoded paths in output files
+	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
+	mkdir -p ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
+	cp ${KERNEL_SRC}/.config ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/.config
+	${MAKE} -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 silentoldconfig prepare scripts
+	find ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -name \*.o.ur-\* | xargs rm -f
+	rsync --ignore-existing -r -v -a $(addprefix ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/,arch include kernel scripts tools) ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/
+	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}
+	touch $@
+
+.headers_install_mark: .compile_mark .modules_compile_mark .headers_compile_mark
+	cp ${KERNEL_SRC}/include/generated/compile.h debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/include/generated/compile.h
+	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
 	touch $@
