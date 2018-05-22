@@ -1,3 +1,11 @@
+pve-kernel (4.13.16-49) unstable; urgency=medium
+
+  * update to Ubuntu-4.13.0-43.48
+
+  * update ZFS to 0.7.9-pve1
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 22 May 2018 15:10:48 +0200
+
 pve-kernel (4.13.16-48) unstable; urgency=medium
 
   * update ZFS to 0.7.8-pve1
