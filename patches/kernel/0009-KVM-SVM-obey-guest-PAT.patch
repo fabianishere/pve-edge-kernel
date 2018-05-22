@@ -34,7 +34,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
-index a8c911fcd73f..e9d0f80fd83a 100644
+index 6b1744499a90..5c37c1a1a949 100644
 --- a/arch/x86/kvm/svm.c
 +++ b/arch/x86/kvm/svm.c
 @@ -3650,6 +3650,13 @@ static int svm_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr)

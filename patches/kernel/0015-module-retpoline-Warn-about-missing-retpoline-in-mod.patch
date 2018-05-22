@@ -34,14 +34,14 @@ Conflicts:
 context changes
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
 ---
- arch/x86/kernel/cpu/bugs.c | 19 +++++++++++++++++--
+ arch/x86/kernel/cpu/bugs.c | 18 +++++++++++++++++-
  include/linux/module.h     |  9 +++++++++
  kernel/module.c            | 11 +++++++++++
  scripts/mod/modpost.c      |  9 +++++++++
- 4 files changed, 46 insertions(+), 2 deletions(-)
+ 4 files changed, 46 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/cpu/bugs.c b/arch/x86/kernel/cpu/bugs.c
-index d5bafcdb4891..e623bd731a74 100644
+index 2443b9580e94..e0b6aa62b253 100644
 --- a/arch/x86/kernel/cpu/bugs.c
 +++ b/arch/x86/kernel/cpu/bugs.c
 @@ -11,6 +11,7 @@
@@ -49,13 +49,13 @@ index d5bafcdb4891..e623bd731a74 100644
  #include <linux/cpu.h>
  #include <linux/smp.h>
 +#include <linux/module.h>
+ #include <linux/nospec.h>
+ #include <linux/prctl.h>
  
- #include <asm/nospec-branch.h>
- #include <asm/cmdline.h>
-@@ -93,6 +94,19 @@ static const char *spectre_v2_strings[] = {
- #define pr_fmt(fmt)     "Spectre V2 mitigation: " fmt
+@@ -130,6 +131,19 @@ static const char *spectre_v2_strings[] = {
  
- static enum spectre_v2_mitigation spectre_v2_enabled = SPECTRE_V2_NONE;
+ static enum spectre_v2_mitigation spectre_v2_enabled __ro_after_init =
+ 	SPECTRE_V2_NONE;
 +static bool spectre_v2_bad_module;
 +
 +#ifdef RETPOLINE
@@ -70,19 +70,19 @@ index d5bafcdb4891..e623bd731a74 100644
 +}
 +#endif
  
- static void __init spec2_print_if_insecure(const char *reason)
+ void x86_spec_ctrl_set(u64 val)
  {
-@@ -299,7 +313,8 @@ ssize_t cpu_show_spectre_v2(struct device *dev,
- 	if (!boot_cpu_has_bug(X86_BUG_SPECTRE_V2))
- 		return sprintf(buf, "Not affected\n");
+@@ -615,7 +629,9 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
+ 			return sprintf(buf, "Mitigation: OSB (observable speculation barrier, Intel v6)\n");
  
--	return sprintf(buf, "%s%s\n", spectre_v2_strings[spectre_v2_enabled],
--		       ibpb_inuse ? ", IBPB (Intel v4)" : "");
-+	return sprintf(buf, "%s%s%s\n", spectre_v2_strings[spectre_v2_enabled],
-+		       ibpb_inuse ? ", IBPB (Intel v4)" : "",
-+		       spectre_v2_bad_module ? " - vulnerable module loaded" : "");
- }
- #endif
+ 	case X86_BUG_SPECTRE_V2:
+-		return sprintf(buf, "%s%s\n", spectre_v2_strings[spectre_v2_enabled], ibpb_inuse ? ", IBPB (Intel v4)" : "");
++		return sprintf(buf, "%s%s%s\n", spectre_v2_strings[spectre_v2_enabled],
++		               ibpb_inuse ? ",IBPB (Intel v4)" : "",
++		               spectre_v2_bad_module ? " - vulnerable module loaded" : "");
+ 
+ 	case X86_BUG_SPEC_STORE_BYPASS:
+ 		return sprintf(buf, "%s\n", ssb_strings[ssb_mode]);
 diff --git a/include/linux/module.h b/include/linux/module.h
 index e7bdd549e527..c4fdf7661f82 100644
 --- a/include/linux/module.h
