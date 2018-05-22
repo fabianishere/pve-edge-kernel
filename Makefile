@@ -2,9 +2,9 @@ RELEASE=5.1
 
 # also update pve-kernel-meta.git if either of these change
 KERNEL_VER=4.15.17
-KREL=1
+KREL=2
 
-PKGREL=9
+PKGREL=10
 
 EXTRAVERSION=-${KREL}-pve
 KVNAME=${KERNEL_VER}${EXTRAVERSION}

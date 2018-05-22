@@ -1,3 +1,11 @@
+pve-kernel (4.15.17-10) unstable; urgency=medium
+
+  * update to Ubuntu-4.15.0-22.24
+
+  * update ZFS to 0.7.9-pve1
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 22 May 2018 11:15:44 +0200
+
 pve-kernel (4.15.17-9) unstable; urgency=medium
 
   * include objtool in pve-headers-* package (needed for some external
