@@ -54,10 +54,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  2 files changed, 110 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index f49ba96f8881..133fcf975b80 100644
+index c14cccce6272..b3aa6fcfe035 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -2968,6 +2968,15 @@
+@@ -2971,6 +2971,15 @@
  		nomsi		[MSI] If the PCI_MSI kernel config parameter is
  				enabled, this kernel boot option can be used to
  				disable the use of MSI interrupts system-wide.
