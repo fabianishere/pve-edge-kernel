@@ -194,3 +194,4 @@ abi-tmp-${KVNAME}:
 .PHONY: clean
 clean:
 	rm -rf *~ build *.prepared ${KERNEL_CFG_ORG}
+	rm -f *.deb *.changes *.buildinfo
