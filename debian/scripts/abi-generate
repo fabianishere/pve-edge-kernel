@@ -4,9 +4,13 @@ use PVE::Tools;
 
 use IO::File;
 
-my $input_file = shift;
-my $output_file = shift;
-my $abi = shift;
+sub usage {
+    die "USAGE: $0 INFILE OUTFILE ABI [INFILE-IS-DEB]\n";
+}
+
+my $input_file = shift // usage();
+my $output_file = shift // usage();
+my $abi = shift // usage();
 my $extract_deb = shift;
 
 die "input file '$input_file' does not exist\n" if ! -e $input_file;
