@@ -5,12 +5,12 @@ use PVE::Tools;
 use IO::File;
 
 sub usage {
-    die "USAGE: $0 INFILE OUTFILE ABI [INFILE-IS-DEB]\n";
+    die "USAGE: $0 INFILE OUTFILE [ABI INFILE-IS-DEB]\n";
 }
 
 my $input_file = shift // usage();
 my $output_file = shift // usage();
-my $abi = shift // usage();
+my $abi = shift;
 my $extract_deb = shift;
 
 die "input file '$input_file' does not exist\n" if ! -e $input_file;
@@ -18,6 +18,7 @@ die "input file '$input_file' does not exist\n" if ! -e $input_file;
 my $modules_symver_fh;
 
 if ($extract_deb) {
+	usage() if !defined($abi);
 	my $cmd = [];
 	push @$cmd, ['dpkg', '--fsys-tarfile', $input_file];
 	push @$cmd, ['tar', '-xOf', '-', "./usr/src/linux-headers-${abi}/Module.symvers"];
