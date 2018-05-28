@@ -129,8 +129,6 @@ binary: install
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'
 	${MAKE} -C ${KERNEL_SRC}/tools/perf man
-	# contained in linux-base
-	rm -f ${KERNEL_SRC}/tools/perf/Documentation/perf.1
 	touch $@
 
 .tools_install_mark: .tools_compile_mark
