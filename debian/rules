@@ -15,7 +15,7 @@ CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}
 PVE_HEADER_PKG=pve-headers-${KVNAME}
-LINUX_TOOLS_PKG=linux-tools-4.13
+LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
 
 # TODO: split for archs, move to files?
 PVE_CONFIG_OPTS= \
@@ -137,7 +137,7 @@ binary: install
 	rm -rf debian/${LINUX_TOOLS_PKG}
 	mkdir -p debian/${LINUX_TOOLS_PKG}/usr/bin
 	mkdir -p debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
-	install -m 755 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/perf debian/${LINUX_TOOLS_PKG}/usr/bin/perf_4.13
+	install -m 755 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/perf debian/${LINUX_TOOLS_PKG}/usr/bin/perf_$(KERNEL_MAJMIN)
 	install -m644 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/Documentation/*.1 debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
 	touch $@
 
