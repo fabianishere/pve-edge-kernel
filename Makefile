@@ -1,10 +1,16 @@
 RELEASE=5.1
 
 # also update pve-kernel-meta.git if either of these change
-KERNEL_VER=4.15.17
+KERNEL_MAJ=4
+KERNEL_MIN=15
+KERNEL_PATCHLEVEL=17
+
 KREL=2
 
 PKGREL=10
+
+KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
+KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
 
 EXTRAVERSION=-${KREL}-pve
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
@@ -33,7 +39,7 @@ endif
 BUILD_DIR=build
 
 KERNEL_SRC=ubuntu-bionic
-KERNEL_SRC_SUBMODULE=submodules/ubuntu-bionic
+KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
 E1000EDIR=e1000e-3.3.6
@@ -61,7 +67,7 @@ DIRS=KERNEL_SRC E1000EDIR IGBDIR IXGBEDIR SPLDIR ZFSDIR MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
-LINUX_TOOLS_DEB=linux-tools-4.15_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
+LINUX_TOOLS_DEB=linux-tools-$(KERNEL_MAJMIN)_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${LINUX_TOOLS_DEB}
 
@@ -96,6 +102,7 @@ debian.prepared: debian
 	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" > ${BUILD_DIR}/debian/SOURCE
 	@$(foreach dir, ${DIRS},echo "${dir}=${${dir}}" >> ${BUILD_DIR}/debian/rules.d/env.mk;)
 	echo "KVNAME=${KVNAME}" >> ${BUILD_DIR}/debian/rules.d/env.mk
+	echo "KERNEL_MAJMIN=${KERNEL_MAJMIN}" >> ${BUILD_DIR}/debian/rules.d/env.mk
 	cd ${BUILD_DIR}; debian/rules debian/control
 	touch $@
 
