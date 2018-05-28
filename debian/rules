@@ -143,7 +143,10 @@ binary: install
 	mkdir -p debian/${LINUX_TOOLS_PKG}/usr/bin
 	mkdir -p debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
 	install -m 755 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/perf debian/${LINUX_TOOLS_PKG}/usr/bin/perf_$(KERNEL_MAJMIN)
-	install -m644 ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/Documentation/*.1 debian/${LINUX_TOOLS_PKG}/usr/share/man/man1
+	for i in ${BUILD_DIR}/${KERNEL_SRC}/tools/perf/Documentation/*.1; do \
+	    fname="$${i##*/}"; manname="$${fname%.1}"; \
+	    install -m644 "$$i" "debian/${LINUX_TOOLS_PKG}/usr/share/man/man1/$${manname}_$(KERNEL_MAJMIN).1"; \
+	done
 	touch $@
 
 .headers_prepare_mark: .config_mark
