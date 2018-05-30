@@ -64,7 +64,7 @@ debian/control: $(wildcard debian/*.in)
 	chmod +x debian/${PVE_KERNEL_PKG}.postrm
 	chmod +x debian/${PVE_KERNEL_PKG}.postinst
 	chmod +x debian/${PVE_HEADER_PKG}.postinst
-	sed -e 's/@KVNAME@/${KVNAME}/g' < debian/control.in > debian/control
+	sed -e 's/@KVNAME@/${KVNAME}/g' -e 's/@KVMAJMIN@/${KERNEL_MAJMIN}/g' < debian/control.in > debian/control
 
 build: .compile_mark .tools_compile_mark .modules_compile_mark
 
