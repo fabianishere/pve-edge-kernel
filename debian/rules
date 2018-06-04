@@ -103,13 +103,12 @@ binary: install
 	install -m 644 ${KERNEL_SRC}/System.map debian/${PVE_KERNEL_PKG}/boot/System.map-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/${KERNEL_IMAGE_PATH} debian/${PVE_KERNEL_PKG}/boot/${KERNEL_INSTALL_FILE}-${KVNAME}
 	${MAKE} -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
-# disabled for now, incompatbile with 4.15
-#	## install latest ibg driver
-#	install -m 644 ${MODULES}/igb.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/igb/
-#	# install latest ixgbe driver
-#	install -m 644 ${MODULES}/ixgbe.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/ixgbe/
-#	# install latest e1000e driver
-#	install -m 644 ${MODULES}/e1000e.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/e1000e/
+	## install latest ibg driver
+	install -m 644 ${MODULES}/igb.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/igb/
+	# install latest ixgbe driver
+	install -m 644 ${MODULES}/ixgbe.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/ixgbe/
+	# install latest e1000e driver
+	install -m 644 ${MODULES}/e1000e.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/net/ethernet/intel/e1000e/
 	# install zfs drivers
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
 	install -m 644 $(addprefix ${MODULES}/,spl.ko splat.ko zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko zpios.ko icp.ko) debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
@@ -195,9 +194,7 @@ binary: install
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
 	touch $@
 
-# intel out-of-tree drivers disabled for now - incompatible with 4.15
-#.modules_compile_mark: $(addprefix ${MODULES}/,igb.ko ixgbe.ko e1000e.ko spl.ko zfs.ko)
-.modules_compile_mark: $(addprefix ${MODULES}/,spl.ko zfs.ko)
+.modules_compile_mark: $(addprefix ${MODULES}/,igb.ko ixgbe.ko e1000e.ko spl.ko zfs.ko)
 	touch $@
 
 ${MODULES}/spl.ko: .compile_mark

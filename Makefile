@@ -58,9 +58,7 @@ ZFSDIR=pkg-zfs
 ZFSSRC=${ZFSONLINUX_SUBMODULE}/zfs-debian
 
 MODULES=modules
-#intel out-of-tree drivers disabled for now - incompatible with 4.15
-#MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${IXGBEDIR} ${SPLDIR} ${ZFSDIR}
-MODULE_DIRS=${SPLDIR} ${ZFSDIR}
+MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${IXGBEDIR} ${SPLDIR} ${ZFSDIR}
 
 # exported to debian/rules via debian/rules.d/dirs.mk
 DIRS=KERNEL_SRC E1000EDIR IGBDIR IXGBEDIR SPLDIR ZFSDIR MODULES
@@ -127,14 +125,13 @@ ${E1000EDIR}.prepared: ${E1000ESRC}
 	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${E1000EDIR} -xf ${E1000ESRC}
 	cd ${BUILD_DIR}/${MODULES}/${E1000EDIR}; patch -p1 < ../../../patches/intel/intel-module-gcc6-compat.patch
 	cd ${BUILD_DIR}/${MODULES}/${E1000EDIR}; patch -p1 < ../../../patches/intel/e1000e/e1000e_4.10_max-mtu.patch
+	cd ${BUILD_DIR}/${MODULES}/${E1000EDIR}; patch -p1 < ../../../patches/intel/e1000e/e1000e_4.15-new-timer.patch
 	touch $@
 
 ${IGBDIR}.prepared: ${IGBSRC}
 	rm -rf ${BUILD_DIR}/${MODULES}/${IGBDIR} $@
 	mkdir -p ${BUILD_DIR}/${MODULES}/${IGBDIR}
 	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${IGBDIR} -xf ${IGBSRC}
-	cd ${BUILD_DIR}/${MODULES}/${IGBDIR}; patch -p1 < ../../../patches/intel/igb/igb_4.10_max-mtu.patch
-	cd ${BUILD_DIR}/${MODULES}/${IGBDIR}; patch -p1 < ../../../patches/intel/igb/igb_4.12_compat.patch
 	touch $@
 
 ${IXGBEDIR}.prepared: ${IXGBESRC}

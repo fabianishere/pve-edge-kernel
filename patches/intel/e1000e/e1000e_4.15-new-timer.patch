@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Thomas Lamprecht <t.lamprecht@proxmox.com>
+Date: Tue, 5 Jun 2018 11:16:29 +0200
+Subject: [PATCH] port to new internal kernel timer API
+
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+diff --git a/src/netdev.c b/src/netdev.c
+--- a/src/netdev.c
++++ b/src/netdev.c
+@@ -5389,9 +5389,10 @@
+  * Need to wait a few seconds after link up to get diagnostic information from
+  * the phy
+  **/
+-static void e1000_update_phy_info(unsigned long data)
++static void e1000_update_phy_info(struct timer_list *t)
+ {
+-	struct e1000_adapter *adapter = (struct e1000_adapter *)data;
++	struct e1000_adapter *adapter;
++	adapter = from_timer(adapter, t, phy_info_timer);
+ 
+ 	if (test_bit(__E1000_DOWN, &adapter->state))
+ 		return;
+@@ -5774,9 +5775,10 @@
+  * e1000_watchdog - Timer Call-back
+  * @data: pointer to adapter cast into an unsigned long
+  **/
+-static void e1000_watchdog(unsigned long data)
++static void e1000_watchdog(struct timer_list *t)
+ {
+-	struct e1000_adapter *adapter = (struct e1000_adapter *)data;
++	struct e1000_adapter *adapter;
++	adapter = from_timer(adapter, t, watchdog_timer);
+ 
+ 	/* Do the rest outside of interrupt context */
+ 	schedule_work(&adapter->watchdog_task);
+@@ -8348,13 +8348,9 @@
+ 		goto err_eeprom;
+ 	}
+ 
+-	init_timer(&adapter->watchdog_timer);
+-	adapter->watchdog_timer.function = e1000_watchdog;
+-	adapter->watchdog_timer.data = (unsigned long)adapter;
+-
+-	init_timer(&adapter->phy_info_timer);
+-	adapter->phy_info_timer.function = e1000_update_phy_info;
+-	adapter->phy_info_timer.data = (unsigned long)adapter;
++	timer_setup(&adapter->watchdog_timer, e1000_watchdog, 0);
++
++	timer_setup(&adapter->phy_info_timer, e1000_update_phy_info, 0);
+ 
+ 	INIT_WORK(&adapter->reset_task, e1000_reset_task);
+ 	INIT_WORK(&adapter->watchdog_task, e1000_watchdog_task);
