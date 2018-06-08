@@ -1,3 +1,11 @@
+pve-kernel (4.15.17-12) unstable; urgency=medium
+
+  * backport fix for SUN NICs when used with Open vSwitch
+
+  * update and re-enable out-of-tree Intel ethernet drivers (e1000e, igb, ixgbe)
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 08 Jun 2018 11:18:32 +0200
+
 pve-kernel (4.15.17-10) unstable; urgency=medium
 
   * update to Ubuntu-4.15.0-22.24
