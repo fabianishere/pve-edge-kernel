@@ -1,10 +1,9 @@
 RELEASE=5.1
 
-# also update pve-kernel-meta.git if either of these change
+# also bump pve-kernel-meta if either of MAJ.MIN, PATCHLEVEL or KREL change
 KERNEL_MAJ=4
 KERNEL_MIN=15
 KERNEL_PATCHLEVEL=17
-
 KREL=3
 
 PKGREL=12
