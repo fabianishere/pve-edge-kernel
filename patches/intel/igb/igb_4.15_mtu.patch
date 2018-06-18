@@ -1,0 +1,15 @@
+diff --git a/src/igb_main.c.orig b/src/igb_main.c
+index 3ee1ec7..c8adf04 100644
+--- a/src/igb_main.c.orig
++++ b/src/igb_main.c
+@@ -5888,10 +5888,8 @@ static int igb_change_mtu(struct net_dev
+ 	while (test_and_set_bit(__IGB_RESETTING, &adapter->state))
+ 		usleep_range(1000, 2000);
+ 
+-#ifndef HAVE_NETDEVICE_MIN_MAX_MTU
+ 	/* igb_down has a dependency on max_frame_size */
+ 	adapter->max_frame_size = max_frame;
+-#endif
+ 
+ 	if (netif_running(netdev))
+ 		igb_down(adapter);

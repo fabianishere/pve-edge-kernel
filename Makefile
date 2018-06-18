@@ -131,6 +131,7 @@ ${IGBDIR}.prepared: ${IGBSRC}
 	rm -rf ${BUILD_DIR}/${MODULES}/${IGBDIR} $@
 	mkdir -p ${BUILD_DIR}/${MODULES}/${IGBDIR}
 	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${IGBDIR} -xf ${IGBSRC}
+	cd ${BUILD_DIR}/${MODULES}/${IGBDIR}; patch -p1 < ../../../patches/intel/igb/igb_4.15_mtu.patch
 	touch $@
 
 ${IXGBEDIR}.prepared: ${IXGBESRC}
