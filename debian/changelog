@@ -1,3 +1,10 @@
+pve-kernel (4.15.17-13) unstable; urgency=medium
+
+  * fix regression for newer out-of-tree IGB driver when setting a non-
+    default MTU
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 18 Jun 2018 17:15:04 +0200
+
 pve-kernel (4.15.17-12) unstable; urgency=medium
 
   * backport fix for SUN NICs when used with Open vSwitch
