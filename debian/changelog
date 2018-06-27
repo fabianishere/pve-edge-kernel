@@ -1,3 +1,9 @@
+pve-kernel (4.15.17-14) unstable; urgency=medium
+
+  * fix KVM L1 guest escape when nested virtualization is used - CVE-2018-12904
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 27 Jun 2018 17:18:05 +0200
+
 pve-kernel (4.15.17-13) unstable; urgency=medium
 
   * fix regression for newer out-of-tree IGB driver when setting a non-
