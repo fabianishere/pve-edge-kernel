@@ -41,6 +41,3 @@ index 87f1fc9801d7..4ef868f1f244 100755
  fi
  if test -z "$KBUILD_BUILD_USER"; then
  	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
--- 
-2.14.2
-

@@ -365,6 +365,3 @@ index 256986aca8df..e8e205bf2e41 100644
  	ret = ocfs2_lock_allocators(inode, &et, 0, dwc->dw_zero_count*2,
  				    &data_ac, &meta_ac);
  	if (ret) {
--- 
-2.14.2
-

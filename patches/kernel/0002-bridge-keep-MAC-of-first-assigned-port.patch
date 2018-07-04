@@ -33,6 +33,3 @@ index 808e2b914015..b0ad54384826 100644
  	}
  
  	if (ether_addr_equal(br->bridge_id.addr, addr))
--- 
-2.14.2
-

@@ -74,7 +74,7 @@ index c14cccce6272..b3aa6fcfe035 100644
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index 451fd28f1855..a928bd86e102 100644
+index 26b3ed731208..d66c874a7a6e 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
 @@ -3702,6 +3702,106 @@ static int __init pci_apply_final_quirks(void)
@@ -184,7 +184,7 @@ index 451fd28f1855..a928bd86e102 100644
  /*
   * Following are device-specific reset methods which can be used to
   * reset a single function if other methods (e.g. FLR, PM D0->D3) are
-@@ -4536,6 +4636,7 @@ static const struct pci_dev_acs_enabled {
+@@ -4538,6 +4638,7 @@ static const struct pci_dev_acs_enabled {
  	{ PCI_VENDOR_ID_CAVIUM, PCI_ANY_ID, pci_quirk_cavium_acs },
  	/* APM X-Gene */
  	{ PCI_VENDOR_ID_AMCC, 0xE004, pci_quirk_xgene_acs },
@@ -192,6 +192,3 @@ index 451fd28f1855..a928bd86e102 100644
  	{ 0 }
  };
  
--- 
-2.14.2
-
