@@ -47,9 +47,6 @@ E1000ESRC=${E1000EDIR}.tar.gz
 IGBDIR=igb-5.3.5.18
 IGBSRC=${IGBDIR}.tar.gz
 
-IXGBEDIR=ixgbe-5.3.7
-IXGBESRC=${IXGBEDIR}.tar.gz
-
 ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
 SPLDIR=pkg-spl
 SPLSRC=${ZFSONLINUX_SUBMODULE}/spl-debian
@@ -57,10 +54,10 @@ ZFSDIR=pkg-zfs
 ZFSSRC=${ZFSONLINUX_SUBMODULE}/zfs-debian
 
 MODULES=modules
-MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${IXGBEDIR} ${SPLDIR} ${ZFSDIR}
+MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${SPLDIR} ${ZFSDIR}
 
 # exported to debian/rules via debian/rules.d/dirs.mk
-DIRS=KERNEL_SRC E1000EDIR IGBDIR IXGBEDIR SPLDIR ZFSDIR MODULES
+DIRS=KERNEL_SRC E1000EDIR IGBDIR SPLDIR ZFSDIR MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
@@ -132,12 +129,6 @@ ${IGBDIR}.prepared: ${IGBSRC}
 	mkdir -p ${BUILD_DIR}/${MODULES}/${IGBDIR}
 	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${IGBDIR} -xf ${IGBSRC}
 	cd ${BUILD_DIR}/${MODULES}/${IGBDIR}; patch -p1 < ../../../patches/intel/igb/igb_4.15_mtu.patch
-	touch $@
-
-${IXGBEDIR}.prepared: ${IXGBESRC}
-	rm -rf ${BUILD_DIR}/${MODULES}/${IXGBEDIR} $@
-	mkdir -p ${BUILD_DIR}/${MODULES}/${IXGBEDIR}
-	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${IXGBEDIR} -xf ${IXGBESRC}
 	touch $@
 
 $(SPLDIR).prepared: ${SPLSRC}
