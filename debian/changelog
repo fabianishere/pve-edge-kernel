@@ -1,3 +1,11 @@
+pve-kernel (4.15.18-15) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.15.0-24.26
+
+  * drop out-of-tree IXGBE driver
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 04 Jul 2018 15:42:56 +0200
+
 pve-kernel (4.15.17-14) unstable; urgency=medium
 
   * fix KVM L1 guest escape when nested virtualization is used - CVE-2018-12904
