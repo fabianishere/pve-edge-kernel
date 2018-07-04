@@ -24,6 +24,7 @@ git format-patch \
     --no-numbered \
     --no-cover-letter \
     --zero-commit \
+    --no-signature \
     --output-dir \
     "${top}/${kernel_patchdir}" \
     "${base_ref}.."
