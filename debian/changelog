@@ -1,3 +1,11 @@
+pve-kernel (4.13.16-51) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.13.0-45.50
+
+  * bump ABI to 4.13.16-4-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 05 Jul 2018 10:25:38 +0200
+
 pve-kernel (4.13.16-50) unstable; urgency=medium
 
   * fix KVM L1 guest escape when nested virtualization is used - CVE-
