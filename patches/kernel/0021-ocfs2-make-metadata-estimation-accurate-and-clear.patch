@@ -56,6 +56,3 @@ index 88a31e9340a0..77ec9b495027 100644
  	}
  
  	ret = ocfs2_write_end_nolock(inode->i_mapping, pos, len, len, wc);
--- 
-2.14.2
-

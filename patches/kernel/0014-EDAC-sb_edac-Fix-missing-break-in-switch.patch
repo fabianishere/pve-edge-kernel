@@ -32,6 +32,3 @@ index 5c3e707ff3fc..59af590b660c 100644
  		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA0_RAS:
  		case PCI_DEVICE_ID_INTEL_IBRIDGE_IMC_HA1_RAS:
  			pvt->pci_ras = pdev;
--- 
-2.14.2
-

@@ -29,6 +29,3 @@ index 537d0a0ad4c4..4450961b1554 100644
  		case TCF_LAYER_NETWORK:
  			return skb_network_header(skb);
  		case TCF_LAYER_TRANSPORT:
--- 
-2.14.2
-

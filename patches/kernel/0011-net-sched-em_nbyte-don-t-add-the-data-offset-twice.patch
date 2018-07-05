@@ -28,6 +28,3 @@ index df3110d69585..07c10bac06a0 100644
  }
  
  static struct tcf_ematch_ops em_nbyte_ops = {
--- 
-2.14.2
-

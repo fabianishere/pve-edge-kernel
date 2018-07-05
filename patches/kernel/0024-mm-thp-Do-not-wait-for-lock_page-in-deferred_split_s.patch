@@ -41,6 +41,3 @@ index 8b887db33383..5c4093e0be8d 100644
  		put_page(page);
  	}
  
--- 
-2.14.2
-

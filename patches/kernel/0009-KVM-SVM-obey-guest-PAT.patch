@@ -34,10 +34,10 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
-index 6b1744499a90..5c37c1a1a949 100644
+index 068084c8e540..da10db3de636 100644
 --- a/arch/x86/kvm/svm.c
 +++ b/arch/x86/kvm/svm.c
-@@ -3650,6 +3650,13 @@ static int svm_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr)
+@@ -3666,6 +3666,13 @@ static int svm_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr)
  	u32 ecx = msr->index;
  	u64 data = msr->data;
  	switch (ecx) {
@@ -51,6 +51,3 @@ index 6b1744499a90..5c37c1a1a949 100644
  	case MSR_IA32_TSC:
  		kvm_write_tsc(vcpu, msr);
  		break;
--- 
-2.14.2
-

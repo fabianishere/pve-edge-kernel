@@ -44,6 +44,3 @@ index d74c3f9f1fa8..436005392047 100644
  endef
  
  # List module undefined symbols (or empty line if not enabled)
--- 
-2.14.2
-

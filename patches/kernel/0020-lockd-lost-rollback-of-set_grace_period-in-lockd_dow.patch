@@ -41,6 +41,3 @@ index 726b6cecf430..fa8f6effcf00 100644
  			svc_shutdown_net(serv, net);
  			dprintk("lockd_down_net: per-net data destroyed; net=%p\n", net);
  		}
--- 
-2.14.2
-

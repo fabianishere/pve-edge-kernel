@@ -74,10 +74,10 @@ index ce24cb1e8f46..0cc1d4200c24 100644
  				Safety option to keep boot IRQs enabled. This
  				should never be necessary.
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index 99eec22d99b7..7576c2b0c913 100644
+index 9dcd5ed5a05b..8882b8d38d7d 100644
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
-@@ -3687,6 +3687,107 @@ static int __init pci_apply_final_quirks(void)
+@@ -3694,6 +3694,107 @@ static int __init pci_apply_final_quirks(void)
  
  fs_initcall_sync(pci_apply_final_quirks);
  
@@ -185,7 +185,7 @@ index 99eec22d99b7..7576c2b0c913 100644
  /*
   * Following are device-specific reset methods which can be used to
   * reset a single function if other methods (e.g. FLR, PM D0->D3) are
-@@ -4529,6 +4630,7 @@ static const struct pci_dev_acs_enabled {
+@@ -4536,6 +4637,7 @@ static const struct pci_dev_acs_enabled {
  	{ 0x10df, 0x720, pci_quirk_mf_endpoint_acs }, /* Emulex Skyhawk-R */
  	/* Cavium ThunderX */
  	{ PCI_VENDOR_ID_CAVIUM, PCI_ANY_ID, pci_quirk_cavium_acs },
@@ -193,6 +193,3 @@ index 99eec22d99b7..7576c2b0c913 100644
  	{ 0 }
  };
  
--- 
-2.14.2
-

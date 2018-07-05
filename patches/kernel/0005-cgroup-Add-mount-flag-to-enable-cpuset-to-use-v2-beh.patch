@@ -61,6 +61,3 @@ index 7bf4b1533f34..ce7426b875f5 100644
  		if (!strcmp(token, "xattr")) {
  			opts->flags |= CGRP_ROOT_XATTR;
  			continue;
--- 
-2.14.2
-

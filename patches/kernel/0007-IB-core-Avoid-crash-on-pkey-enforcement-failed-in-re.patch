@@ -88,6 +88,3 @@ index f8f53bb90837..cb91245e9163 100644
  	list_add(&mad_recv_wc->recv_buf.list, &mad_recv_wc->rmpp_list);
  	if (ib_mad_kernel_rmpp_agent(&mad_agent_priv->agent)) {
  		mad_recv_wc = ib_process_rmpp_recv_wc(mad_agent_priv,
--- 
-2.14.2
-

@@ -47,6 +47,3 @@ index d6afed6d0752..c09ebe92a40a 100644
  	spin_unlock_irqrestore(&wq_head->lock, flags);
  }
  EXPORT_SYMBOL(add_wait_queue);
--- 
-2.14.2
-

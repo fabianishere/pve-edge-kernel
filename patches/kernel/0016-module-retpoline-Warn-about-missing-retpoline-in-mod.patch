@@ -41,7 +41,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  4 files changed, 46 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/cpu/bugs.c b/arch/x86/kernel/cpu/bugs.c
-index 2443b9580e94..e0b6aa62b253 100644
+index 7e5db5aa37f3..b5bcdf7e94d7 100644
 --- a/arch/x86/kernel/cpu/bugs.c
 +++ b/arch/x86/kernel/cpu/bugs.c
 @@ -11,6 +11,7 @@
@@ -52,7 +52,7 @@ index 2443b9580e94..e0b6aa62b253 100644
  #include <linux/nospec.h>
  #include <linux/prctl.h>
  
-@@ -130,6 +131,19 @@ static const char *spectre_v2_strings[] = {
+@@ -131,6 +132,19 @@ static const char *spectre_v2_strings[] = {
  
  static enum spectre_v2_mitigation spectre_v2_enabled __ro_after_init =
  	SPECTRE_V2_NONE;
@@ -70,9 +70,9 @@ index 2443b9580e94..e0b6aa62b253 100644
 +}
 +#endif
  
- void x86_spec_ctrl_set(u64 val)
- {
-@@ -615,7 +629,9 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
+ void
+ x86_virt_spec_ctrl(u64 guest_spec_ctrl, u64 guest_virt_spec_ctrl, bool setguest)
+@@ -627,7 +641,9 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
  			return sprintf(buf, "Mitigation: OSB (observable speculation barrier, Intel v6)\n");
  
  	case X86_BUG_SPECTRE_V2:
@@ -104,7 +104,7 @@ index e7bdd549e527..c4fdf7661f82 100644
  static inline bool module_sig_ok(struct module *module)
  {
 diff --git a/kernel/module.c b/kernel/module.c
-index e5b878b26906..de7db074f793 100644
+index 41b97a191a72..1c3fd6f767b4 100644
 --- a/kernel/module.c
 +++ b/kernel/module.c
 @@ -2855,6 +2855,15 @@ static int check_modinfo_livepatch(struct module *mod, struct load_info *info)
@@ -159,6 +159,3 @@ index 48397feb08fb..cc91f81ac33e 100644
  		add_staging_flag(&buf, mod->name);
  		err |= add_versions(&buf, mod);
  		add_depends(&buf, mod, modules);
--- 
-2.14.2
-

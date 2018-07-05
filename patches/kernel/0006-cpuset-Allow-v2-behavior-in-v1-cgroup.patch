@@ -26,11 +26,10 @@ diff --git a/kernel/cgroup/cpuset.c b/kernel/cgroup/cpuset.c
 index e8cb34193433..f76c4bf3d46a 100644
 --- a/kernel/cgroup/cpuset.c
 +++ b/kernel/cgroup/cpuset.c
-@@ -299,6 +299,16 @@ static DECLARE_WORK(cpuset_hotplug_work, cpuset_hotplug_workfn);
- 
+@@ -300,6 +300,16 @@ static DECLARE_WORK(cpuset_hotplug_work, cpuset_hotplug_workfn);
  static DECLARE_WAIT_QUEUE_HEAD(cpuset_attach_wq);
  
-+/*
+ /*
 + * Cgroup v2 behavior is used when on default hierarchy or the
 + * cgroup_v2_mode flag is set.
 + */
@@ -40,9 +39,10 @@ index e8cb34193433..f76c4bf3d46a 100644
 +	      (cpuset_cgrp_subsys.root->flags & CGRP_ROOT_CPUSET_V2_MODE);
 +}
 +
- /*
++/*
   * This is ugly, but preserves the userspace API for existing cpuset
   * users. If someone tries to mount the "cpuset" filesystem, we
+  * silently switch it to mount "cgroup" instead
 @@ -489,8 +499,7 @@ static int validate_change(struct cpuset *cur, struct cpuset *trial)
  
  	/* On legacy hiearchy, we must be a subset of our parent cpuset. */
@@ -136,6 +136,3 @@ index e8cb34193433..f76c4bf3d46a 100644
  
  	mutex_lock(&cpuset_mutex);
  
--- 
-2.14.2
-

@@ -42,6 +42,3 @@ index 70ad19c4c73e..8f9fd3b757db 100644
  
  	ret = ib_security_pkey_access(map->agent.device,
  				      map->agent.port_num,
--- 
-2.14.2
-
