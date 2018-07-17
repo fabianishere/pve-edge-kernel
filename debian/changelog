@@ -1,3 +1,11 @@
+pve-kernel (4.15.18-16) unstable; urgency=medium
+
+  * update to Ubuntu-4.15.0-29.31
+
+  * cherry-pick fix for zpl_mount deadlock possibility
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 23 Jul 2018 15:59:19 +0200
+
 pve-kernel (4.15.18-15) unstable; urgency=medium
 
   * update sources to Ubuntu-4.15.0-24.26
