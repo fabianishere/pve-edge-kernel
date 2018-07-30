@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Fri, 27 Jul 2018 14:27:05 -0700
+Subject: [PATCH] UBUNTU SAUCE: apparmor: fix apparmor mediating locking non-fs
+ unix sockets
+
+the apparmor policy language current does not allow expressing of the
+locking permission for no-fs unix sockets. However the kernel is
+enforcing mediation.
+
+Add the AA_MAY_LOCK perm to the computed perm mask which will grant
+permission for all current abi profiles, but still allow specifying
+auditing of the operation if needed.
+
+http://bugs.launchpad.net/bugs/1780227
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+---
+ security/apparmor/lib.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/security/apparmor/lib.c b/security/apparmor/lib.c
+index a7b3f681b80e..eafad30a78d7 100644
+--- a/security/apparmor/lib.c
++++ b/security/apparmor/lib.c
+@@ -327,7 +327,7 @@ void aa_compute_perms(struct aa_dfa *dfa, unsigned int state,
+ 	/* for v5 perm mapping in the policydb, the other set is used
+ 	 * to extend the general perm set
+ 	 */
+-	perms->allow |= map_other(dfa_other_allow(dfa, state));
++	perms->allow |= map_other(dfa_other_allow(dfa, state)) | AA_MAY_LOCK;
+ 	perms->audit |= map_other(dfa_other_audit(dfa, state));
+ 	perms->quiet |= map_other(dfa_other_quiet(dfa, state));
+ //	perms->xindex = dfa_user_xindex(dfa, state);
+-- 
+2.17.1
+
