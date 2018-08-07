@@ -1,3 +1,10 @@
+pve-kernel (4.15.18-18) unstable; urgency=medium
+
+  * add SGID non-directory fix (fixes CVE-2018-13405)
+  * update to Ubuntu-4.15.0-30.32 (fixes CVE-2018-5390)
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 07 Aug 2018 16:04:18 +0200
+
 pve-kernel (4.15.18-17) unstable; urgency=medium
 
   * apparmor: fix apparmor mediating locking non-fs unix sockets
