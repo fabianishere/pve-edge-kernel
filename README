@@ -55,6 +55,21 @@ git clone git://git.proxmox.com/git/pve-firmware.git
 NOTES:
 ======
 
+ABI versions, package versions and package name:
+------------------------------------------------
+
+We follow debian's versioning w.r.t ABI changes:
+
+https://kernel-team.pages.debian.net/kernel-handbook/ch-versions.html
+https://wiki.debian.org/DebianKernelABIChanges
+
+The debian/rules file has a target comparing the build kernel's ABI against the
+version stored in the repository and indicates when an ABI bump is necessary.
+An ABI bump within one upstream version consists of incrementing the KREL
+variable in the Makefile, rebuilding the packages and running 'make abiupdate'
+(the 'abiupdate' target in 'Makefile' contains the steps for consistently
+updating the repository).
+
 Watchdog blacklist
 ------------------
 
