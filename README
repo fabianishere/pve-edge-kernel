@@ -80,7 +80,7 @@ see debian/rules (PVE_CONFIG_OPTS)
 - enable CONFIG_CEPH_FS=m (request from user)
 
 - enable common CONFIG_BLK_DEV_XXX to avoid hardware detection
-  problems (udev, undate-initramfs have serious problems without that)
+  problems (udev, update-initramfs have serious problems without that)
 
   	 CONFIG_BLK_DEV_SD=y
   	 CONFIG_BLK_DEV_SR=y
