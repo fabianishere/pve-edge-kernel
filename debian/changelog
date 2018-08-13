@@ -1,3 +1,9 @@
+pve-kernel (4.15.18-19) unstable; urgency=medium
+
+  * update ZFS submodule to 0.7.9-pve3
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 13 Aug 2018 07:50:59 +0200
+
 pve-kernel (4.15.18-18) unstable; urgency=medium
 
   * add SGID non-directory fix (fixes CVE-2018-13405)
