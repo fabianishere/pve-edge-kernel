@@ -151,7 +151,7 @@ $(ZFSDIR).prepared: ${ZFSSRC}
 
 .PHONY: upload
 upload: ${DEBS}
-	tar cf - ${DEBS}|ssh repoman@repo.proxmox.com -- upload --product pve,pmg --dist stretch --arch ${ARCH}
+	tar cf - ${DEBS}|ssh -X repoman@repo.proxmox.com -- upload --product pve,pmg --dist stretch --arch ${ARCH}
 
 .PHONY: distclean
 distclean: clean
