@@ -19,7 +19,7 @@ Signed-off-by: John Johansen <john.johansen@canonical.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/security/apparmor/lib.c b/security/apparmor/lib.c
-index a7b3f681b80e..eafad30a78d7 100644
+index 068a9f471f77..23f3d16d6b85 100644
 --- a/security/apparmor/lib.c
 +++ b/security/apparmor/lib.c
 @@ -327,7 +327,7 @@ void aa_compute_perms(struct aa_dfa *dfa, unsigned int state,
@@ -31,6 +31,3 @@ index a7b3f681b80e..eafad30a78d7 100644
  	perms->audit |= map_other(dfa_other_audit(dfa, state));
  	perms->quiet |= map_other(dfa_other_quiet(dfa, state));
  //	perms->xindex = dfa_user_xindex(dfa, state);
--- 
-2.17.1
-
