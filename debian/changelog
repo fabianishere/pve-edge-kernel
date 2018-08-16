@@ -1,3 +1,13 @@
+pve-kernel (4.15.18-20) unstable; urgency=medium
+
+  * update to Ubuntu-4.15.0-32.35
+
+  * bump ABI to 4.15.18-2-pve
+
+  * fix CVE-2018-3620, CVE-2018-3646, CVE-2018-5391
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 16 Aug 2018 11:06:35 +0200
+
 pve-kernel (4.15.18-19) unstable; urgency=medium
 
   * update ZFS submodule to 0.7.9-pve3
