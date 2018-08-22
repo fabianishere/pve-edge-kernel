@@ -15,8 +15,6 @@ Additional/Updated Modules:
 
 - include latest e1000e driver from intel/sourceforge
 
-- include latest ixgbe driver from intel/sourceforge
-
 - include latest igb driver from intel/sourceforge
 
 - include native OpenZFS filesystem kernel modules for Linux
@@ -84,7 +82,7 @@ Additional information
 We use the default configuration provided by Ubuntu, and apply
 the following modifications:
 
-see debian/rules (PVE_CONFIG_OPTS)
+NOTE: For the exact and current list see debian/rules (PVE_CONFIG_OPTS)
 
 - enable INTEL_MEI_WDT=m (to allow disabling via patch)
 
@@ -110,20 +108,13 @@ see debian/rules (PVE_CONFIG_OPTS)
 	 CONFIG_BLK_DEV_NBD=m
 	 CONFIG_BLK_DEV_RBD=m
 
-- set LOOP_MIN_COUNT to 8 (debian defaults)
-	 CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
+- enable IBM JFS file system as module
 
-- disable module signatures (CONFIG_MODULE_SIG)
+  enable it as requested by users (bug #64)
 
-- enable IBM JFS file system
+- enable apple HFS and HFSPLUS as module
 
-  This is disabled in RHEL kernel for no real reason, so we enable
-  it as requested by users (bug #64)
-
-- enable apple HFS and HFSPLUS
-
-  This is disabled in RHEL kernel for no real reason, so we enable
-  it as requested by users
+  enable it as requested by users
 
 - enable CONFIG_BCACHE=m (requested by user)
 
