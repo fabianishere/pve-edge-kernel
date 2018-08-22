@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Date: Sun, 1 Jul 2018 18:22:37 +0200
+Subject: [PATCH] scsi: hpsa: disable device during shutdown
+
+4.17-stable review patch.  If anyone has any objections, please let me know.
+
+------------------
+
+From: Sinan Kaya <okaya@codeaurora.org>
+
+commit 0d98ba8d70b0070ac117452ea0b663e26bbf46bf upstream.
+
+'Commit cc27b735ad3a ("PCI/portdrv: Turn off PCIe services during
+shutdown")' has been added to kernel to shutdown pending PCIe port service
+interrupts during reboot so that a newly started kexec kernel wouldn't
+observe pending interrupts.
+
+pcie_port_device_remove() is disabling the root port and switches by
+calling pci_disable_device() after all PCIe service drivers are shutdown.
+
+This has been found to cause crashes on HP DL360 Gen9 machines during
+reboot due to hpsa driver not clearing the bus master bit during the
+shutdown procedure by calling pci_disable_device().
+
+Disable device as part of the shutdown sequence.
+
+Signed-off-by: Sinan Kaya <okaya@codeaurora.org>
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=199779
+Fixes: cc27b735ad3a ("PCI/portdrv: Turn off PCIe services during shutdown")
+Cc: stable@vger.kernel.org
+Reported-by: Ryan Finnie <ryan@finnie.org>
+Tested-by: Don Brace <don.brace@microsemi.com>
+Acked-by: Don Brace <don.brace@microsemi.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+---
+ drivers/scsi/hpsa.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/scsi/hpsa.c b/drivers/scsi/hpsa.c
+index 211975cc28c9..2d4b5177d1a2 100644
+--- a/drivers/scsi/hpsa.c
++++ b/drivers/scsi/hpsa.c
+@@ -8879,7 +8879,7 @@ static void hpsa_disable_rld_caching(struct ctlr_info *h)
+ 	kfree(options);
+ }
+ 
+-static void hpsa_shutdown(struct pci_dev *pdev)
++static void __hpsa_shutdown(struct pci_dev *pdev)
+ {
+ 	struct ctlr_info *h;
+ 
+@@ -8894,6 +8894,12 @@ static void hpsa_shutdown(struct pci_dev *pdev)
+ 	hpsa_disable_interrupt_mode(h);		/* pci_init 2 */
+ }
+ 
++static void hpsa_shutdown(struct pci_dev *pdev)
++{
++	__hpsa_shutdown(pdev);
++	pci_disable_device(pdev);
++}
++
+ static void hpsa_free_device_info(struct ctlr_info *h)
+ {
+ 	int i;
+@@ -8937,7 +8943,7 @@ static void hpsa_remove_one(struct pci_dev *pdev)
+ 		scsi_remove_host(h->scsi_host);		/* init_one 8 */
+ 	/* includes hpsa_free_irqs - init_one 4 */
+ 	/* includes hpsa_disable_interrupt_mode - pci_init 2 */
+-	hpsa_shutdown(pdev);
++	__hpsa_shutdown(pdev);
+ 
+ 	hpsa_free_device_info(h);		/* scan */
+ 
