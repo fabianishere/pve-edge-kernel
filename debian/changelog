@@ -1,3 +1,13 @@
+pve-kernel (4.15.18-21) unstable; urgency=medium
+
+  * backport fix for udp/tcp with SO_BINDTODEVICE
+
+  * scsi: hpsa: disable device during shutdown
+
+  * vhost: fix info leak due to uninitialized memory (CVE-2018-1118)
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 23 Aug 2018 11:01:17 +0200
+
 pve-kernel (4.15.18-20) unstable; urgency=medium
 
   * update to Ubuntu-4.15.0-32.35
