@@ -1,3 +1,13 @@
+pve-kernel (4.15.18-24) unstable; urgency=medium
+
+  * bump spl and zfs to 0.7.11
+
+  * update sources to Ubuntu-4.15.0-35.38
+
+  * bump ABI to 4.15.18-5-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 13 Sep 2018 09:15:10 +0200
+
 pve-kernel (4.15.18-23) unstable; urgency=medium
 
   * backport protection against userspace-userspace spectreRSB
