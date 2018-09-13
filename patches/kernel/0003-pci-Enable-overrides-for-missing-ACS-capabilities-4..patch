@@ -54,7 +54,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  2 files changed, 110 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index e1c10a202abe..e40248310433 100644
+index 51210d10d905..ceb1b471d249 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
 @@ -3049,6 +3049,15 @@
