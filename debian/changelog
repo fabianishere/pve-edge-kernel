@@ -1,3 +1,11 @@
+pve-kernel (4.15.18-25) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.15.0-36.39
+
+  * bump ABI to 4.15.18-6-pve
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 03 Oct 2018 14:09:02 +0200
+
 pve-kernel (4.15.18-24) unstable; urgency=medium
 
   * bump spl and zfs to 0.7.11
