@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Martin Wilck <mwilck@suse.com>
+Date: Tue, 9 Oct 2018 17:04:41 +0100
+Subject: [PATCH] blkdev: __blkdev_direct_IO_simple: fix leak in error case
+
+Buglink: https://bugs.launchpad.net/bugs/1796542
+
+Fixes: 72ecad22d9f1 ("block: support a full bio worth of IO for simplified bdev direct-io")
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+(cherry picked from commit 9362dd1109f87a9d0a798fbc890cb339c171ed35)
+Signed-off-by: Colin Ian King <colin.king@canonical.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ fs/block_dev.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 82c823ef06a6..74b4ae9b7ba0 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -219,7 +219,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 
+ 	ret = bio_iov_iter_get_pages(&bio, iter);
+ 	if (unlikely(ret))
+-		return ret;
++		goto out;
+ 	ret = bio.bi_iter.bi_size;
+ 
+ 	if (iov_iter_rw(iter) == READ) {
+@@ -248,12 +248,13 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 		put_page(bvec->bv_page);
+ 	}
+ 
+-	if (vecs != inline_vecs)
+-		kfree(vecs);
+-
+ 	if (unlikely(bio.bi_status))
+ 		ret = blk_status_to_errno(bio.bi_status);
+ 
++out:
++	if (vecs != inline_vecs)
++		kfree(vecs);
++
+ 	bio_uninit(&bio);
+ 
+ 	return ret;
