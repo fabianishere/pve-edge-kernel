@@ -24,6 +24,32 @@ Additional/Updated Modules:
   For licensing questions, see: http://open-zfs.org/wiki/Talk:FAQ
 
 
+SUBMODULE
+=========
+
+We track the current upstream repository as submodule. Besides obvious
+advantages over tracking binary tar archives this also has some implications.
+
+For building the submodule directory gets copied into build/ and a few patches
+get applied with the `patch` tool. From a git point-of-view, the copied
+directory remains clean even with extra patches applied since it does not
+contain a .git directory, but a reference to the (still pristine) submodule:
+
+$ cat build/ubuntu-bionic/.git
+
+If you mistakenly cloned the upstream repo as "normal" clone (not via the
+submodule mechanics) this means that you have a real .git directory with its
+independent objects and tracking info when copying for building, thus git
+operates on the copied directory - and "sees" that it was dirtied by `patch`,
+and thus the kernel buildsystem sees this too and will add a '+' to the version
+as a result. This changes the output directories for modules and other build
+artefacts and let's then the build fail on packaging.
+
+So always ensure that you really checked it out as submodule, not as full
+"normal" clone. You can also explicitly set the LOCALVERSION variable to
+undefined with: `export LOCALVERSION= but that should only be done for test
+builds.
+
 RELATED PACKAGES:
 =================
 
