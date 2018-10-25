@@ -1,3 +1,15 @@
+pve-kernel (4.15.18-28) unstable; urgency=medium
+
+  * backport deadlock fix for issue ZOL#7939
+
+  * cherry-pick 2 patches planned for zfs-0.7.12
+
+  * update sources to Ubuntu-4.15.0-39.42
+
+  * bump ABI to 4.15.18-8
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 30 Oct 2018 14:27:50 +0100
+
 pve-kernel (4.15.18-27) unstable; urgency=medium
 
   * backport fix for silent corruption in Linux kernel 4.15 with O_DIRECT
