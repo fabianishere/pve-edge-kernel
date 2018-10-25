@@ -49,8 +49,8 @@ your customers the hassle of this boot option.
 
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
 ---
- Documentation/admin-guide/kernel-parameters.txt |   9 +++
- drivers/pci/quirks.c                            | 101 ++++++++++++++++++++++++
+ .../admin-guide/kernel-parameters.txt         |   9 ++
+ drivers/pci/quirks.c                          | 101 ++++++++++++++++++
  2 files changed, 110 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
