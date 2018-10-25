@@ -491,6 +491,7 @@ i6050-fw-usb-1.5.sbcf kernel/drivers/net/wimax/i2400m/i2400m-usb.ko
 i915/bxt_dmc_ver1_07.bin kernel/drivers/gpu/drm/i915/i915.ko
 i915/bxt_guc_ver8_7.bin kernel/drivers/gpu/drm/i915/i915.ko
 i915/bxt_huc_ver01_07_1398.bin kernel/drivers/gpu/drm/i915/i915.ko
+i915/glk_dmc_ver1_04.bin kernel/drivers/gpu/drm/i915/i915.ko
 i915/kbl_dmc_ver1_01.bin kernel/drivers/gpu/drm/i915/i915.ko
 i915/kbl_guc_ver9_14.bin kernel/drivers/gpu/drm/i915/i915.ko
 i915/kbl_huc_ver02_00_1810.bin kernel/drivers/gpu/drm/i915/i915.ko
