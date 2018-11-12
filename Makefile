@@ -1,14 +1,12 @@
-RELEASE=5.1
-
 # also bump pve-kernel-meta if either of MAJ.MIN, PATCHLEVEL or KREL change
 KERNEL_MAJ=4
 KERNEL_MIN=15
 KERNEL_PATCHLEVEL=18
 # increment KREL if the ABI changes (abicheck target in debian/rules)
 # rebuild packages with new KREL and run 'make abiupdate'
-KREL=8
+KREL=9
 
-PKGREL=28
+PKGREL=29
 
 KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
 KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)

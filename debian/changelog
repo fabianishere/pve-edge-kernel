@@ -1,3 +1,11 @@
+pve-kernel (4.15.18-29) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.15.0-40.43
+
+  * bump ABI to 4.15.18-9
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 12 Nov 2018 14:01:34 +0100
+
 pve-kernel (4.15.18-28) unstable; urgency=medium
 
   * backport deadlock fix for issue ZOL#7939
