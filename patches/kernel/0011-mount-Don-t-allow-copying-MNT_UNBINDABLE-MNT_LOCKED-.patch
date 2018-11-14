@@ -1,0 +1,78 @@
+From 37b0e20be5149d5dc049e2aed3e8b03589a6ffa0 Mon Sep 17 00:00:00 2001
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Date: Tue, 13 Nov 2018 07:44:38 +0000
+Subject: [PATCH 11/11] mount: Don't allow copying MNT_UNBINDABLE|MNT_LOCKED
+ mounts
+
+BugLink: https://launchpad.net/bugs/1789161
+
+Jonathan Calmels from NVIDIA reported that he's able to bypass the
+mount visibility security check in place in the Linux kernel by using
+a combination of the unbindable property along with the private mount
+propagation option to allow a unprivileged user to see a path which
+was purposefully hidden by the root user.
+
+Reproducer:
+  # Hide a path to all users using a tmpfs
+  root@castiana:~# mount -t tmpfs tmpfs /sys/devices/
+  root@castiana:~#
+
+  # As an unprivileged user, unshare user namespace and mount namespace
+  stgraber@castiana:~$ unshare -U -m -r
+
+  # Confirm the path is still not accessible
+  root@castiana:~# ls /sys/devices/
+
+  # Make /sys recursively unbindable and private
+  root@castiana:~# mount --make-runbindable /sys
+  root@castiana:~# mount --make-private /sys
+
+  # Recursively bind-mount the rest of /sys over to /mnnt
+  root@castiana:~# mount --rbind /sys/ /mnt
+
+  # Access our hidden /sys/device as an unprivileged user
+  root@castiana:~# ls /mnt/devices/
+  breakpoint cpu cstate_core cstate_pkg i915 intel_pt isa kprobe
+  LNXSYSTM:00 msr pci0000:00 platform pnp0 power software system
+  tracepoint uncore_arb uncore_cbox_0 uncore_cbox_1 uprobe virtual
+
+Solve this by teaching copy_tree to fail if a mount turns out to be
+both unbindable and locked.
+
+Cc: stable@vger.kernel.org
+Fixes: 5ff9d8a65ce8 ("vfs: Lock in place mounts from more privileged users")
+Reported-by: Jonathan Calmels <jcalmels@nvidia.com>
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+(cherry picked from commit df7342b240185d58d3d9665c0bbf0a0f5570ec29)
+Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+Acked-by: Colin King <colin.king@canonical.com>
+Acked-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+Signed-off-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+---
+ fs/namespace.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/fs/namespace.c b/fs/namespace.c
+index dcf107925150..91a3040f0cd0 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -1798,8 +1798,14 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+ 		for (s = r; s; s = next_mnt(s, r)) {
+ 			if (!(flag & CL_COPY_UNBINDABLE) &&
+ 			    IS_MNT_UNBINDABLE(s)) {
+-				s = skip_mnt_tree(s);
+-				continue;
++				if (s->mnt.mnt_flags & MNT_LOCKED) {
++					/* Both unbindable and locked. */
++					q = ERR_PTR(-EPERM);
++					goto out;
++				} else {
++					s = skip_mnt_tree(s);
++					continue;
++				}
+ 			}
+ 			if (!(flag & CL_COPY_MNT_NS_FILE) &&
+ 			    is_mnt_ns_file(s->mnt.mnt_root)) {
+-- 
+2.11.0
+

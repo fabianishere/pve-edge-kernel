@@ -1,0 +1,75 @@
+From 5506202b83e65b844309093e712b5b507eb1e403 Mon Sep 17 00:00:00 2001
+From: Jann Horn <jannh@google.com>
+Date: Tue, 13 Nov 2018 07:42:38 +0000
+Subject: [PATCH 09/11] userns: also map extents in the reverse map to kernel
+ IDs
+
+BugLink: https://launchpad.net/bugs/1801924
+
+The current logic first clones the extent array and sorts both copies, then
+maps the lower IDs of the forward mapping into the lower namespace, but
+doesn't map the lower IDs of the reverse mapping.
+
+This means that code in a nested user namespace with >5 extents will see
+incorrect IDs. It also breaks some access checks, like
+inode_owner_or_capable() and privileged_wrt_inode_uidgid(), so a process
+can incorrectly appear to be capable relative to an inode.
+
+To fix it, we have to make sure that the "lower_first" members of extents
+in both arrays are translated; and we have to make sure that the reverse
+map is sorted *after* the translation (since otherwise the translation can
+break the sorting).
+
+This is CVE-2018-18955.
+
+Fixes: 6397fac4915a ("userns: bump idmap limits to 340")
+Cc: stable@vger.kernel.org
+Signed-off-by: Jann Horn <jannh@google.com>
+Tested-by: Eric W. Biederman <ebiederm@xmission.com>
+Reviewed-by: Eric W. Biederman <ebiederm@xmission.com>
+Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
+
+CVE-2018-18955
+
+(cherry picked from commit d2f007dbe7e4c9583eea6eb04d60001e85c6f1bd)
+Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+Acked-by: Colin King <colin.king@canonical.com>
+Acked-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+Signed-off-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+---
+ kernel/user_namespace.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index 08d638386b83..12de8c144db9 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -983,10 +983,6 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 	if (!new_idmap_permitted(file, ns, cap_setid, &new_map))
+ 		goto out;
+ 
+-	ret = sort_idmaps(&new_map);
+-	if (ret < 0)
+-		goto out;
+-
+ 	ret = -EPERM;
+ 	/* Map the lower ids from the parent user namespace to the
+ 	 * kernel global id space.
+@@ -1013,6 +1009,14 @@ static ssize_t map_write(struct file *file, const char __user *buf,
+ 		e->lower_first = lower_first;
+ 	}
+ 
++	/*
++	 * If we want to use binary search for lookup, this clones the extent
++	 * array and sorts both copies.
++	 */
++	ret = sort_idmaps(&new_map);
++	if (ret < 0)
++		goto out;
++
+ 	/* Install the map */
+ 	if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
+ 		memcpy(map->extent, new_map.extent,
+-- 
+2.11.0
+

@@ -1,0 +1,67 @@
+From 3918a0379c7d37ce5d348ec6c2439d744a92a1f8 Mon Sep 17 00:00:00 2001
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Date: Tue, 13 Nov 2018 07:44:37 +0000
+Subject: [PATCH 10/11] mount: Retest MNT_LOCKED in do_umount
+
+BugLink: https://launchpad.net/bugs/1789161
+
+It was recently pointed out that the one instance of testing MNT_LOCKED
+outside of the namespace_sem is in ksys_umount.
+
+Fix that by adding a test inside of do_umount with namespace_sem and
+the mount_lock held.  As it helps to fail fails the existing test is
+maintained with an additional comment pointing out that it may be racy
+because the locks are not held.
+
+Cc: stable@vger.kernel.org
+Reported-by: Al Viro <viro@ZenIV.linux.org.uk>
+Fixes: 5ff9d8a65ce8 ("vfs: Lock in place mounts from more privileged users")
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+(cherry picked from commit 25d202ed820ee347edec0bf3bf553544556bf64b)
+Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+Acked-by: Colin King <colin.king@canonical.com>
+Acked-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+Signed-off-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+---
+ fs/namespace.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 570c9672ac9f..dcf107925150 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -1609,8 +1609,13 @@ static int do_umount(struct mount *mnt, int flags)
+ 
+ 	namespace_lock();
+ 	lock_mount_hash();
+-	event++;
+ 
++	/* Recheck MNT_LOCKED with the locks held */
++	retval = -EINVAL;
++	if (mnt->mnt.mnt_flags & MNT_LOCKED)
++		goto out;
++
++	event++;
+ 	if (flags & MNT_DETACH) {
+ 		if (!list_empty(&mnt->mnt_list))
+ 			umount_tree(mnt, UMOUNT_PROPAGATE);
+@@ -1624,6 +1629,7 @@ static int do_umount(struct mount *mnt, int flags)
+ 			retval = 0;
+ 		}
+ 	}
++out:
+ 	unlock_mount_hash();
+ 	namespace_unlock();
+ 	return retval;
+@@ -1714,7 +1720,7 @@ SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
+ 		goto dput_and_out;
+ 	if (!check_mnt(mnt))
+ 		goto dput_and_out;
+-	if (mnt->mnt.mnt_flags & MNT_LOCKED)
++	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
+ 		goto dput_and_out;
+ 	retval = -EPERM;
+ 	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
+-- 
+2.11.0
+
