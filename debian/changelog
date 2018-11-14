@@ -1,3 +1,11 @@
+pve-kernel (4.15.18-30) unstable; urgency=medium
+
+  * add patches for CVE-2018-18955 and  https://launchpad.net/bugs/1789161
+
+  * update ZFS to 0.7.12
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 15 Nov 2018 13:32:46 +0100
+
 pve-kernel (4.15.18-29) unstable; urgency=medium
 
   * update sources to Ubuntu-4.15.0-40.43
