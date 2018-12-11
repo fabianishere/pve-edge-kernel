@@ -57,12 +57,12 @@ diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/adm
 index 51210d10d905..ceb1b471d249 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -3049,6 +3049,15 @@
- 		nomsi		[MSI] If the PCI_MSI kernel config parameter is
- 				enabled, this kernel boot option can be used to
- 				disable the use of MSI interrupts system-wide.
+@@ -3067,6 +3067,15 @@
+ 				Also, it enforces the PCI Local Bus spec
+ 				rule that those bits should be 0 in system reset
+ 				events (useful for kexec/kdump cases).
 +		pci_acs_override =
-+					[PCIE] Override missing PCIe ACS support for:
++				[PCIE] Override missing PCIe ACS support for:
 +				downstream
 +					All downstream ports - full ACS capabilities
 +				multifunction
