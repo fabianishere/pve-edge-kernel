@@ -1,3 +1,11 @@
+pve-kernel (4.15.18-33) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.15.0-46.49
+
+  * bump ABI to 4.15.18-11
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 05 Feb 2019 07:36:16 +0100
+
 pve-kernel (4.15.18-32) unstable; urgency=medium
 
   * fix NULL pointer dereference possibility in net/ipip
