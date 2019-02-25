@@ -1,3 +1,14 @@
+pve-kernel (4.15.18-34) unstable; urgency=medium
+
+  * backport fix for possible ipset memory exhaustion bug
+
+  * backport fix for possible use after free in crypto stack
+
+  * backport fixes for multiple KVM vulnerabilities: CVE-2019-6974,
+    CVE-2019-7221, CVE-2019-7222
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 25 Feb 2019 14:51:06 +0100
+
 pve-kernel (4.15.18-33) unstable; urgency=medium
 
   * update sources to Ubuntu-4.15.0-46.49
