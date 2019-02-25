@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Peter Shier <pshier@google.com>
+Date: Mon, 25 Feb 2019 11:48:06 +0000
+Subject: [PATCH] KVM: nVMX: unconditionally cancel preemption timer in
+ free_nested (CVE-2019-7221)
+
+Bugzilla: 1671904
+
+There are multiple code paths where an hrtimer may have been started to
+emulate an L1 VMX preemption timer that can result in a call to free_nested
+without an intervening L2 exit where the hrtimer is normally
+cancelled. Unconditionally cancel in free_nested to cover all cases.
+
+Embargoed until Feb 7th 2019.
+
+Signed-off-by: Peter Shier <pshier@google.com>
+Reported-by: Jim Mattson <jmattson@google.com>
+Reviewed-by: Jim Mattson <jmattson@google.com>
+Reported-by: Felix Wilhelm <fwilhelm@google.com>
+Cc: stable@kernel.org
+Message-Id: <20181011184646.154065-1-pshier@google.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+
+CVE-2019-7221
+
+(backported from commit ecec76885bcfe3294685dc363fd1273df0d5d65f)
+[tyhicks: Backport to 4.18:
+ - free_nested() is in arch/x86/kvm/vmx.c]
+Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/kvm/vmx.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index 7ade6cb125d3..37b095e7f00a 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -7681,6 +7681,7 @@ static void free_nested(struct vcpu_vmx *vmx)
+ 	if (!vmx->nested.vmxon && !vmx->nested.smm.vmxon)
+ 		return;
+ 
++	hrtimer_cancel(&vmx->nested.preemption_timer);
+ 	vmx->nested.vmxon = false;
+ 	vmx->nested.smm.vmxon = false;
+ 	free_vpid(vmx->nested.vpid02);
