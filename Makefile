@@ -49,9 +49,7 @@ IGBSRC=${IGBDIR}.tar.gz
 
 ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
 SPLDIR=pkg-spl
-SPLSRC=${ZFSONLINUX_SUBMODULE}/spl-debian
 ZFSDIR=pkg-zfs
-ZFSSRC=${ZFSONLINUX_SUBMODULE}/zfs-debian
 
 MODULES=modules
 MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${SPLDIR} ${ZFSDIR}
@@ -131,19 +129,14 @@ ${IGBDIR}.prepared: ${IGBSRC}
 	cd ${BUILD_DIR}/${MODULES}/${IGBDIR}; patch -p1 < ../../../patches/intel/igb/igb_4.15_mtu.patch
 	touch $@
 
-$(SPLDIR).prepared: ${SPLSRC}
-	rm -rf ${BUILD_DIR}/${MODULES}/${SPLDIR} $@
-	mkdir -p ${BUILD_DIR}/${MODULES}/${SPLDIR}
-	cp -a ${SPLSRC}/* ${BUILD_DIR}/${MODULES}/${SPLDIR}
-	cd ${BUILD_DIR}/${MODULES}/${SPLDIR}; for patch in ../../../${SPLSRC}/../spl-patches/*.patch; do patch -p1 < $${patch}; done
-	touch $@
-
-$(ZFSDIR).prepared: ${ZFSSRC}
-	rm -rf ${BUILD_DIR}/${MODULES}/${ZFSDIR} $@
-	mkdir -p ${BUILD_DIR}/${MODULES}/${ZFSDIR}
-	cp -a ${ZFSSRC}/* ${BUILD_DIR}/${MODULES}/${ZFSDIR}
-	cd ${BUILD_DIR}/${MODULES}/${ZFSDIR}; for patch in ../../../${ZFSSRC}/../zfs-patches/*.patch; do patch -p1 < $${patch}; done
-	touch $@
+${SPLDIR}.prepared: ${ZFSDIR}.prepared
+${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
+	rm -rf ${BUILD_DIR}/${MODULES}/${SPLDIR} ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
+	mkdir -p ${BUILD_DIR}/${MODULES}/tmp
+	cp -a ${ZFSONLINUX_SUBMODULE}/* ${BUILD_DIR}/${MODULES}/tmp
+	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
+	rm -rf ${BUILD_DIR}/${MODULES}/tmp
+	touch ${ZFSDIR}.prepared ${SPLDIR}.prepared
 
 .PHONY: upload
 upload: ${DEBS}
@@ -157,15 +150,14 @@ distclean: clean
 .PHONY: update_modules
 update_modules: submodule
 	git submodule foreach 'git pull --ff-only origin master'
-	cd ${ZFSSRC}; git pull --ff-only origin master
-	cd ${SPLSRC}; git pull --ff-only origin master
+	cd ${ZFSONLINUX_SUBMODULE}; git pull --ff-only origin master
 
 # make sure submodules were initialized
 .PHONY: submodule
 submodule:
 	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init ${KERNEL_SRC_SUBMODULE}
 	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init ${ZFSONLINUX_SUBMODULE}
-	(test -f "${ZFSSRC}/debian/changelog" && test -f "${SPLZRC}/debian/changelog") || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
+	(test -f "${ZFSONLINUX_SUBMODULE}/zfs/upstream/README.markdown" && test -f "${ZFSONLINUX_SUBMODULE}/spl/upstream/README.markdown") || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
 
 # call after ABI bump with header deb in working directory
 .PHONY: abiupdate
