@@ -37,25 +37,19 @@ endif
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-bionic
+KERNEL_SRC=ubuntu-disco
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
-
-E1000EDIR=e1000e-3.4.1.1
-E1000ESRC=${E1000EDIR}.tar.gz
-
-IGBDIR=igb-5.3.5.18
-IGBSRC=${IGBDIR}.tar.gz
 
 ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
 SPLDIR=pkg-spl
 ZFSDIR=pkg-zfs
 
 MODULES=modules
-MODULE_DIRS=${E1000EDIR} ${IGBDIR} ${SPLDIR} ${ZFSDIR}
+MODULE_DIRS=${SPLDIR} ${ZFSDIR}
 
 # exported to debian/rules via debian/rules.d/dirs.mk
-DIRS=KERNEL_SRC E1000EDIR IGBDIR SPLDIR ZFSDIR MODULES
+DIRS=KERNEL_SRC SPLDIR ZFSDIR MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
@@ -111,22 +105,6 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE} | submodule
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
-	touch $@
-
-${E1000EDIR}.prepared: ${E1000ESRC}
-	rm -rf ${BUILD_DIR}/${MODULES}/${E1000EDIR} $@
-	mkdir -p ${BUILD_DIR}/${MODULES}/${E1000EDIR}
-	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${E1000EDIR} -xf ${E1000ESRC}
-	cd ${BUILD_DIR}/${MODULES}/${E1000EDIR}; patch -p1 < ../../../patches/intel/intel-module-gcc6-compat.patch
-	cd ${BUILD_DIR}/${MODULES}/${E1000EDIR}; patch -p1 < ../../../patches/intel/e1000e/e1000e_4.10_max-mtu.patch
-	cd ${BUILD_DIR}/${MODULES}/${E1000EDIR}; patch -p1 < ../../../patches/intel/e1000e/e1000e_4.15-new-timer.patch
-	touch $@
-
-${IGBDIR}.prepared: ${IGBSRC}
-	rm -rf ${BUILD_DIR}/${MODULES}/${IGBDIR} $@
-	mkdir -p ${BUILD_DIR}/${MODULES}/${IGBDIR}
-	tar --strip-components=1 -C ${BUILD_DIR}/${MODULES}/${IGBDIR} -xf ${IGBSRC}
-	cd ${BUILD_DIR}/${MODULES}/${IGBDIR}; patch -p1 < ../../../patches/intel/igb/igb_4.15_mtu.patch
 	touch $@
 
 ${SPLDIR}.prepared: ${ZFSDIR}.prepared
