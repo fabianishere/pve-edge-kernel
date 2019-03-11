@@ -13,6 +13,7 @@ connected ports (for no real reason). To avoid problems with ARP
 we simply use the MAC of the first connected port.
 
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  net/bridge/br_stp_if.c | 5 +----
  1 file changed, 1 insertion(+), 4 deletions(-)

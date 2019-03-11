@@ -15,6 +15,7 @@ Make mkcompile_h use $KBUILD_BUILD_VERSION_TIMESTAMP in preference to
 $KBUILD_BUILD_TIMESTAMP.
 
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  scripts/mkcompile_h | 10 +++++++---
  1 file changed, 7 insertions(+), 3 deletions(-)
