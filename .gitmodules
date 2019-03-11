@@ -1,6 +1,6 @@
 [submodule "submodules/zfsonlinux"]
 	path = submodules/zfsonlinux
 	url = ../zfsonlinux
-[submodule "submodules/ubuntu-bionic"]
-	path = submodules/ubuntu-bionic
-	url = ../mirror_ubuntu-bionic-kernel
+[submodule "submodules/ubuntu-disco"]
+	path = submodules/ubuntu-disco
+	url = ../mirror_ubuntu-disco-kernel
