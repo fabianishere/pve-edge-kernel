@@ -175,7 +175,7 @@ binary: install
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
 	mkdir -p ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
 	cp ${KERNEL_SRC}/.config ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/.config
-	${MAKE} -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 silentoldconfig prepare scripts
+	${MAKE} -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 syncconfig prepare scripts
 	find ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -name \*.o.ur-\* | xargs rm -f
 	rsync --ignore-existing -r -v -a $(addprefix ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/,arch include kernel scripts tools) ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}
