@@ -22,7 +22,7 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  2 files changed, 6 insertions(+)
 
 diff --git a/drivers/net/ethernet/intel/i40e/i40e.h b/drivers/net/ethernet/intel/i40e/i40e.h
-index e019baa905c5..80114d6a910a 100644
+index a68b914776c7..09452e4b4877 100644
 --- a/drivers/net/ethernet/intel/i40e/i40e.h
 +++ b/drivers/net/ethernet/intel/i40e/i40e.h
 @@ -145,6 +145,7 @@ enum i40e_state_t {

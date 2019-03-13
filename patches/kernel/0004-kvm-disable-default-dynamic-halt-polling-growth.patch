@@ -12,7 +12,7 @@ Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
-index 234d03abcb75..2e7d3aee779d 100644
+index 238ddbc127e1..d7a24fd29144 100644
 --- a/virt/kvm/kvm_main.c
 +++ b/virt/kvm/kvm_main.c
 @@ -77,7 +77,7 @@ module_param(halt_poll_ns, uint, 0644);
