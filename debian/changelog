@@ -1,3 +1,13 @@
+pve-kernel (4.15.18-35) unstable; urgency=medium
+
+  * update sources to Ubuntu-4.15.0-47.50
+
+  * update ZFS to 0.7.13
+
+  * bump ABI to 4.15.18-12
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 13 Mar 2019 08:24:42 +0100
+
 pve-kernel (4.15.18-34) unstable; urgency=medium
 
   * backport fix for possible ipset memory exhaustion bug
