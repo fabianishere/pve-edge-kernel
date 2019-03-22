@@ -61,7 +61,7 @@ all: check_gcc deb
 deb: ${DEBS}
 
 check_gcc:
-	$(GCC) --version|grep "6\.3" || false
+	$(GCC) --version|grep "8\.3" || false
 	@$(GCC) -Werror -mindirect-branch=thunk-extern -mindirect-branch-register -c -x c /dev/null -o check_gcc.o \
 		|| ( rm -f check_gcc.o; \
 		     echo "Please install gcc-6 packages with indirect thunk / RETPOLINE support"; \
