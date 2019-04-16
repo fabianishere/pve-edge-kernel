@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Eduardo Habkost <ehabkost@redhat.com>
+Date: Mon, 17 Dec 2018 22:34:18 -0200
+Subject: [PATCH] kvm: x86: Add AMD's EX_CFG to the list of ignored MSRs
+
+Some guests OSes (including Windows 10) write to MSR 0xc001102c
+on some cases (possibly while trying to apply a CPU errata).
+Make KVM ignore reads and writes to that MSR, so the guest won't
+crash.
+
+The MSR is documented as "Execution Unit Configuration (EX_CFG)",
+at AMD's "BIOS and Kernel Developer's Guide (BKDG) for AMD Family
+15h Models 00h-0Fh Processors".
+
+Cc: stable@vger.kernel.org
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/include/asm/msr-index.h | 1 +
+ arch/x86/kvm/x86.c               | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index c8f73efb4ece..9e39cc8bd989 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -390,6 +390,7 @@
+ #define MSR_F15H_NB_PERF_CTR		0xc0010241
+ #define MSR_F15H_PTSC			0xc0010280
+ #define MSR_F15H_IC_CFG			0xc0011021
++#define MSR_F15H_EX_CFG			0xc001102c
+ 
+ /* Fam 10h MSRs */
+ #define MSR_FAM10H_MMIO_CONF_BASE	0xc0010058
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 477563e7ccbd..f049ecfac7bb 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -2426,6 +2426,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+ 	case MSR_AMD64_PATCH_LOADER:
+ 	case MSR_AMD64_BU_CFG2:
+ 	case MSR_AMD64_DC_CFG:
++	case MSR_F15H_EX_CFG:
+ 		break;
+ 
+ 	case MSR_IA32_UCODE_REV:
+@@ -2721,6 +2722,7 @@ int kvm_get_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+ 	case MSR_AMD64_BU_CFG2:
+ 	case MSR_IA32_PERF_CTL:
+ 	case MSR_AMD64_DC_CFG:
++	case MSR_F15H_EX_CFG:
+ 		msr_info->data = 0;
+ 		break;
+ 	case MSR_F15H_PERF_CTL0 ... MSR_F15H_PERF_CTR5:
