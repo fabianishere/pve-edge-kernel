@@ -37,7 +37,7 @@ diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
 index 477563e7ccbd..f049ecfac7bb 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -2426,6 +2426,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+@@ -2240,6 +2240,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
  	case MSR_AMD64_PATCH_LOADER:
  	case MSR_AMD64_BU_CFG2:
  	case MSR_AMD64_DC_CFG:
@@ -45,11 +45,11 @@ index 477563e7ccbd..f049ecfac7bb 100644
  		break;
  
  	case MSR_IA32_UCODE_REV:
-@@ -2721,6 +2722,7 @@ int kvm_get_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+@@ -2528,6 +2529,7 @@ int kvm_get_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
  	case MSR_AMD64_BU_CFG2:
  	case MSR_IA32_PERF_CTL:
  	case MSR_AMD64_DC_CFG:
 +	case MSR_F15H_EX_CFG:
  		msr_info->data = 0;
  		break;
- 	case MSR_F15H_PERF_CTL0 ... MSR_F15H_PERF_CTR5:
+ 	case MSR_K7_EVNTSEL0 ... MSR_K7_EVNTSEL3:
