@@ -22,10 +22,10 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  2 files changed, 3 insertions(+)
 
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index c8f73efb4ece..9e39cc8bd989 100644
+index 7ca92f9b5eae..4eb78a908544 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -390,6 +390,7 @@
+@@ -382,6 +382,7 @@
  #define MSR_F15H_NB_PERF_CTR		0xc0010241
  #define MSR_F15H_PTSC			0xc0010280
  #define MSR_F15H_IC_CFG			0xc0011021
@@ -34,7 +34,7 @@ index c8f73efb4ece..9e39cc8bd989 100644
  /* Fam 10h MSRs */
  #define MSR_FAM10H_MMIO_CONF_BASE	0xc0010058
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 477563e7ccbd..f049ecfac7bb 100644
+index ac17f53812af..1154795459de 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
 @@ -2240,6 +2240,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
