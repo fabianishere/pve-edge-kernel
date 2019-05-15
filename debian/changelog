@@ -1,3 +1,9 @@
+pve-kernel (4.15.18-39) unstable; urgency=medium
+
+  * update to Ubuntu-4.15.0-50.54 with MDS mitigations
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 15 May 2019 06:56:23 +0200
+
 pve-kernel (4.15.18-38) unstable; urgency=medium
 
   * update to Ubuntu-4.15.0-49.53
