@@ -107,7 +107,7 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE} | submodule
 	cp ${KERNEL_CFG_ORG} ${BUILD_DIR}/${KERNEL_SRC}/.config
 	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian ${BUILD_DIR}/${KERNEL_SRC}/debian.master
-	cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/kernel/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
+	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/kernel/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
