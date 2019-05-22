@@ -1,3 +1,13 @@
+pve-kernel (5.0.8-1) pve pmg; urgency=medium
+
+  * update to Ubuntu-5.0.0-16.17
+
+  * bump ABI to 5.0.8-1
+
+  * build for Debian Buster / PVE/PMG 6
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 22 May 2019 14:06:59 +0200
+
 pve-kernel (4.15.18-40) unstable; urgency=medium
 
   * update to Ubuntu-4.15.0-51.55
