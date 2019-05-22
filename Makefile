@@ -29,12 +29,6 @@ GITVERSION:=$(shell git rev-parse HEAD)
 
 SKIPABI=0
 
-ifeq    ($(CC), cc)
-GCC=gcc
-else
-GCC=$(CC)
-endif
-
 BUILD_DIR=build
 
 KERNEL_SRC=ubuntu-disco
@@ -57,16 +51,8 @@ LINUX_TOOLS_DEB=linux-tools-$(KERNEL_MAJMIN)_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${LINUX_TOOLS_DEB}
 
-all: check_gcc deb
+all: deb
 deb: ${DEBS}
-
-check_gcc:
-	$(GCC) --version|grep "8\.3" || false
-	@$(GCC) -Werror -mindirect-branch=thunk-extern -mindirect-branch-register -c -x c /dev/null -o check_gcc.o \
-		|| ( rm -f check_gcc.o; \
-		     echo "Please install gcc-6 packages with indirect thunk / RETPOLINE support"; \
-		     false)
-	@rm -f check_gcc.o
 
 ${LINUX_TOOLS_DEB} ${HDR_DEB}: ${DST_DEB}
 ${DST_DEB}: ${BUILD_DIR}.prepared
