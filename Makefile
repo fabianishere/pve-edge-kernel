@@ -36,14 +36,13 @@ KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
 ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
-SPLDIR=pkg-spl
 ZFSDIR=pkg-zfs
 
 MODULES=modules
-MODULE_DIRS=${SPLDIR} ${ZFSDIR}
+MODULE_DIRS=${ZFSDIR}
 
 # exported to debian/rules via debian/rules.d/dirs.mk
-DIRS=KERNEL_SRC SPLDIR ZFSDIR MODULES
+DIRS=KERNEL_SRC ZFSDIR MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
@@ -93,14 +92,13 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE} | submodule
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
 	touch $@
 
-${SPLDIR}.prepared: ${ZFSDIR}.prepared
 ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
-	rm -rf ${BUILD_DIR}/${MODULES}/${SPLDIR} ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
+	rm -rf ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
 	mkdir -p ${BUILD_DIR}/${MODULES}/tmp
 	cp -a ${ZFSONLINUX_SUBMODULE}/* ${BUILD_DIR}/${MODULES}/tmp
 	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
-	touch ${ZFSDIR}.prepared ${SPLDIR}.prepared
+	touch ${ZFSDIR}.prepared
 
 .PHONY: upload
 upload: ${DEBS}
@@ -121,7 +119,7 @@ update_modules: submodule
 submodule:
 	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init ${KERNEL_SRC_SUBMODULE}
 	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init ${ZFSONLINUX_SUBMODULE}
-	(test -f "${ZFSONLINUX_SUBMODULE}/zfs/upstream/README.markdown" && test -f "${ZFSONLINUX_SUBMODULE}/spl/upstream/README.markdown") || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
+	test -f "${ZFSONLINUX_SUBMODULE}/upstream/README.markdown" || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
 
 # call after ABI bump with header deb in working directory
 .PHONY: abiupdate
