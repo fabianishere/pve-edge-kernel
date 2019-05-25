@@ -118,8 +118,7 @@ update_modules: submodule
 .PHONY: submodule
 submodule:
 	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init ${KERNEL_SRC_SUBMODULE}
-	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init ${ZFSONLINUX_SUBMODULE}
-	test -f "${ZFSONLINUX_SUBMODULE}/upstream/README.markdown" || (cd ${ZFSONLINUX_SUBMODULE}; git submodule update --init)
+	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init --recursive ${ZFSONLINUX_SUBMODULE}
 
 # call after ABI bump with header deb in working directory
 .PHONY: abiupdate
