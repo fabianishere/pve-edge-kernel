@@ -1,3 +1,11 @@
+pve-kernel (5.0.8-2) pve pmg; urgency=medium
+
+  * update to ZFS 0.8.0
+
+  * bump ABI to 5.0.8-2
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 24 May 2019 20:38:04 +0200
+
 pve-kernel (5.0.8-1) pve pmg; urgency=medium
 
   * update to Ubuntu-5.0.0-16.17
