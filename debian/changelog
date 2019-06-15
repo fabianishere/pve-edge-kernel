@@ -1,3 +1,13 @@
+pve-kernel (5.0.12-1) pve pmg; urgency=medium
+
+  * update sources to Ubuntu-5.0.0-18.19
+
+  * update to ZFS 0.8.1
+
+  * revert KVM nested option default back to off
+
+ -- Proxmox Support Team <support@proxmox.com>  Sat, 15 Jun 2019 11:39:18 +0200
+
 pve-kernel (5.0.8-2) pve pmg; urgency=medium
 
   * update to ZFS 0.8.0
