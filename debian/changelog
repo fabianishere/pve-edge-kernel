@@ -1,3 +1,11 @@
+pve-kernel (5.0.15-1) pve pmg; urgency=medium
+
+  * update to Ubuntu-5.0.0-21.22
+
+  * bump ABI to 5.0.15-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 03 Jul 2019 10:51:57 +0200
+
 pve-kernel (5.0.12-1) pve pmg; urgency=medium
 
   * update sources to Ubuntu-5.0.0-18.19
