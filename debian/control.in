@@ -62,7 +62,7 @@ Provides: linux-image,
           linux-image-2.6,
 Suggests: pve-firmware,
 Depends: busybox,
-         grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub-efi-arm64,
          initramfs-tools,
+Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub-efi-arm64,
 Description: The Proxmox PVE Kernel Image
  This package contains the linux kernel and initial ramdisk used for booting
