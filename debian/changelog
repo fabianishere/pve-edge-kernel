@@ -1,3 +1,15 @@
+pve-kernel (5.0.18-1) pve pmg; urgency=medium
+
+  * update sources to Ubuntu-5.0.0-22.23
+
+  * bump ABI to 5.0.18-1
+
+  * backport "rbd: don't assert on writes to snapshots" to fix issues with
+    DISCARD operations on Ceph RBD backed block devices during a snapshot
+    operation.
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 24 Jul 2019 08:13:30 +0200
+
 pve-kernel (5.0.15-1) pve pmg; urgency=medium
 
   * update to Ubuntu-5.0.0-21.22
