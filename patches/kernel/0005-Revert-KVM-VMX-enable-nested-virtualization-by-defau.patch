@@ -18,7 +18,7 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
-index f14248f584b3..3c0972eb9e93 100644
+index df6e325b288b..2874cb9c41f5 100644
 --- a/arch/x86/kvm/vmx/vmx.c
 +++ b/arch/x86/kvm/vmx/vmx.c
 @@ -106,7 +106,7 @@ module_param(enable_apicv, bool, S_IRUGO);
