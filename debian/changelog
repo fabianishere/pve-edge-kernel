@@ -1,3 +1,11 @@
+pve-kernel (5.0.21-2) pve pmg; urgency=medium
+
+  * update sources to Ubuntu-5.0.0-27.28
+
+  * backport vhost_net: disable zerocopy by default
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 28 Aug 2019 15:12:18 +0200
+
 pve-kernel (5.0.21-1) pve pmg; urgency=medium
 
   * update sources to Ubuntu-5.0.0-26.27
