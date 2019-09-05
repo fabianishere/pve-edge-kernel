@@ -1,3 +1,13 @@
+pve-kernel (5.3.1-1) pve pmg; urgency=medium
+
+  * Initial Ubuntu Eoan Kernel build, based on 5.3
+
+  * update sources to Ubuntu-5.3.0-16.17
+
+  * bump ABI to 5.3.0-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 01 Oct 2019 18:57:21 +0200
+
 pve-kernel (5.0.21-7) pve pmg; urgency=medium
 
   * update ZFS to 0.8.2
