@@ -31,7 +31,7 @@ SKIPABI=0
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-disco
+KERNEL_SRC=ubuntu-eoan
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 

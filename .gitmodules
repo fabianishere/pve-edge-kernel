@@ -1,6 +1,6 @@
 [submodule "submodules/zfsonlinux"]
 	path = submodules/zfsonlinux
 	url = ../zfsonlinux
-[submodule "submodules/ubuntu-disco"]
-	path = submodules/ubuntu-disco
-	url = ../mirror_ubuntu-disco-kernel
+[submodule "submodules/ubuntu-eoan"]
+	path = submodules/ubuntu-eoan
+	url = ../mirror_ubuntu-eoan-kernel
