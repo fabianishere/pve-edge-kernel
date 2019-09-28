@@ -1,3 +1,11 @@
+pve-kernel (5.0.21-7) pve pmg; urgency=medium
+
+  * update ZFS to 0.8.2
+
+  * bump ABI to 5.0.21-3
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 30 Sep 2019 09:11:02 +0200
+
 pve-kernel (5.0.21-6) pve pmg; urgency=medium
 
   * backport new FPU register copy helpers
