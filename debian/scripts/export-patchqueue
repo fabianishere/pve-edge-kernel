@@ -25,6 +25,7 @@ git format-patch \
     --no-cover-letter \
     --zero-commit \
     --no-signature \
+    --diff-algorithm=myers \
     --output-dir \
     "${top}/${kernel_patchdir}" \
     "${base_ref}.."
