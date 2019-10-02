@@ -3,7 +3,7 @@ KERNEL SOURCE:
 
 We currently use the Ubuntu kernel sources, available from:
 
- http://kernel.ubuntu.com/git/ubuntu/ubuntu-bionic.git/
+ http://kernel.ubuntu.com/git/ubuntu/ubuntu-eoan.git/
 
 Ubuntu will maintain those kernels till:
 
@@ -12,10 +12,6 @@ Ubuntu will maintain those kernels till:
 
 Additional/Updated Modules:
 ---------------------------
-
-- include latest e1000e driver from intel/sourceforge
-
-- include latest igb driver from intel/sourceforge
 
 - include native OpenZFS filesystem kernel modules for Linux
 
