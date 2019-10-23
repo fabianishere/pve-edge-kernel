@@ -810,6 +810,9 @@ me4000_firmware.bin kernel/drivers/staging/comedi/drivers/me4000.ko
 mediatek/mt7610e.bin kernel/drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0e.ko
 mediatek/mt7610e.bin kernel/drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0u.ko
 mediatek/mt7610u.bin kernel/drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0u.ko
+mediatek/mt7615_cr4.bin kernel/drivers/net/wireless/mediatek/mt76/mt7615/mt7615e.ko
+mediatek/mt7615_n9.bin kernel/drivers/net/wireless/mediatek/mt76/mt7615/mt7615e.ko
+mediatek/mt7615_rom_patch.bin kernel/drivers/net/wireless/mediatek/mt76/mt7615/mt7615e.ko
 mediatek/mt7622pr2h.bin kernel/drivers/bluetooth/btmtkuart.ko
 mediatek/mt7650e.bin kernel/drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0e.ko
 mediatek/mt7663pr2h.bin kernel/drivers/bluetooth/btmtksdio.ko
@@ -851,9 +854,6 @@ mrvl/usbusb8997_combo_v4.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex
 mt7601u.bin kernel/drivers/net/wireless/mediatek/mt7601u/mt7601u.ko
 mt7603_e1.bin kernel/drivers/net/wireless/mediatek/mt76/mt7603/mt7603e.ko
 mt7603_e2.bin kernel/drivers/net/wireless/mediatek/mt76/mt7603/mt7603e.ko
-mt7615_cr4.bin kernel/drivers/net/wireless/mediatek/mt76/mt7615/mt7615e.ko
-mt7615_n9.bin kernel/drivers/net/wireless/mediatek/mt76/mt7615/mt7615e.ko
-mt7615_rom_patch.bin kernel/drivers/net/wireless/mediatek/mt76/mt7615/mt7615e.ko
 mt7628_e1.bin kernel/drivers/net/wireless/mediatek/mt76/mt7603/mt7603e.ko
 mt7628_e2.bin kernel/drivers/net/wireless/mediatek/mt76/mt7603/mt7603e.ko
 mt7662.bin kernel/drivers/net/wireless/mediatek/mt76/mt76x2/mt76x2e.ko
