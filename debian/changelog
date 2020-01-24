@@ -1,3 +1,11 @@
+pve-kernel (5.3.13-2) pve pmg; urgency=medium
+
+  * update sources to Ubuntu-5.3.0-29.31
+
+  * update ZFS to 0.8.3
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 24 Jan 2020 09:49:36 +0100
+
 pve-kernel (5.3.13-1) pve pmg; urgency=medium
 
   * bump ABI to 5.3.13-1
