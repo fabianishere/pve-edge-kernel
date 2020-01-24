@@ -83,6 +83,3 @@ index 6ea7fdc82f3c..08e09c8c269f 100644
  		return;
  
  	if (rdmsr_safe_on_cpu(cpu, MSR_AMD64_SMCA_MCx_IPID(bank), &low, &high)) {
--- 
-2.20.1
-
