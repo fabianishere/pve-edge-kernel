@@ -66,6 +66,7 @@ known bank type can update smca_banks[].
 Fixes: 68627a697c19 ("x86/mce/AMD, EDAC/mce_amd: Enumerate Reserved SMCA bank type")
 Signed-off-by: Yazen Ghannam <yazen.ghannam@amd.com>
 Signed-off-by: Borislav Petkov <bp@suse.de>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  arch/x86/kernel/cpu/mce/amd.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

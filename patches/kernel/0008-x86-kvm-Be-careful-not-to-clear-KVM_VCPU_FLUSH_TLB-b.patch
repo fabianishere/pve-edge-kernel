@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Date: Fri, 31 Jan 2020 08:06:40 -0300
+Subject: [PATCH] x86/kvm: Be careful not to clear KVM_VCPU_FLUSH_TLB bit
+
+CVE-2019-3016
+CVE-2020-3016
+
+kvm_steal_time_set_preempted() may accidentally clear KVM_VCPU_FLUSH_TLB
+bit if it is called more than once while VCPU is preempted.
+
+This is part of CVE-2019-3016.
+
+(This bug was also independently discovered by Jim Mattson
+<jmattson@google.com>)
+
+Signed-off-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Reviewed-by: Joao Martins <joao.m.martins@oracle.com>
+Signed-off-by: Thadeu Lima de Souza Cascardo <cascardo@canonical.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/kvm/x86.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 778b3a899769..92d8e4ebba16 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -3393,6 +3393,9 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
+ 	if (!(vcpu->arch.st.msr_val & KVM_MSR_ENABLED))
+ 		return;
+ 
++	if (vcpu->arch.st.steal.preempted)
++		return;
++
+ 	vcpu->arch.st.steal.preempted = KVM_VCPU_PREEMPTED;
+ 
+ 	kvm_write_guest_offset_cached(vcpu->kvm, &vcpu->arch.st.stime,
