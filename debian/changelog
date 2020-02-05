@@ -1,3 +1,11 @@
+pve-kernel (5.3.18-1) pve pmg; urgency=medium
+
+  * bump ABI to 5.3.18-1
+
+  * update sources to Ubuntu-5.3.0-40.32
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 05 Feb 2020 11:49:10 +0100
+
 pve-kernel (5.3.13-3) pve pmg; urgency=medium
 
   * backport fixes for information leak within a KVM guest
