@@ -1109,6 +1109,10 @@ prism_ap_fw.bin kernel/drivers/net/wireless/intersil/orinoco/orinoco.ko
 prism_sta_fw.bin kernel/drivers/net/wireless/intersil/orinoco/orinoco.ko
 qat_895xcc.bin kernel/drivers/crypto/qat/qat_dh895xcc/qat_dh895xcc.ko
 qat_895xcc_mmp.bin kernel/drivers/crypto/qat/qat_dh895xcc/qat_dh895xcc.ko
+qat_c3xxx.bin kernel/drivers/crypto/qat/qat_c3xxx/qat_c3xxx.ko
+qat_c3xxx_mmp.bin kernel/drivers/crypto/qat/qat_c3xxx/qat_c3xxx.ko
+qat_c62x.bin kernel/drivers/crypto/qat/qat_c62x/qat_c62x.ko
+qat_c62x_mmp.bin kernel/drivers/crypto/qat/qat_c62x/qat_c62x.ko
 qed/qed_init_values_zipped-8.37.7.0.bin kernel/drivers/net/ethernet/qlogic/qed/qed.ko
 ql2100_fw.bin kernel/drivers/scsi/qla2xxx/qla2xxx.ko
 ql2200_fw.bin kernel/drivers/scsi/qla2xxx/qla2xxx.ko
