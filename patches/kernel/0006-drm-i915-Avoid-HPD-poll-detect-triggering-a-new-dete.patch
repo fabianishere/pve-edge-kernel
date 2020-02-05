@@ -60,7 +60,7 @@ index 3fcf2f84bcce..da1d6be46a0c 100644
  }
  
 diff --git a/drivers/gpu/drm/i915/display/intel_dp.c b/drivers/gpu/drm/i915/display/intel_dp.c
-index 4b4d516b15e0..106b666a2cc3 100644
+index 305abddc274a..dbdd46ba9bfe 100644
 --- a/drivers/gpu/drm/i915/display/intel_dp.c
 +++ b/drivers/gpu/drm/i915/display/intel_dp.c
 @@ -5649,6 +5649,12 @@ intel_dp_detect(struct drm_connector *connector,

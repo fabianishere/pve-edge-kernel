@@ -38,10 +38,10 @@ index 7c06343614a4..f62f4ff5f4f4 100644
  	} st;
  
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 431e34965707..c059728f8a44 100644
+index f63fa5846f08..6ce9ace8a801 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -2503,7 +2503,7 @@ static void record_steal_time(struct kvm_vcpu *vcpu)
+@@ -2509,7 +2509,7 @@ static void record_steal_time(struct kvm_vcpu *vcpu)
  	if (xchg(&st->preempted, 0) & KVM_VCPU_FLUSH_TLB)
  		kvm_vcpu_flush_tlb(vcpu, false);
  
@@ -50,7 +50,7 @@ index 431e34965707..c059728f8a44 100644
  
  	if (st->version & 1)
  		st->version += 1;  /* first time write, random junk */
-@@ -2676,11 +2676,6 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+@@ -2682,11 +2682,6 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
  		if (data & KVM_STEAL_RESERVED_MASK)
  			return 1;
  
@@ -62,7 +62,7 @@ index 431e34965707..c059728f8a44 100644
  		vcpu->arch.st.msr_val = data;
  
  		if (!(data & KVM_MSR_ENABLED))
-@@ -3398,7 +3393,7 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
+@@ -3404,7 +3399,7 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
  	if (!(vcpu->arch.st.msr_val & KVM_MSR_ENABLED))
  		return;
  
@@ -71,7 +71,7 @@ index 431e34965707..c059728f8a44 100644
  		return;
  
  	if (kvm_map_gfn(vcpu, vcpu->arch.st.msr_val >> PAGE_SHIFT, &map,
-@@ -3408,7 +3403,7 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
+@@ -3414,7 +3409,7 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
  	st = map.hva +
  		offset_in_page(vcpu->arch.st.msr_val & KVM_STEAL_VALID_BITS);
  

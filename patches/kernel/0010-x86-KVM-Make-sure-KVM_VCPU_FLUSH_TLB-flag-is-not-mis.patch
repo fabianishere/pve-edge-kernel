@@ -28,10 +28,10 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 29 insertions(+), 20 deletions(-)
 
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 41fee3d359ab..431e34965707 100644
+index cb18560b07bc..f63fa5846f08 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -2482,43 +2482,45 @@ static void kvm_vcpu_flush_tlb(struct kvm_vcpu *vcpu, bool invalidate_gpa)
+@@ -2488,43 +2488,45 @@ static void kvm_vcpu_flush_tlb(struct kvm_vcpu *vcpu, bool invalidate_gpa)
  
  static void record_steal_time(struct kvm_vcpu *vcpu)
  {
@@ -92,7 +92,7 @@ index 41fee3d359ab..431e34965707 100644
  }
  
  int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
-@@ -3390,18 +3392,25 @@ void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+@@ -3396,18 +3398,25 @@ void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
  
  static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
  {

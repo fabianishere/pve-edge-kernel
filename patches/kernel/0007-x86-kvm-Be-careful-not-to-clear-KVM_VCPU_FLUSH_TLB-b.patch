@@ -23,10 +23,10 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 778b3a899769..92d8e4ebba16 100644
+index 9c45e6ca30fd..80e860bd39d5 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -3393,6 +3393,9 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
+@@ -3399,6 +3399,9 @@ static void kvm_steal_time_set_preempted(struct kvm_vcpu *vcpu)
  	if (!(vcpu->arch.st.msr_val & KVM_MSR_ENABLED))
  		return;
  

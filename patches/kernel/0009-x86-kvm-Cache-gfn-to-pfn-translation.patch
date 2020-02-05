@@ -39,10 +39,10 @@ index f68e174f452f..7c06343614a4 100644
  
  	u64 tsc_offset;
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 92d8e4ebba16..41fee3d359ab 100644
+index 80e860bd39d5..cb18560b07bc 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -8936,6 +8936,9 @@ static void fx_init(struct kvm_vcpu *vcpu)
+@@ -8945,6 +8945,9 @@ static void fx_init(struct kvm_vcpu *vcpu)
  void kvm_arch_vcpu_free(struct kvm_vcpu *vcpu)
  {
  	void *wbinvd_dirty_mask = vcpu->arch.wbinvd_dirty_mask;
@@ -52,7 +52,7 @@ index 92d8e4ebba16..41fee3d359ab 100644
  
  	kvmclock_reset(vcpu);
  
-@@ -9602,11 +9605,18 @@ int kvm_arch_create_memslot(struct kvm *kvm, struct kvm_memory_slot *slot,
+@@ -9611,11 +9614,18 @@ int kvm_arch_create_memslot(struct kvm *kvm, struct kvm_memory_slot *slot,
  
  void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen)
  {
