@@ -1,12 +1,12 @@
 # also bump pve-kernel-meta if either of MAJ.MIN, PATCHLEVEL or KREL change
 KERNEL_MAJ=5
-KERNEL_MIN=3
-KERNEL_PATCHLEVEL=18
+KERNEL_MIN=4
+KERNEL_PATCHLEVEL=22
 # increment KREL if the ABI changes (abicheck target in debian/rules)
 # rebuild packages with new KREL and run 'make abiupdate'
-KREL=2
+KREL=1
 
-PKGREL=2
+PKGREL=1
 
 KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
 KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
@@ -31,7 +31,7 @@ SKIPABI=0
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-eoan
+KERNEL_SRC=ubuntu-focal
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 

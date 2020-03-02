@@ -1,6 +1,6 @@
 [submodule "submodules/zfsonlinux"]
 	path = submodules/zfsonlinux
 	url = ../zfsonlinux
-[submodule "submodules/ubuntu-eoan"]
-	path = submodules/ubuntu-eoan
-	url = ../mirror_ubuntu-eoan-kernel
+[submodule "submodules/ubuntu-focal"]
+	path = submodules/ubuntu-focal
+	url = ../mirror_ubuntu-focal-kernel
