@@ -1,3 +1,11 @@
+pve-kernel (5.4.24-1) pve pmg; urgency=medium
+
+  * update to Ubuntu-5.4.0-18.22
+
+  * bump ABI to 5.4.24-1
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 09 Mar 2020 12:59:46 +0100
+
 pve-kernel (5.4.22-1) pve pmg; urgency=medium
 
   * Initial Ubuntu Focal Kernel build, based on 5.4
