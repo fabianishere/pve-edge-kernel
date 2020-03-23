@@ -1486,8 +1486,10 @@ rtlwifi/rtl8723bu_nic.bin kernel/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu.
 rtlwifi/rtl8723efw.bin kernel/drivers/net/wireless/realtek/rtlwifi/rtl8723ae/rtl8723ae.ko
 rtlwifi/rtl8821aefw_29.bin kernel/drivers/net/wireless/realtek/rtlwifi/rtl8821ae/rtl8821ae.ko
 rtlwifi/rtl8821aefw.bin kernel/drivers/net/wireless/realtek/rtlwifi/rtl8821ae/rtl8821ae.ko
+rtw88/rtw8723d_fw.bin kernel/drivers/net/wireless/realtek/rtw88/rtw88.ko
 rtw88/rtw8822b_fw.bin kernel/drivers/net/wireless/realtek/rtw88/rtw88.ko
 rtw88/rtw8822c_fw.bin kernel/drivers/net/wireless/realtek/rtw88/rtw88.ko
+rtw88/rtw8822c_wow_fw.bin kernel/drivers/net/wireless/realtek/rtw88/rtw88.ko
 s5k4ecgx.bin kernel/drivers/media/i2c/s5k4ecgx.ko
 sd8385.bin kernel/drivers/net/wireless/marvell/libertas/libertas_sdio.ko
 sd8385_helper.bin kernel/drivers/net/wireless/marvell/libertas/libertas_sdio.ko
