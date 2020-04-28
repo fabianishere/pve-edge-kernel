@@ -13,10 +13,13 @@ include debian/rules.d/${DEB_BUILD_ARCH}.mk
 
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
-PVE_KERNEL_PKG=pve-kernel-${KVNAME}
-PVE_HEADER_PKG=pve-headers-${KVNAME}
+PVE_KERNEL_PKG=pve-edge-kernel-${KVNAME}
+PVE_HEADER_PKG=pve-edge-headers-${KVNAME}
 LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
 KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
+
+# If no custom compiler is specified, use the default
+PVE_BUILD_CC ?= ${CC}
 
 # TODO: split for archs, move to files?
 PVE_CONFIG_OPTS= \
@@ -91,11 +94,11 @@ binary: install
 
 .config_mark:
 	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
-	${MAKE} -C ${KERNEL_SRC} oldconfig
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} oldconfig
 	touch $@
 
 .compile_mark: .config_mark
-	${MAKE} -C ${KERNEL_SRC} KBUILD_BUILD_VERSION_TIMESTAMP="PVE ${DEB_VERSION} (${CHANGELOG_DATE})"
+	${MAKE} -C ${KERNEL_SRC} KCFLAGS=${PVE_BUILD_CFLAGS} KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} (${CHANGELOG_DATE})"
 	touch $@
 
 .install_mark: .compile_mark .modules_compile_mark
@@ -217,9 +220,10 @@ fwcheck: fwlist-${KVNAME} fwlist-previous
 	@echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
 	sort fwlist-previous | uniq > fwlist-previous.sorted
 	sort fwlist-${KVNAME} | uniq > fwlist-${KVNAME}.sorted
-	diff -up -N fwlist-previous.sorted fwlist-${KVNAME}.sorted > fwlist.diff
-	rm fwlist.diff fwlist-previous.sorted fwlist-${KVNAME}.sorted
-	@echo "done, no need to rebuild pve-firmware"
+	-diff -up -N fwlist-previous.sorted fwlist-${KVNAME}.sorted > fwlist.diff
+	@test -s fwlist.diff \
+		&& echo "done, no need to rebuild pve-firmware" \
+		|| echo "Please rebuild pve-firmware"
 
 
 abi-${KVNAME}: .compile_mark

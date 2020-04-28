@@ -11,10 +11,23 @@ PKGREL=1
 KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
 KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
 
-EXTRAVERSION=-${KREL}-pve
+EXTRAVERSION=-${KREL}
+
+# Append Linux flavor name to EXTRAVERSION
+ifdef PVE_BUILD_FLAVOR
+	_ := $(info Using build flavor: ${PVE_BUILD_FLAVOR})
+	EXTRAVERSION:=${EXTRAVERSION}-${PVE_BUILD_FLAVOR}
+endif
+
+# Append Linux build type to EXTRAVERSION
+ifdef PVE_BUILD_TYPE
+	:_ = $(info Using build type: ${PVE_BUILD_TYPE})
+	EXTRAVERSION:=${EXTRAVERSION}-${PVE_BUILD_TYPE}
+endif
+
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
-PACKAGE=pve-kernel-${KVNAME}
-HDRPACKAGE=pve-headers-${KVNAME}
+PACKAGE=pve-edge-kernel-${KVNAME}
+HDRPACKAGE=pve-edge-headers-${KVNAME}
 
 ARCH=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
 
@@ -35,7 +48,7 @@ KERNEL_SRC=ubuntu-focal
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-ZFSONLINUX_SUBMODULE=submodules/zfsonlinux
+ZFSONLINUX_SUBMODULE=submodules/zfsonlinux/
 ZFSDIR=pkg-zfs
 
 MODULES=modules
@@ -70,7 +83,7 @@ debian.prepared: debian
 	rm -rf ${BUILD_DIR}/debian
 	mkdir -p ${BUILD_DIR}
 	cp -a debian ${BUILD_DIR}/debian
-	echo "git clone git://git.proxmox.com/git/pve-kernel.git\\ngit checkout ${GITVERSION}" > ${BUILD_DIR}/debian/SOURCE
+	echo "git clone git@github.com:fabianishere/pve-kernel-edge.git\\ngit checkout ${GITVERSION}" > ${BUILD_DIR}/debian/SOURCE
 	@$(foreach dir, ${DIRS},echo "${dir}=${${dir}}" >> ${BUILD_DIR}/debian/rules.d/env.mk;)
 	echo "KVNAME=${KVNAME}" >> ${BUILD_DIR}/debian/rules.d/env.mk
 	echo "KERNEL_MAJMIN=${KERNEL_MAJMIN}" >> ${BUILD_DIR}/debian/rules.d/env.mk
@@ -100,10 +113,6 @@ ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
 	touch ${ZFSDIR}.prepared
 
-.PHONY: upload
-upload: ${DEBS}
-	tar cf - ${DEBS}|ssh -X repoman@repo.proxmox.com -- upload --product pve,pmg --dist buster --arch ${ARCH}
-
 .PHONY: distclean
 distclean: clean
 	git submodule deinit --all
@@ -115,7 +124,7 @@ update_modules: submodule
 	cd ${ZFSONLINUX_SUBMODULE}; git pull --ff-only origin master
 
 # make sure submodules were initialized
-.PHONY: submodule
+PHONY: submodule
 submodule:
 	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init ${KERNEL_SRC_SUBMODULE}
 	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init --recursive ${ZFSONLINUX_SUBMODULE}
