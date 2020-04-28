@@ -1,0 +1,25 @@
+name: Kernel Build
+
+on:
+  push:
+    branches: [master]
+    tags:
+        - release/*
+
+jobs:
+  build:
+    runs-on: [self-hosted]
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v2
+      with:
+          clean: false # Re-use artifacts from previous build
+          submodules: recursive
+    - name: Build Kernel
+      run: make
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: debs
+        path: "*.deb"
+
