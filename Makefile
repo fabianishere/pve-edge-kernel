@@ -63,8 +63,13 @@ LINUX_TOOLS_DEB=linux-tools-$(KERNEL_MAJMIN)_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${LINUX_TOOLS_DEB}
 
-all: deb
+all: deb release.txt
 deb: ${DEBS}
+
+release.txt:
+	echo "${KVNAME}" > release.txt
+	echo "${PVE_BUILD_FLAVOR}" >> release.txt
+	echo "${PVE_BUILD_TYPE}" >> release.txt
 
 ${LINUX_TOOLS_DEB} ${HDR_DEB}: ${DST_DEB}
 ${DST_DEB}: ${BUILD_DIR}.prepared
