@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Thu, 14 Sep 2017 11:09:58 +0200
+Subject: [PATCH] kvm: disable default dynamic halt polling growth
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ virt/kvm/kvm_main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+index 35a82cb10556..84cf5dcb0405 100644
+--- a/virt/kvm/kvm_main.c
++++ b/virt/kvm/kvm_main.c
+@@ -76,7 +76,7 @@ module_param(halt_poll_ns, uint, 0644);
+ EXPORT_SYMBOL_GPL(halt_poll_ns);
+ 
+ /* Default doubles per-vcpu halt_poll_ns. */
+-unsigned int halt_poll_ns_grow = 2;
++unsigned int halt_poll_ns_grow = 0;
+ module_param(halt_poll_ns_grow, uint, 0644);
+ EXPORT_SYMBOL_GPL(halt_poll_ns_grow);
+ 

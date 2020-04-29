@@ -1,7 +1,7 @@
 # also bump pve-kernel-meta if either of MAJ.MIN, PATCHLEVEL or KREL change
 KERNEL_MAJ=5
-KERNEL_MIN=4
-KERNEL_PATCHLEVEL=30
+KERNEL_MIN=5
+KERNEL_PATCHLEVEL=19
 # increment KREL if the ABI changes (abicheck target in debian/rules)
 # rebuild packages with new KREL and run 'make abiupdate'
 KREL=1
@@ -47,7 +47,7 @@ SKIPABI=0
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-focal
+KERNEL_SRC=linux-stable
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
@@ -110,12 +110,13 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
+	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/ubuntu/*.patch; do echo "applying Ubuntu patch '$$patch'" && patch -p1 < $${patch}; done
 # TODO: split for archs, track and diff in our repository?
 	cat ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cp ${KERNEL_CFG_ORG} ${BUILD_DIR}/${KERNEL_SRC}/.config
 	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian ${BUILD_DIR}/${KERNEL_SRC}/debian.master
-	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/kernel/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
+	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/pve/*.patch; do echo "applying PVE patch '$$patch'" && patch -p1 < $${patch}; done
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
@@ -125,6 +126,7 @@ ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
 	mkdir -p ${BUILD_DIR}/${MODULES}/tmp
 	cp -a ${ZFSONLINUX_SUBMODULE}/* ${BUILD_DIR}/${MODULES}/tmp
+	set -e; cd ${BUILD_DIR}/${MODULES}/tmp/upstream; for patch in ../../../../patches/zfsonlinux/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
 	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
 	touch ${ZFSDIR}.prepared

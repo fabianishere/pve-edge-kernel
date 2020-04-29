@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Thu, 14 Sep 2017 11:02:18 +0200
+Subject: [PATCH] bridge: keep MAC of first assigned port
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+original commit message:
+
+Default bridge changes MAC dynamically using smallest MAC of all
+connected ports (for no real reason). To avoid problems with ARP
+we simply use the MAC of the first connected port.
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ net/bridge/br_stp_if.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/net/bridge/br_stp_if.c b/net/bridge/br_stp_if.c
+index d174d3a566aa..885e18c72c87 100644
+--- a/net/bridge/br_stp_if.c
++++ b/net/bridge/br_stp_if.c
+@@ -256,10 +256,7 @@ bool br_stp_recalculate_bridge_id(struct net_bridge *br)
+ 		return false;
+ 
+ 	list_for_each_entry(p, &br->port_list, list) {
+-		if (addr == br_mac_zero ||
+-		    memcmp(p->dev->dev_addr, addr, ETH_ALEN) < 0)
+-			addr = p->dev->dev_addr;
+-
++		addr = p->dev->dev_addr;
+ 	}
+ 
+ 	if (ether_addr_equal(br->bridge_id.addr, addr))
