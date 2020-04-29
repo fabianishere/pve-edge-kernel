@@ -19,9 +19,12 @@ ifdef PVE_BUILD_FLAVOR
 	EXTRAVERSION:=${EXTRAVERSION}-${PVE_BUILD_FLAVOR}
 endif
 
+# Default to generic micro architecture
+PVE_BUILD_TYPE ?= generic
+
 # Append Linux build type to EXTRAVERSION
-ifdef PVE_BUILD_TYPE
-	:_ = $(info Using build type: ${PVE_BUILD_TYPE})
+ifneq (${PVE_BUILD_TYPE},generic)
+	_ := $(info Using build type: ${PVE_BUILD_TYPE})
 	EXTRAVERSION:=${EXTRAVERSION}-${PVE_BUILD_TYPE}
 endif
 
