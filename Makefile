@@ -106,7 +106,7 @@ debian.prepared: debian
 	cd ${BUILD_DIR}; debian/rules debian/control
 	touch $@
 
-${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE} | submodule
+${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
@@ -128,22 +128,6 @@ ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
 	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
 	touch ${ZFSDIR}.prepared
-
-.PHONY: distclean
-distclean: clean
-	git submodule deinit --all
-
-# upgrade to current master
-.PHONY: update_modules
-update_modules: submodule
-	git submodule foreach 'git pull --ff-only origin master'
-	cd ${ZFSONLINUX_SUBMODULE}; git pull --ff-only origin master
-
-# make sure submodules were initialized
-PHONY: submodule
-submodule:
-	test -f "${KERNEL_SRC_SUBMODULE}/README" || git submodule update --init ${KERNEL_SRC_SUBMODULE}
-	test -f "${ZFSONLINUX_SUBMODULE}/Makefile" || git submodule update --init --recursive ${ZFSONLINUX_SUBMODULE}
 
 # call after ABI bump with header deb in working directory
 .PHONY: abiupdate
