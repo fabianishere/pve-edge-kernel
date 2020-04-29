@@ -1,8 +1,14 @@
+pve-edge-kernel (5.6.8-1) edge; urgency=medium
+
+  * update to Linux 5.6.8-1 based on Ubuntu 5.6.0-7.7
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Thu, 30 Apr 2020 18:41:30 +0200
+
 pve-edge-kernel (5.5.19-1) edge; urgency=medium
 
   * update to Linux 5.5.19 based on Ubuntu 5.5.0-7.8
 
- -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 29 Apr 2020 21:20:30 +0200
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Thu, 30 Apr 2020 18:30:30 +0200
 
 pve-edge-kernel (5.4.30-1) edge; urgency=medium
 
