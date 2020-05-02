@@ -183,11 +183,12 @@ index 320255e5e8f8..8d5808de9071 100644
  /*
   * Some Atheros AR9xxx and QCA988x chips do not behave after a bus reset.
   * The device will throw a Link Down error on AER-capable systems and
-@@ -4663,6 +4763,7 @@ static const struct pci_dev_acs_enabled {
- 	{ PCI_VENDOR_ID_BROADCOM, 0xD714, pci_quirk_brcm_acs },
- 	/* Amazon Annapurna Labs */
- 	{ PCI_VENDOR_ID_AMAZON_ANNAPURNA_LABS, 0x0031, pci_quirk_al_acs },
-+ 	{ PCI_ANY_ID, PCI_ANY_ID, pcie_acs_overrides },
+@@ -4796,6 +4896,8 @@ static const struct pci_dev_acs_enabled {
+	{ PCI_VENDOR_ID_ZHAOXIN, 0x9083, pci_quirk_mf_endpoint_acs },
+	/* Zhaoxin Root/Downstream Ports */
+	{ PCI_VENDOR_ID_ZHAOXIN, PCI_ANY_ID, pci_quirk_zhaoxin_pcie_ports_acs },
++	/* PCIe ACS overrides */
++	{ PCI_ANY_ID, PCI_ANY_ID, pcie_acs_overrides },
  	{ 0 }
  };
  
