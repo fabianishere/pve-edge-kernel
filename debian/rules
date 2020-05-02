@@ -32,9 +32,9 @@ PVE_CONFIG_OPTS= \
 -m CONFIG_BLK_DEV_RBD \
 -d CONFIG_SND_PCSP \
 -m CONFIG_BCACHE \
--m CONFIG_JFS_FS \
--m CONFIG_HFS_FS \
--m CONFIG_HFSPLUS_FS \
+-d CONFIG_JFS_FS \
+-d CONFIG_HFS_FS \
+-d CONFIG_HFSPLUS_FS \
 -e CONFIG_BRIDGE \
 -e CONFIG_BRIDGE_NETFILTER \
 -e CONFIG_BLK_DEV_SD \
@@ -59,7 +59,30 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_UNWINDER_ORC \
 -d CONFIG_UNWINDER_GUESS \
 -e CONFIG_UNWINDER_FRAME_POINTER \
--e CONFIG_PAGE_TABLE_ISOLATION
+-e CONFIG_PAGE_TABLE_ISOLATION \
+# General options \
+-e IKCONFIG \
+-E IKCONFIG IKCONFIG_PROC \
+-u RT_GROUP_SCHED \
+# Power management \
+-e ACPI_REV_OVERRIDE_POSSIBLE \
+-e ACPI_TABLE_UPGRADE
+# Loadable module support \
+-u MODULE_SIG_FORCE \
+-e MODULE_COMPRESS \
+-E MODULE_COMPRESS MODULE_COMPRESS_XZ \
+# Networking support \
+-e NETFILTER_INGRESS \
+-m NET_SCH_CAKE\
+# Device Drivers \
+-e FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER \
+-e DELL_SMBIOS_SMM \
+-m PATA_JMICRON \
+# Security \
+-e SECURITY_SELINUX \
+-E SECURITY_SELINUX SECURITY_SELINUX_BOOTPARAM \
+-e SECURITY_APPARMOR \
+-e AUDIT
 
 debian/control: $(wildcard debian/*.in)
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
@@ -94,7 +117,7 @@ binary: install
 
 .config_mark:
 	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} oldconfig
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} olddefconfig
 	touch $@
 
 .compile_mark: .config_mark
@@ -120,8 +143,8 @@ binary: install
 	/sbin/depmod -b debian/${PVE_KERNEL_PKG}/ ${KVNAME}
 	# Autogenerate blacklist for watchdog devices (see README)
 	install -m 0755 -d debian/${PVE_KERNEL_PKG}/lib/modprobe.d
-	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > watchdog-blacklist.tmp
-	echo ipmi_watchdog.ko >> watchdog-blacklist.tmp
+	# ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > watchdog-blacklist.tmp
+	echo ipmi_watchdog.ko > watchdog-blacklist.tmp
 	cat watchdog-blacklist.tmp|sed -e 's/^/blacklist /' -e 's/.ko$$//'|sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/source
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/build

@@ -13,6 +13,9 @@ KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
 
 EXTRAVERSION=-${KREL}
 
+# Linux flavor
+PVE_BUILD_FLAVOR ?= clear
+
 # Append Linux flavor name to EXTRAVERSION
 ifdef PVE_BUILD_FLAVOR
 	_ := $(info Using build flavor: ${PVE_BUILD_FLAVOR})
@@ -112,11 +115,12 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
 	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/ubuntu/*.patch; do echo "applying Ubuntu patch '$$patch'" && patch -p1 < $${patch}; done
 # TODO: split for archs, track and diff in our repository?
-	cat ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
+	cat submodules/clear-linux/config-fragment ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cp ${KERNEL_CFG_ORG} ${BUILD_DIR}/${KERNEL_SRC}/.config
 	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian ${BUILD_DIR}/${KERNEL_SRC}/debian.master
 	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/pve/*.patch; do echo "applying PVE patch '$$patch'" && patch -p1 < $${patch}; done
+	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../submodules/clear-linux/*.patch; do echo "applying Clear Linux patch '$$patch'" && patch -p1 < $${patch}; done
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
