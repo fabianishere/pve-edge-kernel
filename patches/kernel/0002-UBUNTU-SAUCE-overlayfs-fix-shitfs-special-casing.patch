@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Date: Wed, 6 May 2020 10:55:28 +0200
+Subject: [PATCH] UBUNTU: SAUCE: overlayfs: fix shitfs special-casing
+
+BugLink: https://bugs.launchpad.net/bugs/1876645
+
+When I picked up Andrei's patch I ported it wrong. We need to initialize
+realpath before dereferencing it obviously.
+
+Cc: Stefan Bader <stefan.bader@canonical.com>
+Cc: Seth Forshee <seth.forshee@canonical.com>
+Cc: Kamal Mostafa <kamal@canonical.com>
+Cc: Kleber Sacilotto de Souza <kleber.souza@canonical.com>
+Cc: Andrei Vagin <avagin@gmail.com>
+Fixes: 4e1f6efeedae ("UBUNTU: SAUCE: overlayfs: use shiftfs hacks only with shiftfs as underlay")
+Link: https://bugs.launchpad.net/bugs/1857257
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Acked-by: Stefan Bader <stefan.bader@canonical.com>
+Acked-by: Kleber Souza <kleber.souza@canonical.com>
+Signed-off-by: Khalid Elmously <khalid.elmously@canonical.com>
+---
+ fs/overlayfs/file.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fs/overlayfs/file.c b/fs/overlayfs/file.c
+index a2faa086ee4b..a406736588d4 100644
+--- a/fs/overlayfs/file.c
++++ b/fs/overlayfs/file.c
+@@ -32,6 +32,7 @@ static struct file *ovl_open_realfile(const struct file *file,
+ 	int flags = file->f_flags | O_NOATIME | FMODE_NONOTIFY;
+ 
+ 	old_cred = ovl_override_creds(inode->i_sb);
++	ovl_path_real(file->f_path.dentry, &realpath);
+ 	if (realpath.dentry->d_sb->s_magic == SHIFTFS_MAGIC)
+ 		realfile = open_with_fake_path(&realpath, flags, realinode,
+ 					       current_cred());
