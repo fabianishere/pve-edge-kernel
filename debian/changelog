@@ -1,3 +1,14 @@
+pve-kernel (5.4.41-1) pve pmg; urgency=medium
+
+  * update sources to Ubuntu-5.4.0-32.36
+
+  * update ZFS to 0.8.4
+
+  * Revert "scsi: lpfc: Fix broken Credit Recovery after driver load" as a
+    workaround for some LP Fibre Channel SCSI boxes.
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 15 May 2020 15:06:08 +0200
+
 pve-kernel (5.4.34-2) pve pmg; urgency=medium
 
   * backport fix for overlayfs
