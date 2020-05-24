@@ -1,29 +1,320 @@
-From 8e87364259ff46e436937ce830138d2c3efddab9 Mon Sep 17 00:00:00 2001
-From: "Kernel Builder (kathleen)" <ubuntu-kernel-bot@canonical.com>
-Date: Tue, 21 Apr 2020 08:32:00 +0000
+From a1a1e5c0863534bb167afacd5e266baa78bf6beb Mon Sep 17 00:00:00 2001
+From: "Kernel Builder (tangerine)" <ubuntu-kernel-bot@canonical.com>
+Date: Sun, 17 May 2020 20:30:37 -0400
 Subject: [PATCH 4/5] debian changelog
 
 ---
- debian.master/changelog | 9371 +----------------------------------------------
- 1 file changed, 3 insertions(+), 9368 deletions(-)
+ debian.master/changelog | 9662 +----------------------------------------------
+ 1 file changed, 3 insertions(+), 9659 deletions(-)
 
 diff --git a/debian.master/changelog b/debian.master/changelog
-index 8657f9d..6d33b7e 100644
+index b22f4d5..872f7d2 100644
 --- a/debian.master/changelog
 +++ b/debian.master/changelog
-@@ -1,9371 +1,6 @@
--linux-5.6 (5.6.0-7.7) focal; urgency=medium
-+linux (5.5.19-050519.202004210831) unstable; urgency=low
+@@ -1,9662 +1,6 @@
+-linux-5.7 (5.7.0-3.4) groovy; urgency=medium
++linux (5.7.0-050700rc6.202005172030) unstable; urgency=low
+ 
+-  [ Upstream Kernel Changes ]
++  Mainline build at commit: v5.7-rc6
+ 
+-  * Rebase to v5.7-rc5
++ -- Mainline Build <kernel@tangerine>  Sun, 17 May 2020 20:30:37 -0400
  
 -  * Packaging resync (LP: #1786013)
 -    - update dkms package versions
-+  Mainline build at commit: v5.5.19
- 
+-
+-  * getitimer returns it_value=0 erroneously (LP: #1349028)
+-    - [Config] CONTEXT_TRACKING_FORCE policy should be unset
+-
+-  * lockdown on power (LP: #1855668) // Ubuntu Kernel Support for OpenPOWER NV
+-    Secure & Trusted Boot (LP: #1866909)
+-    - [Config] Enable configs for OpenPOWER NV Secure & Trusted Boot
+-
+-  * Miscellaneous Ubuntu changes
+-    - SAUCE: Import aufs driver
+-    - [Config] Enable aufs
+-    - [Config] annotations: remove SND_SOC_SOF_HDA_COMMON_HDMI_CODEC
+-    - [Config] Remove CONFIG_SND_HDA_INTEL_DETECT_DMIC from annotations
+-    - [Debian] final-checks -- Do not remove ~* from abi
+-    - [Config] Enable 5-level page table support for x86
+-    - [Config] updateconfigs after 5.7-rc5 rebase
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Mon, 11 May 2020 10:25:42 +0200
+-
+-linux-5.7 (5.7.0-2.3) groovy; urgency=medium
+-
+-  * Packaging resync (LP: #1786013)
+-    - [Packaging] update helper scripts
+-    - update dkms package versions
+-    - [Packaging] update helper scripts
+-
+-  * ASUS T100HAN boots to a blank screen with a cursor [i965: Failed to submit
+-    batchbuffer: Input/output error] (LP: #1860754)
+-    - [Config] CONFIG_PMIC_OPREGION=y and CONFIG_GPIO_CRYSTAL_COVE=y for amd64
+-
+-  * ubuntu/focal64 fails to mount Vagrant shared folders  (LP: #1873506)
+-    - [Packaging] Move virtualbox modules to linux-modules
+-    - [Packaging] Remove vbox and zfs modules from generic.inclusion-list
+-
+-  * built-using constraints preventing uploads (LP: #1875601)
+-    - temporarily drop Built-Using data
+-
+-  * dkms artifacts may expire from the pool (LP: #1850958)
+-    - [Packaging] autoreconstruct -- manage executable debian files
+-    - [packaging] handle downloads from the librarian better
+-
+-  * Add signed modules for the 435 NVIDIA driver (LP: #1875888)
+-    - [Packaging] NVIDIA -- add signed modules for the 435 NVIDIA driver
+-
+-  * [Selftests] Apply various fixes and improvements (LP: #1870543)
+-    - SAUCE: selftests/seccomp -- Disable timeout for seccomp tests
+-
+-  * [17.04 FEAT] Integrate kernel message catalogue for s390x into Ubuntu
+-    distribution (LP: #1628889)
+-    - SAUCE: s390: kernel message catalog
+-
+-  * Overlayfs in user namespace leaks directory content of inaccessible
+-    directories (LP: #1793458) // CVE-2018-6559
+-    - SAUCE: overlayfs: ensure mounter privileges when reading directories
+-
+-  * suspend only works once on ThinkPad X1 Carbon gen 7 (LP: #1865570)
+-    - SAUCE: e1000e: Disable s0ix flow for X1 Carbon 7th
+-
+-  * [ICL] TC port in legacy/static mode can't be detected due TCCOLD
+-    (LP: #1868936)
+-    - drm/i915/display: Move out code to return the digital_port of the aux ch
+-    - drm/i915/display: Add intel_legacy_aux_to_power_domain()
+-    - drm/i915/display: Split hsw_power_well_enable() into two
+-    - drm/i915/tc/icl: Implement TC cold sequences
+-    - drm/i915/tc: Skip ref held check for TC legacy aux power wells
+-    - drm/i915/tc/tgl: Implement TC cold sequences
+-    - drm/i915/tc: Catch TC users accessing FIA registers without enable aux
+-    - drm/i915/tc: Do not warn when aux power well of static TC ports timeout
+-
+-  * Touchpad doesn't work on Dell Inspiron 7000 2-in-1 (LP: #1851901)
+-    - Revert "UBUNTU: SAUCE: mfd: intel-lpss: add quirk for Dell XPS 13 7390
+-      2-in-1"
+-
+-  * 'Elan touchpad' not detected on 'Lenovo ThinkBook 15 IIL' (LP: #1861610)
+-    - SAUCE: Input: elan_i2c - add more hardware ID for Lenovo laptop
+-
+-  * linux-image-5.0.0-35-generic breaks checkpointing of container
+-    (LP: #1857257)
+-    - SAUCE: overlayfs: use shiftfs hacks only with shiftfs as underlay
+-
+-  * alsa/sof: kernel oops on the machine without Intel hdmi audio codec (a
+-    regression in the  asoc machine driver) (LP: #1874359)
+-    - ASoC: intel/skl/hda - fix oops on systems without i915 audio codec
+-
+-  * Add debian/rules targets to compile/run kernel selftests (LP: #1874286)
+-    - [Packaging] add support to compile/run selftests
+-
+-  * 5.4.0-24.28 does not seem to apply rtprio, whereas -21 does. (LP: #1873315)
+-    - [Config] lowlatency: turn off RT_GROUP_SCHED
+-
+-  * alsa/sof: external mic can't be deteced on Lenovo and HP laptops
+-    (LP: #1872569)
+-    - SAUCE: ASoC: intel/skl/hda - set autosuspend timeout for hda codecs
+-
+-  * shiftfs: O_TMPFILE reports ESTALE (LP: #1872757)
+-    - SAUCE: shiftfs: fix dentry revalidation
+-
+-  * shiftfs: broken shiftfs nesting (LP: #1872094)
+-    - SAUCE: shiftfs: record correct creator credentials
+-
+-  * lockdown on power (LP: #1855668)
+-    - SAUCE: (lockdown) powerpc: lock down kernel in secure boot mode
+-
+-  * Add support for Realtek 8723DE wireless adapter (LP: #1780590)
+-    - SAUCE: rtw88: add adaptivity support for EU/JP regulatory
+-    - SAUCE: rtw88: update tx descriptor of mgmt and rsvd page packets
+-    - SAUCE: rtw88: sar: dump sar information via debugfs
+-    - SAUCE: rtw88: 8723d: add IQ calibration
+-    - SAUCE: rtw88: 8723d: Add power tracking
+-    - SAUCE: rtw88: 8723d: implement flush queue
+-    - SAUCE: rtw88: 8723d: set ltecoex register address in chip_info
+-    - SAUCE: rtw88: 8723d: Add coex support
+-    - SAUCE: rtw88: 8723d: Add shutdown callback to disable BT USB suspend
+-
+-  * Fix authentication fail on Realtek WiFi 8723de (LP: #1871300)
+-    - SAUCE: rtw88: No retry and report for auth and assoc
+-    - SAUCE: rtw88: fix rate for a while after being connected
+-    - SAUCE: rtw88: Move driver IQK to set channel before association for 11N chip
+-
+-  * Miscellaneous Ubuntu changes
+-    - SAUCE: rtw88: fix 'const' mismatch in power suequence hooks
+-    - SAUCE: rtw88: fix 'const' mismatch in
+-      __priority_queue_cfg_legacy()/__priority_queue_cfg()
+-    - [Config] RTW88=m
+-    - SAUCE: (lockdown) Revert carried-forward lockdown patches
+-    - SAUCE: (lockdown) Add efi_status_to_str() and rework efi_status_to_err().
+-    - SAUCE: (lockdown) Make get_cert_list() use efi_status_to_str() to print
+-      error messages.
+-    - SAUCE: (lockdown) security: lockdown: expose a hook to lock the kernel down
+-    - SAUCE: (lockdown) efi: Add an EFI_SECURE_BOOT flag to indicate secure boot
+-      mode
+-    - SAUCE: (lockdown) efi: Lock down the kernel if booted in secure boot mode
+-    - SAUCE: (lockdown) s390: Lock down the kernel when the IPL secure flag is set
+-    - SAUCE: (lockdown) KEYS: Make use of platform keyring for module signature
+-      verify
+-    - SAUCE: (lockdown) arm64: Allow locking down the kernel under EFI secure boot
+-    - SAUCE: (lockdown) security: lockdown: Make
+-      CONFIG_LOCK_DOWN_IN_EFI_SECURE_BOOT more generic
+-    - [Config] Add back CONFIG_LOCK_DOWN_IN_SECURE_BOOT annotation for ppc64el
+-    - [Config] CONFIG_RT_GROUP_SCHED=y
+-    - [Packaging] Include modules.builtin.modinfo in linux-modules
+-    - SAUCE: LSM: Infrastructure management of the sock security
+-    - SAUCE: Fix-up af_unix mediation for sock infrastructure management
+-    - SAUCE: Revert "apparmor: Allow filtering based on secmark policy"
+-    - SAUCE: Revert "apparmor: Parse secmark policy"
+-    - SAUCE: Revert "apparmor: Add a wildcard secid"
+-    - SAUCE: Revert "apparmor: fixup secid map conversion to using IDR"
+-    - SAUCE: Revert "apparmor: Use an IDR to allocate apparmor secids"
+-    - SAUCE: Revert "apparmor: add support for mapping secids and using secctxes"
+-    - Update dropped.txt for restored apparmor patches
+-    - Remove lockdown patches from dropped.txt
+-    - SAUCE: powerpc/ima: require IMA module signatures only if MODULE_SIG is not
+-      enabled
+-    - SAUCE: selftests/ftrace: Use printf instead of echo in kprobe syntax error
+-      tests
+-    - SAUCE: selftests/net -- disable l2tp.sh test
+-    - SAUCE: selftests/net -- disable timeout
+-    - SAUCE: tools: hv: Update shebang to use python3 instead of python
+-    - Remove dropped.txt
+-    - [Packaging] move linux-doc and linux-libc-dev stubs to debian.master
+-    - [Debian] Support generating configs for riscv64
+-    - [Config] CONFIG_KMSG_IDS=y for s390x
+-    - [Packaging] add libcap-dev dependency
+-    - [Config] CONFIG_AD5770R=m
+-    - [Config] CONFIG_AL3010=m
+-    - [Config] CONFIG_APPLE_MFI_FASTCHARGE=m
+-    - [Config] CONFIG_BAREUDP=m
+-    - [Config] CONFIG_CRYPTO_DEV_OCTEONTX_CPT=m
+-    - [Config] CONFIG_CRYPTO_DEV_ZYNQMP_AES=m
+-    - [Config] CONFIG_DRM_DISPLAY_CONNECTOR=m
+-    - [Config] CONFIG_DRM_PANEL_BOE_TV101WUM_NL6=m
+-    - [Config] CONFIG_DRM_PANEL_ELIDA_KD35T133=m
+-    - [Config] CONFIG_DRM_PANEL_FEIXIN_K101_IM2BA02=m
+-    - [Config] CONFIG_DRM_PANEL_NOVATEK_NT35510=m
+-    - [Config] CONFIG_DRM_PANEL_SAMSUNG_S6E88A0_AMS452EF01=m
+-    - [Config] CONFIG_DRM_PARADE_PS8640=m
+-    - [Config] CONFIG_DRM_SIMPLE_BRIDGE=m
+-    - [Config] CONFIG_DRM_TIDSS=m
+-    - [Config] CONFIG_DRM_TI_TPD12S015=m
+-    - [Config] CONFIG_DRM_TOSHIBA_TC358768=m
+-    - [Config] CONFIG_EDAC_DMC520=m
+-    - [Config] CONFIG_EXFAT_FS=m
+-    - [Config] CONFIG_GP2AP002=m
+-    - [Config] CONFIG_GPIO_MLXBF2=m
+-    - [Config] CONFIG_HID_GLORIOUS=m
+-    - [Config] CONFIG_HID_MCP2221=m
+-    - [Config] CONFIG_HMC425=m
+-    - [Config] CONFIG_ICP10100=m
+-    - [Config] CONFIG_IMX8MM_THERMAL=m
+-    - [Config] CONFIG_IMX_SC_THERMAL=m
+-    - [Config] CONFIG_INTERCONNECT_QCOM_OSM_L3=m
+-    - [Config] CONFIG_INTERCONNECT_QCOM_SC7180=m
+-    - [Config] CONFIG_K3_RTI_WATCHDOG=m
+-    - [Config] CONFIG_MDIO_IPQ8064=m
+-    - [Config] CONFIG_MDIO_MVUSB=m
+-    - [Config] CONFIG_MHI_BUS=m
+-    - [Config] CONFIG_OCTEONTX2_VF=m
+-    - [Config] CONFIG_PHY_CADENCE_TORRENT=m
+-    - [Config] CONFIG_PHY_QCOM_USB_HS_28NM=m
+-    - [Config] CONFIG_PHY_QCOM_USB_SS=m
+-    - [Config] CONFIG_PINCTRL_DA9062=m
+-    - [Config] CONFIG_PINCTRL_IPQ6018=m
+-    - [Config] CONFIG_PTP_1588_CLOCK_IDT82P33=m
+-    - [Config] CONFIG_PTP_1588_CLOCK_VMW=m
+-    - [Config] CONFIG_QCOM_IPA=m
+-    - [Config] CONFIG_REGULATOR_MP5416=m
+-    - [Config] CONFIG_REGULATOR_MP886X=m
+-    - [Config] CONFIG_RN5T618_ADC=m
+-    - [Config] CONFIG_RTC_DRV_MT2712=m
+-    - [Config] CONFIG_RTC_DRV_RC5T619=m
+-    - [Config] CONFIG_SC_MSS_7180=m
+-    - [Config] CONFIG_SENSORS_AXI_FAN_CONTROL=m
+-    - [Config] CONFIG_SM_GCC_8250=m
+-    - [Config] CONFIG_SND_BCM63XX_I2S_WHISTLER=m
+-    - [Config] CONFIG_SND_MESON_AIU=m
+-    - [Config] CONFIG_SND_MESON_G12A_TOACODEC=m
+-    - [Config] CONFIG_SND_MESON_GX_SOUND_CARD=m
+-    - [Config] CONFIG_SND_SOC_AMD_RV_RT5682_MACH=m
+-    - [Config] CONFIG_SND_SOC_INTEL_SOF_PCM512x_MACH=m
+-    - [Config] CONFIG_SND_SOC_MESON_T9015=m
+-    - [Config] CONFIG_SND_SOC_RT5682_SDW=m
+-    - [Config] CONFIG_SND_SOC_TLV320ADCX140=m
+-    - [Config] CONFIG_SPI_FSI=m
+-    - [Config] CONFIG_SPI_MTK_NOR=m
+-    - [Config] CONFIG_SPI_MUX=m
+-    - [Config] CONFIG_SPRD_THERMAL=m
+-    - [Config] CONFIG_SURFACE_3_POWER_OPREGION=m
+-    - [Config] CONFIG_TINYDRM_ILI9486=m
+-    - [Config] CONFIG_TI_K3_AM65_CPSW_NUSS=m
+-    - [Config] CONFIG_TYPEC_MUX_INTEL_PMC=m
+-    - [Config] CONFIG_UACCE=m
+-    - [Config] CONFIG_UNIPHIER_XDMAC=m
+-    - [Config] CONFIG_USB_MAX3420_UDC=m
+-    - [Config] CONFIG_USB_RAW_GADGET=m
+-    - [Config] CONFIG_VHOST_VDPA=m
+-    - [Config] CONFIG_VIDEO_IMX219=m
+-    - [Config] CONFIG_VIDEO_SUN8I_ROTATE=m
+-    - [Config] CONFIG_VIRTIO_VDPA=m
+-    - [Config] CONFIG_MOST_COMPONENTS=m
+-    - [Config] CONFIG_MFD_IQS62X=m
+-    - packaging: getabis: switch to ckt-ppa:bootstrap/linux-5.7
+-
+-  * Miscellaneous upstream changes
+-    - Revert "UBUNTU: SAUCE: rtw88: add rtw_read8_mask and rtw_read16_mask"
+-    - Revert "UBUNTU: SAUCE: drm/i915/fbc: disable framebuffer compression on
+-      IceLake"
+-    - Revert "UBUNTU: SAUCE: platform/x86: dell-uart-backlight: move retry block"
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Mon, 04 May 2020 10:48:48 +0200
+-
+-linux-5.7 (5.7.0-1.2) groovy; urgency=medium
+-
+-  * Packaging resync (LP: #1786013)
+-    - [Packaging] update helper scripts
+-
+-  * Miscellaneous Ubuntu changes
+-    - SAUCE: hio: pass make_request ptr directly to blk_alloc_queue()
+-    - SAUCE: hio: locally define disk_map_sector_rcu()
+-    - SAUCE: hio: Revert "block: unexport disk_map_sector_rcu"
+-    - SAUCE: hio: include <linux/part_stat.h>
+-    - [Config] amd64: i386: HIO=m
+-    - [Config] updateconfigs after 5.7-rc3 rebase
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Mon, 27 Apr 2020 11:31:38 +0200
+-
+-linux-5.7 (5.7.0-0.1) groovy; urgency=medium
+-
+-  * Miscellaneous Ubuntu changes
+-    - [Config] updateconfigs after rebase to 5.7-rc1
+-
+-  [ Upstream Kernel Changes ]
+-
+-  * Rebase to v5.7-rc1
+-  * Rebase to v5.7-rc2
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Thu, 16 Apr 2020 11:53:58 +0200
+-
+-linux-5.7 (5.7.0-0.0) focal; urgency=medium
+-
+-  * Dummy entry
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Thu, 16 Apr 2020 11:53:58 +0200
+-
+-linux-5.6 (5.6.0-7.7) focal; urgency=medium
+-
+-  * Packaging resync (LP: #1786013)
+-    - update dkms package versions
+-
 -  * Kernel Oops - general protection fault: 0000 [#1] SMP PTI after
 -    disconnecting thunderbolt docking station (LP: #1864754)
 -    - SAUCE: ptp: free ptp clock properly
-+ -- Mainline Build <kernel@kathleen>  Tue, 21 Apr 2020 08:32:00 +0000
- 
+-
 -  * swap storms kills interactive use (LP: #1861359)
 -    - SAUCE: mm/page_alloc.c: disable memory reclaim watermark boosting by default
 -

@@ -1,27 +1,27 @@
-From 6a36a80309a4935b5febf43c7e25047fb2910b5a Mon Sep 17 00:00:00 2001
-From: "Kernel Builder (sita)" <ubuntu-kernel-bot@canonical.com>
-Date: Thu, 23 Apr 2020 09:33:59 +0000
-Subject: [PATCH 5/5] configs (based on Ubuntu-5.6.0-7.7)
+From d3b5fe8d750339adfa962a84b3d42b47a6113424 Mon Sep 17 00:00:00 2001
+From: "Kernel Builder (tangerine)" <ubuntu-kernel-bot@canonical.com>
+Date: Sun, 17 May 2020 20:31:28 -0400
+Subject: [PATCH 5/5] configs (based on Ubuntu-5.7.0-3.4)
 
 ---
- debian.master/config/amd64/config.common.amd64  |  1 -
- .../config/amd64/config.flavour.generic         |  1 -
- .../config/amd64/config.flavour.lowlatency      |  1 -
- debian.master/config/arm64/config.common.arm64  |  4 +---
- debian.master/config/armhf/config.common.armhf  |  2 --
- debian.master/config/config.common.ubuntu       | 17 +++--------------
- debian.master/config/i386/config.common.i386    |  1 -
- .../config/i386/config.flavour.generic          |  1 -
- .../config/i386/config.flavour.lowlatency       |  1 -
- .../config/ppc64el/config.common.ppc64el        |  2 --
- debian.master/config/s390x/config.common.s390x  |  1 -
- 11 files changed, 4 insertions(+), 28 deletions(-)
+ debian.master/config/amd64/config.common.amd64     |  1 -
+ debian.master/config/amd64/config.flavour.generic  |  1 -
+ .../config/amd64/config.flavour.lowlatency         |  1 -
+ debian.master/config/arm64/config.common.arm64     |  4 +--
+ debian.master/config/armhf/config.common.armhf     |  2 --
+ debian.master/config/config.common.ubuntu          | 37 ++--------------------
+ debian.master/config/i386/config.common.i386       |  1 -
+ debian.master/config/i386/config.flavour.generic   |  1 -
+ .../config/i386/config.flavour.lowlatency          |  1 -
+ debian.master/config/ppc64el/config.common.ppc64el |  2 --
+ debian.master/config/s390x/config.common.s390x     |  1 -
+ 11 files changed, 4 insertions(+), 48 deletions(-)
 
 diff --git a/debian.master/config/amd64/config.common.amd64 b/debian.master/config/amd64/config.common.amd64
-index a473a9a03a7f..d0098d1ed9c1 100644
+index 85ff9dc..fef3036 100644
 --- a/debian.master/config/amd64/config.common.amd64
 +++ b/debian.master/config/amd64/config.common.amd64
-@@ -183,7 +183,6 @@ CONFIG_HFSPLUS_FS=m
+@@ -185,7 +185,6 @@ CONFIG_HFSPLUS_FS=m
  CONFIG_HFS_FS=m
  CONFIG_HIBERNATION=y
  CONFIG_HID=m
@@ -30,7 +30,7 @@ index a473a9a03a7f..d0098d1ed9c1 100644
  CONFIG_HOTPLUG_PCI=y
  CONFIG_HOTPLUG_PCI_SHPC=y
 diff --git a/debian.master/config/amd64/config.flavour.generic b/debian.master/config/amd64/config.flavour.generic
-index d1662374ea94..5938d9ba3f6c 100644
+index d166237..5938d9b 100644
 --- a/debian.master/config/amd64/config.flavour.generic
 +++ b/debian.master/config/amd64/config.flavour.generic
 @@ -4,7 +4,6 @@
@@ -42,7 +42,7 @@ index d1662374ea94..5938d9ba3f6c 100644
  # CONFIG_PREEMPT is not set
  CONFIG_PREEMPT_VOLUNTARY=y
 diff --git a/debian.master/config/amd64/config.flavour.lowlatency b/debian.master/config/amd64/config.flavour.lowlatency
-index 814348dc984b..42de09fb0bff 100644
+index 814348d..42de09f 100644
 --- a/debian.master/config/amd64/config.flavour.lowlatency
 +++ b/debian.master/config/amd64/config.flavour.lowlatency
 @@ -4,7 +4,6 @@
@@ -54,10 +54,10 @@ index 814348dc984b..42de09fb0bff 100644
  CONFIG_PREEMPT=y
  # CONFIG_PREEMPT_VOLUNTARY is not set
 diff --git a/debian.master/config/arm64/config.common.arm64 b/debian.master/config/arm64/config.common.arm64
-index dfe622def83c..69180578ddf4 100644
+index b2f8a3c1..ab96a76 100644
 --- a/debian.master/config/arm64/config.common.arm64
 +++ b/debian.master/config/arm64/config.common.arm64
-@@ -165,7 +165,7 @@ CONFIG_FEALNX=m
+@@ -166,7 +166,7 @@ CONFIG_FEALNX=m
  CONFIG_FIREWIRE=m
  CONFIG_FIREWIRE_NOSY=m
  CONFIG_FIXED_PHY=y
@@ -66,7 +66,7 @@ index dfe622def83c..69180578ddf4 100644
  CONFIG_FPGA_BRIDGE=m
  CONFIG_FPGA_DFL=m
  CONFIG_FRAME_WARN=1024
-@@ -195,7 +195,6 @@ CONFIG_HFSPLUS_FS=m
+@@ -197,7 +197,6 @@ CONFIG_HFSPLUS_FS=m
  CONFIG_HFS_FS=m
  # CONFIG_HIBERNATION is not set
  CONFIG_HID=m
@@ -74,7 +74,7 @@ index dfe622def83c..69180578ddf4 100644
  CONFIG_HMC6352=m
  CONFIG_HOTPLUG_PCI=y
  CONFIG_HOTPLUG_PCI_SHPC=y
-@@ -283,7 +282,6 @@ CONFIG_IPMI_HANDLER=m
+@@ -287,7 +286,6 @@ CONFIG_IPMI_HANDLER=m
  # CONFIG_IPMMU_VMSA is not set
  # CONFIG_IP_DCCP_CCID3 is not set
  CONFIG_IRQ_BYPASS_MANAGER=y
@@ -83,10 +83,10 @@ index dfe622def83c..69180578ddf4 100644
  CONFIG_ISL29020=m
  CONFIG_JFS_FS=m
 diff --git a/debian.master/config/armhf/config.common.armhf b/debian.master/config/armhf/config.common.armhf
-index 5407bc1cd66b..97651f0e6512 100644
+index b5a5f76..1fd6228 100644
 --- a/debian.master/config/armhf/config.common.armhf
 +++ b/debian.master/config/armhf/config.common.armhf
-@@ -184,7 +184,6 @@ CONFIG_HFSPLUS_FS=m
+@@ -186,7 +186,6 @@ CONFIG_HFSPLUS_FS=m
  CONFIG_HFS_FS=m
  CONFIG_HIBERNATION=y
  CONFIG_HID=m
@@ -94,19 +94,19 @@ index 5407bc1cd66b..97651f0e6512 100644
  CONFIG_HMC6352=m
  # CONFIG_HOTPLUG_PCI is not set
  CONFIG_HPFS_FS=m
-@@ -267,7 +266,6 @@ CONFIG_IPACK_BUS=m
- CONFIG_IPMI_HANDLER=m
+@@ -272,7 +271,6 @@ CONFIG_IPMI_HANDLER=m
  CONFIG_IPMMU_VMSA=y
  # CONFIG_IP_DCCP_CCID3 is not set
+ CONFIG_IRQ_BYPASS_MANAGER=m
 -# CONFIG_IRQ_FORCED_THREADING_DEFAULT is not set
  CONFIG_ISL29003=m
  CONFIG_ISL29020=m
  CONFIG_JFS_FS=m
 diff --git a/debian.master/config/config.common.ubuntu b/debian.master/config/config.common.ubuntu
-index b63878493c30..c26dcf10c136 100644
+index 298d45c..9650399 100644
 --- a/debian.master/config/config.common.ubuntu
 +++ b/debian.master/config/config.common.ubuntu
-@@ -281,10 +281,7 @@ CONFIG_AMD_XGBE_DCB=y
+@@ -283,10 +283,7 @@ CONFIG_AMD_XGBE_DCB=y
  CONFIG_AMD_XGBE_HAVE_ECC=y
  CONFIG_AMILO_RFKILL=m
  CONFIG_AMLOGIC_THERMAL=m
@@ -118,7 +118,15 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_APB_TIMER=y
  CONFIG_APDS9300=m
  CONFIG_APDS9960=m
-@@ -767,7 +764,7 @@ CONFIG_ARM_TI_CPUFREQ=y
+@@ -368,6 +365,7 @@ CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE=y
+ CONFIG_ARCH_HAS_MEMREMAP_COMPAT_ALIGN=y
+ CONFIG_ARCH_HAS_MEM_ENCRYPT=y
+ CONFIG_ARCH_HAS_MMIOWB=y
++CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE=y
+ CONFIG_ARCH_HAS_PHYS_TO_DMA=y
+ CONFIG_ARCH_HAS_PKEYS=y
+ CONFIG_ARCH_HAS_PMEM_API=y
+@@ -772,7 +770,7 @@ CONFIG_ARM_TI_CPUFREQ=y
  CONFIG_ARM_VEXPRESS_SPC_CPUFREQ=m
  CONFIG_ARM_VIRT_EXT=y
  CONFIG_AS3935=m
@@ -127,7 +135,33 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_ASN1=y
  CONFIG_ASPEED_ADC=m
  CONFIG_ASPEED_BT_IPMI_BMC=m
-@@ -2436,7 +2433,6 @@ CONFIG_DELL_SMBIOS=m
+@@ -908,25 +906,6 @@ CONFIG_AUDIT_ARCH=y
+ CONFIG_AUDIT_ARCH_COMPAT_GENERIC=y
+ CONFIG_AUDIT_COMPAT_GENERIC=y
+ CONFIG_AUDIT_GENERIC=y
+-CONFIG_AUFS_BDEV_LOOP=y
+-# CONFIG_AUFS_BRANCH_MAX_1023 is not set
+-CONFIG_AUFS_BRANCH_MAX_127=y
+-# CONFIG_AUFS_BRANCH_MAX_32767 is not set
+-# CONFIG_AUFS_BRANCH_MAX_511 is not set
+-# CONFIG_AUFS_BR_FUSE is not set
+-CONFIG_AUFS_BR_HFSPLUS=y
+-# CONFIG_AUFS_BR_RAMFS is not set
+-# CONFIG_AUFS_DEBUG is not set
+-CONFIG_AUFS_DIRREN=y
+-CONFIG_AUFS_EXPORT=y
+-# CONFIG_AUFS_FHSM is not set
+-CONFIG_AUFS_FS=m
+-# CONFIG_AUFS_HNOTIFY is not set
+-CONFIG_AUFS_INO_T_64=y
+-# CONFIG_AUFS_RDU is not set
+-CONFIG_AUFS_SBILIST=y
+-# CONFIG_AUFS_SHWH is not set
+-CONFIG_AUFS_XATTR=y
+ CONFIG_AURORA_NB8800=m
+ CONFIG_AUTO_ZRELADDR=y
+ CONFIG_AX25=m
+@@ -2480,7 +2459,6 @@ CONFIG_DELL_SMBIOS=m
  CONFIG_DELL_SMBIOS_SMM=y
  CONFIG_DELL_SMBIOS_WMI=y
  CONFIG_DELL_SMO8800=m
@@ -135,16 +169,15 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_DELL_WMI=m
  CONFIG_DELL_WMI_AIO=m
  CONFIG_DELL_WMI_DESCRIPTOR=m
-@@ -3546,7 +3542,7 @@ CONFIG_GAMEPORT_L4=m
- CONFIG_GAMEPORT_NS558=m
- CONFIG_GARP=m
- CONFIG_GART_IOMMU=y
--CONFIG_GCC_VERSION=90201
-+CONFIG_GCC_VERSION=90300
- # CONFIG_GCOV_KERNEL is not set
- CONFIG_GDB_SCRIPTS=y
- CONFIG_GEMINI_ETHERNET=m
-@@ -5338,7 +5334,6 @@ CONFIG_LOCKDEP_SUPPORT=y
+@@ -5186,7 +5164,6 @@ CONFIG_KGDB_KDB=y
+ CONFIG_KGDB_LOW_LEVEL_TRAP=y
+ CONFIG_KGDB_SERIAL_CONSOLE=y
+ # CONFIG_KGDB_TESTS is not set
+-CONFIG_KMSG_IDS=y
+ CONFIG_KMX61=m
+ CONFIG_KPC2000=y
+ CONFIG_KPC2000_CORE=m
+@@ -5414,7 +5391,6 @@ CONFIG_LOCKDEP_SUPPORT=y
  CONFIG_LOCKD_V4=y
  CONFIG_LOCKUP_DETECTOR=y
  CONFIG_LOCK_DEBUGGING_SUPPORT=y
@@ -152,7 +185,7 @@ index b63878493c30..c26dcf10c136 100644
  # CONFIG_LOCK_DOWN_KERNEL_FORCE_CONFIDENTIALITY is not set
  # CONFIG_LOCK_DOWN_KERNEL_FORCE_INTEGRITY is not set
  CONFIG_LOCK_DOWN_KERNEL_FORCE_NONE=y
-@@ -8451,14 +8446,12 @@ CONFIG_RTLWIFI_USB=m
+@@ -8556,14 +8532,12 @@ CONFIG_RTLWIFI_USB=m
  CONFIG_RTL_CARDS=m
  CONFIG_RTS5208=m
  CONFIG_RTW88=m
@@ -160,14 +193,14 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_RTW88_8822BE=y
  CONFIG_RTW88_8822CE=y
  CONFIG_RTW88_CORE=m
- CONFIG_RTW88_DEBUG=y
- CONFIG_RTW88_DEBUGFS=y
+ # CONFIG_RTW88_DEBUG is not set
+ # CONFIG_RTW88_DEBUGFS is not set
  CONFIG_RTW88_PCI=m
 -# CONFIG_RTW88_REGD_USER_REG_HINTS is not set
  # CONFIG_RT_GROUP_SCHED is not set
  CONFIG_RT_MUTEXES=y
  CONFIG_RUNTIME_TESTING_MENU=y
-@@ -9046,8 +9039,6 @@ CONFIG_SGI_XP=m
+@@ -9156,8 +9130,6 @@ CONFIG_SGI_XP=m
  CONFIG_SGL_ALLOC=y
  CONFIG_SG_POOL=y
  CONFIG_SG_SPLIT=y
@@ -176,7 +209,15 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_SHMEM=y
  CONFIG_SHUFFLE_PAGE_ALLOCATOR=y
  CONFIG_SH_ETH=m
-@@ -11143,7 +11134,6 @@ CONFIG_VCNL4035=m
+@@ -10473,7 +10445,6 @@ CONFIG_TI_CPSW=y
+ # CONFIG_TI_CPSW_PHY_SEL is not set
+ CONFIG_TI_CPSW_SWITCHDEV=m
+ CONFIG_TI_CPTS=y
+-CONFIG_TI_CPTS_MOD=y
+ CONFIG_TI_DAC082S085=m
+ CONFIG_TI_DAC5571=m
+ CONFIG_TI_DAC7311=m
+@@ -11265,7 +11236,6 @@ CONFIG_VDPA_SIM=m
  CONFIG_VDSO=y
  CONFIG_VEML6030=m
  CONFIG_VEML6070=m
@@ -184,7 +225,7 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_VETH=m
  CONFIG_VEXPRESS_CONFIG=y
  CONFIG_VEXPRESS_SYSCFG=y
-@@ -11577,7 +11567,6 @@ CONFIG_WATCHDOG_RTAS=m
+@@ -11706,7 +11676,6 @@ CONFIG_WATCHDOG_RTAS=m
  CONFIG_WATCHDOG_SYSFS=y
  CONFIG_WCN36XX=m
  # CONFIG_WCN36XX_DEBUGFS is not set
@@ -193,10 +234,10 @@ index b63878493c30..c26dcf10c136 100644
  CONFIG_WDAT_WDT=m
  CONFIG_WDT=m
 diff --git a/debian.master/config/i386/config.common.i386 b/debian.master/config/i386/config.common.i386
-index 52b30381e1b2..0268d7a4c6da 100644
+index 82398ce..d23088b 100644
 --- a/debian.master/config/i386/config.common.i386
 +++ b/debian.master/config/i386/config.common.i386
-@@ -180,7 +180,6 @@ CONFIG_HFSPLUS_FS=m
+@@ -182,7 +182,6 @@ CONFIG_HFSPLUS_FS=m
  CONFIG_HFS_FS=m
  CONFIG_HIBERNATION=y
  CONFIG_HID=m
@@ -205,7 +246,7 @@ index 52b30381e1b2..0268d7a4c6da 100644
  CONFIG_HOTPLUG_PCI=y
  CONFIG_HOTPLUG_PCI_SHPC=y
 diff --git a/debian.master/config/i386/config.flavour.generic b/debian.master/config/i386/config.flavour.generic
-index 5c2e4e1d3a9f..965113b110ce 100644
+index 5c2e4e1..965113b 100644
 --- a/debian.master/config/i386/config.flavour.generic
 +++ b/debian.master/config/i386/config.flavour.generic
 @@ -4,6 +4,5 @@
@@ -216,7 +257,7 @@ index 5c2e4e1d3a9f..965113b110ce 100644
  # CONFIG_PREEMPT is not set
  CONFIG_PREEMPT_VOLUNTARY=y
 diff --git a/debian.master/config/i386/config.flavour.lowlatency b/debian.master/config/i386/config.flavour.lowlatency
-index 6b121e3f433b..0af82e00adce 100644
+index 6b121e3..0af82e0 100644
 --- a/debian.master/config/i386/config.flavour.lowlatency
 +++ b/debian.master/config/i386/config.flavour.lowlatency
 @@ -4,6 +4,5 @@
@@ -227,10 +268,10 @@ index 6b121e3f433b..0af82e00adce 100644
  CONFIG_PREEMPT=y
  # CONFIG_PREEMPT_VOLUNTARY is not set
 diff --git a/debian.master/config/ppc64el/config.common.ppc64el b/debian.master/config/ppc64el/config.common.ppc64el
-index 7761c349c82c..1945b4564116 100644
+index c0c01a8..f66726e 100644
 --- a/debian.master/config/ppc64el/config.common.ppc64el
 +++ b/debian.master/config/ppc64el/config.common.ppc64el
-@@ -182,7 +182,6 @@ CONFIG_HFSPLUS_FS=m
+@@ -184,7 +184,6 @@ CONFIG_HFSPLUS_FS=m
  CONFIG_HFS_FS=m
  # CONFIG_HIBERNATION is not set
  CONFIG_HID=m
@@ -238,7 +279,7 @@ index 7761c349c82c..1945b4564116 100644
  CONFIG_HMC6352=m
  CONFIG_HOTPLUG_PCI=y
  # CONFIG_HOTPLUG_PCI_SHPC is not set
-@@ -265,7 +264,6 @@ CONFIG_IPACK_BUS=m
+@@ -270,7 +269,6 @@ CONFIG_IPACK_BUS=m
  CONFIG_IPMI_HANDLER=m
  # CONFIG_IP_DCCP_CCID3 is not set
  CONFIG_IRQ_BYPASS_MANAGER=y
@@ -247,17 +288,17 @@ index 7761c349c82c..1945b4564116 100644
  CONFIG_ISL29020=m
  CONFIG_JFS_FS=m
 diff --git a/debian.master/config/s390x/config.common.s390x b/debian.master/config/s390x/config.common.s390x
-index 6ea96d850eae..12fbc11c1c32 100644
+index 1400c2a..c955443 100644
 --- a/debian.master/config/s390x/config.common.s390x
 +++ b/debian.master/config/s390x/config.common.s390x
-@@ -169,7 +169,6 @@ CONFIG_GPIO_GENERIC_PLATFORM=m
+@@ -170,7 +170,6 @@ CONFIG_GPIO_GENERIC_PLATFORM=m
+ # CONFIG_HFSPLUS_FS is not set
  # CONFIG_HFS_FS is not set
- # CONFIG_HIBERNATION is not set
  # CONFIG_HID is not set
 -# CONFIG_HIO is not set
  # CONFIG_HMC6352 is not set
  CONFIG_HOTPLUG_PCI=y
  # CONFIG_HOTPLUG_PCI_SHPC is not set
 -- 
-2.17.1
+2.7.4
 
