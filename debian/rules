@@ -15,6 +15,7 @@ CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}
 PVE_HEADER_PKG=pve-headers-${KVNAME}
+PVE_USR_HEADER_PKG=pve-kernel-libc-dev
 LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
 KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 
@@ -87,7 +88,7 @@ debian/control: $(wildcard debian/*.in)
 
 build: .compile_mark .tools_compile_mark .modules_compile_mark
 
-install: .install_mark .tools_install_mark .headers_install_mark
+install: .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
 	dh_installchangelogs
 	dh_installman
@@ -97,7 +98,7 @@ install: .install_mark .tools_install_mark .headers_install_mark
 
 binary: install
 	debian/rules fwcheck abicheck
-	dh_strip -N${PVE_HEADER_PKG}
+	dh_strip -N${PVE_HEADER_PKG} -N${PVE_USR_HEADER_PKG}
 	dh_makeshlibs
 	dh_shlibdeps
 	dh_installdeb
@@ -205,6 +206,23 @@ binary: install
 	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
+	touch $@
+
+.usr_headers_install_mark: PKG_DIR = debian/${PVE_USR_HEADER_PKG}
+.usr_headers_install_mark: OUT_DIR = ${PKG_DIR}/usr
+.usr_headers_install_mark: .config_mark
+	rm -rf '${PKG_DIR}'
+	mkdir -p  '${PKG_DIR}'
+	$(MAKE) -C ${KERNEL_SRC} headers_check ARCH=$(KERNEL_HEADER_ARCH)
+	$(MAKE) -C ${KERNEL_SRC} headers_install ARCH=$(KERNEL_HEADER_ARCH) INSTALL_HDR_PATH='$(CURDIR)'/$(OUT_DIR)
+	rm -rf $(OUT_DIR)/include/drm $(OUT_DIR)/include/scsi
+	find $(OUT_DIR)/include \( -name .install -o -name ..install.cmd \) -execdir rm {} +
+
+# Move include/asm to arch-specific directory
+	mkdir -p $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)
+	mv $(OUT_DIR)/include/asm $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
+	test ! -d $(OUT_DIR)/include/arch || \
+		mv $(OUT_DIR)/include/arch $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
 	touch $@
 
 .modules_compile_mark: ${MODULES}/zfs.ko
