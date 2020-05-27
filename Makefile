@@ -126,7 +126,7 @@ ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
 	mkdir -p ${BUILD_DIR}/${MODULES}/tmp
 	cp -a ${ZFSONLINUX_SUBMODULE}/* ${BUILD_DIR}/${MODULES}/tmp
-	set -e; cd ${BUILD_DIR}/${MODULES}/tmp/upstream; for patch in ../../../../patches/zfsonlinux/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
+	# set -e; cd ${BUILD_DIR}/${MODULES}/tmp/upstream; for patch in ../../../../patches/zfsonlinux/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
 	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
 	touch ${ZFSDIR}.prepared
