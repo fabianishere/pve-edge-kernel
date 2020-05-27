@@ -1,3 +1,9 @@
+pve-edge-kernel (5.7.0-0rc7) edge; urgency=medium
+
+  * update to Linux 5.7-rc7 based on Ubuntu 5.7.0-3.4
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 27 May 2020 12:29:50 +0200
+
 pve-edge-kernel (5.7.0-0rc6) edge; urgency=medium
 
   * update to Linux 5.7-rc6 based on Ubuntu 5.7.0-3.4

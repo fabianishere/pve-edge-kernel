@@ -4,9 +4,9 @@ KERNEL_MIN=7
 KERNEL_PATCHLEVEL=0
 # increment KREL if the ABI changes (abicheck target in debian/rules)
 # rebuild packages with new KREL and run 'make abiupdate'
-KREL=0rc6
+KREL=0rc7
 
-PKGREL=0rc6
+PKGREL=0rc7
 
 KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
 KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
