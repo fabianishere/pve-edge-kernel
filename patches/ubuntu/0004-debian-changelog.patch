@@ -1,26 +1,87 @@
-From a1a1e5c0863534bb167afacd5e266baa78bf6beb Mon Sep 17 00:00:00 2001
+From 1260d079bcf1fe8b8376c64037bc66cb2a3cdefa Mon Sep 17 00:00:00 2001
 From: "Kernel Builder (tangerine)" <ubuntu-kernel-bot@canonical.com>
-Date: Sun, 17 May 2020 20:30:37 -0400
+Date: Sun, 31 May 2020 21:30:33 -0400
 Subject: [PATCH 4/5] debian changelog
 
 ---
- debian.master/changelog | 9662 +----------------------------------------------
- 1 file changed, 3 insertions(+), 9659 deletions(-)
+ debian.master/changelog | 9723 +----------------------------------------------
+ 1 file changed, 3 insertions(+), 9720 deletions(-)
 
 diff --git a/debian.master/changelog b/debian.master/changelog
-index b22f4d5..872f7d2 100644
+index 27360b8..1614fee 100644
 --- a/debian.master/changelog
 +++ b/debian.master/changelog
-@@ -1,9662 +1,6 @@
--linux-5.7 (5.7.0-3.4) groovy; urgency=medium
-+linux (5.7.0-050700rc6.202005172030) unstable; urgency=low
+@@ -1,9723 +1,6 @@
+-linux-5.7 (5.7.0-5.6) groovy; urgency=medium
++linux (5.7.0-050700.202005312130) unstable; urgency=low
  
+-  * Packaging resync (LP: #1786013)
+-    - update dkms package versions
++  Mainline build at commit: v5.7
+ 
+-  * [UBUNTU 20.04] PSI generates overhead on s390x (LP: #1876044)
+-    - Ubuntu: [Config] CONFIG_PSI is enabled by default, but creates additional
+-      overhead on s390x, hence should be disabled by default on s390x only.
++ -- Mainline Build <kernel@tangerine>  Sun, 31 May 2020 21:30:33 -0400
+ 
+-  * Miscellaneous Ubuntu changes
+-    - Rebase to v5.7-rc7
+-    - [Config] ppc64el: disable STRICT_KERNEL_RWX
+-
 -  [ Upstream Kernel Changes ]
-+  Mainline build at commit: v5.7-rc6
- 
+-
+-  * Rebase to v5.7-rc7
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Mon, 25 May 2020 11:44:09 +0200
+-
+-linux-5.7 (5.7.0-4.5) groovy; urgency=medium
+-
+-  * Packaging resync (LP: #1786013)
+-    - update dkms package versions
+-
+-  * update-initramfs complains of missing amdgpu firmware files (LP: #1873325)
+-    - SAUCE: drm/amdgpu: Remove unreleased arcturus and navi12 firmware from
+-      modinfo
+-
+-  * Support DMIC micmute LED on HP platforms (LP: #1876859)
+-    - ALSA: hda/realtek - Introduce polarity for micmute LED GPIO
+-    - ALSA: hda/realtek - Enable micmute LED on and HP system
+-    - ALSA: hda/realtek - Add LED class support for micmute LED
+-    - ALSA: hda/realtek - Fix unused variable warning w/o
+-      CONFIG_LEDS_TRIGGER_AUDIO
+-    - ASoC: SOF: Update correct LED status at the first time usage of
+-      update_mute_led()
+-
+-  * Killer(R) Wi-Fi 6 AX1650i 160MHz Wireless Network Adapter (201NGW),
+-    REV=0x354 [8086:a0f0] subsystem id [1a56:1651] wireless adapter not found
+-    due to firmware crash (LP: #1874685)
+-    - SAUCE: iwlwifi: pcie: handle QuZ configs with killer NICs as well
+-
+-  * rtkit-daemon[*]: Failed to make ourselves RT: Operation not permitted after
+-    upgrade to 20.04 (LP: #1875665)
+-    - [Config] Turn off CONFIG_RT_GROUP_SCHED everywhere
+-
+-  * Unable to handle kernel pointer dereference in virtual kernel address space
+-    on Eoan (LP: #1876645)
+-    - SAUCE: overlayfs: fix shitfs special-casing
+-
+-  * Miscellaneous Ubuntu changes
+-    - SAUCE: skip building selftest 'runqslower' if kernel not built
+-    - Rebase to v5.7-rc6
+-    - [Config] updateconfigs after 5.7-rc6 rebase
+-
+-  [ Upstream Kernel Changes ]
+-
+-  * Rebase to v5.7-rc6
+-
+- -- Paolo Pisati <paolo.pisati@canonical.com>  Mon, 18 May 2020 11:27:25 +0200
+-
+-linux-5.7 (5.7.0-3.4) groovy; urgency=medium
+-
+-  [ Upstream Kernel Changes ]
+-
 -  * Rebase to v5.7-rc5
-+ -- Mainline Build <kernel@tangerine>  Sun, 17 May 2020 20:30:37 -0400
- 
+-
 -  * Packaging resync (LP: #1786013)
 -    - update dkms package versions
 -
