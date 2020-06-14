@@ -1,29 +1,110 @@
-From 1260d079bcf1fe8b8376c64037bc66cb2a3cdefa Mon Sep 17 00:00:00 2001
-From: "Kernel Builder (tangerine)" <ubuntu-kernel-bot@canonical.com>
-Date: Sun, 31 May 2020 21:30:33 -0400
+From ac2916bee6860c758c825a2e9daa3ec46e02b22d Mon Sep 17 00:00:00 2001
+From: "Kernel Builder (sita)" <ubuntu-kernel-bot@canonical.com>
+Date: Sun, 7 Jun 2020 12:30:49 +0000
 Subject: [PATCH 4/5] debian changelog
 
 ---
- debian.master/changelog | 9723 +----------------------------------------------
- 1 file changed, 3 insertions(+), 9720 deletions(-)
+ debian.master/changelog | 9804 +--------------------------------------
+ 1 file changed, 3 insertions(+), 9801 deletions(-)
 
 diff --git a/debian.master/changelog b/debian.master/changelog
-index 27360b8..1614fee 100644
+index 543e89a318ec..ab18ce98fd52 100644
 --- a/debian.master/changelog
 +++ b/debian.master/changelog
-@@ -1,9723 +1,6 @@
--linux-5.7 (5.7.0-5.6) groovy; urgency=medium
-+linux (5.7.0-050700.202005312130) unstable; urgency=low
+@@ -1,9804 +1,6 @@
+-linux-5.7 (5.7.0-6.7) groovy; urgency=medium
++linux (5.7.1-050701.202006071230) unstable; urgency=low
  
 -  * Packaging resync (LP: #1786013)
+-    - [Packaging] update helper scripts
 -    - update dkms package versions
-+  Mainline build at commit: v5.7
++  Mainline build at commit: v5.7.1
  
+-  * shiftfs: fix btrfs snapshot deletion (LP: #1879688)
+-    - SAUCE: shiftfs: let userns root destroy subvolumes from other users
++ -- Mainline Build <kernel@sita>  Sun, 07 Jun 2020 12:30:48 +0000
+ 
+-  * seccomp_benchmark times out on eoan (LP: #1881576)
+-    - SAUCE: selftests/seccomp: use 90s as timeout
+-
+-  * Realtek 8723DE [10ec:d723] subsystem [10ec:d738]  disconnects unsolicitedly
+-    when Bluetooth is paired: Reason: 23=IEEE8021X_FAILED (LP: #1878147)
+-    - SAUCE: Revert "UBUNTU: SAUCE: rtw88: Move driver IQK to set channel before
+-      association for 11N chip"
+-    - SAUCE: Revert "UBUNTU: SAUCE: rtw88: fix rate for a while after being
+-      connected"
+-    - SAUCE: Revert "UBUNTU: SAUCE: rtw88: No retry and report for auth and assoc"
+-    - SAUCE: Revert "UBUNTU: SAUCE: rtw88: 8723d: Add coex support"
+-    - rtw88: 8723d: Add coex support
+-    - SAUCE: rtw88: coex: 8723d: set antanna control owner
+-    - SAUCE: rtw88: coex: 8723d: handle BT inquiry cases
+-    - SAUCE: rtw88: fix EAPOL 4-way failure by finish IQK earlier
+-
+-  * ASoC/amd: add audio driver for amd renoir (LP: #1881046)
+-    - ASoC: amd: add Renoir ACP3x IP register header
+-    - ASoC: amd: add Renoir ACP PCI driver
+-    - ASoC: amd: add acp init/de-init functions
+-    - ASoC: amd: create acp3x pdm platform device
+-    - ASoC: amd: add ACP3x PDM platform driver
+-    - ASoC: amd: irq handler changes for ACP3x PDM dma driver
+-    - ASoC: amd: add acp3x pdm driver dma ops
+-    - ASoC: amd: add ACP PDM DMA driver dai ops
+-    - ASoC: amd: add Renoir ACP PCI driver PM ops
+-    - ASoC: amd: add ACP PDM DMA driver pm ops
+-    - ASoC: amd: enable Renoir acp3x drivers build
+-    - ASoC: amd: create platform devices for Renoir
+-    - ASoC: amd: RN machine driver using dmic
+-    - ASoC: amd: enable build for RN machine driver
+-    - ASoC: amd: fix kernel warning
+-    - ASoC: amd: refactoring dai_hw_params() callback
+-    - ASoC: amd: return error when acp de-init fails
+-    - [Config]: enable amd renoir ASoC audio
+-
+-  * Slow send speed with Intel I219-V on Ubuntu 18.04.1 (LP: #1802691)
+-    - e1000e: Disable TSO for buffer overrun workaround
+-
+-  * Fix incorrect speed/duplex when I210 device is runtime suspended
+-    (LP: #1880656)
+-    - igb: Report speed and duplex as unknown when device is runtime suspended
+-
+-  * Fix Pericom USB controller OHCI/EHCI PME# defect (LP: #1879321)
+-    - serial: 8250_pci: Move Pericom IDs to pci_ids.h
+-    - PCI: Avoid Pericom USB controller OHCI/EHCI PME# defect
+-
+-  * [UBUNTU 20.04] s390x/pci: enumerate pci functions per physical adapter
+-    (LP: #1874056)
+-    - s390/pci: Expose new port attribute for PCIe functions
+-    - s390/pci: adaptation of iommu to multifunction
+-    - s390/pci: define kernel parameters for PCI multifunction
+-    - s390/pci: define RID and RID available
+-    - s390/pci: create zPCI bus
+-    - s390/pci: adapt events for zbus
+-    - s390/pci: Handling multifunctions
+-    - s390/pci: Do not disable PF when VFs exist
+-    - s390/pci: Documentation for zPCI
+-    - s390/pci: removes wrong PCI multifunction assignment
+-
+-  * add 16-bit width registers support for EEPROM at24 device (LP: #1876699)
+-    - regmap-i2c: add 16-bit width registers support
+-
+-  * Miscellaneous Ubuntu changes
+-    - [Config] Enable virtualbox guest and shared-folder modules
+-
+-  [ Upstream Kernel Changes ]
+-
+-  * Rebase to v5.7
+-
+- -- Seth Forshee <seth.forshee@canonical.com>  Mon, 01 Jun 2020 16:11:24 -0500
+-
+-linux-5.7 (5.7.0-5.6) groovy; urgency=medium
+-
+-  * Packaging resync (LP: #1786013)
+-    - update dkms package versions
+-
 -  * [UBUNTU 20.04] PSI generates overhead on s390x (LP: #1876044)
 -    - Ubuntu: [Config] CONFIG_PSI is enabled by default, but creates additional
 -      overhead on s390x, hence should be disabled by default on s390x only.
-+ -- Mainline Build <kernel@tangerine>  Sun, 31 May 2020 21:30:33 -0400
- 
+-
 -  * Miscellaneous Ubuntu changes
 -    - Rebase to v5.7-rc7
 -    - [Config] ppc64el: disable STRICT_KERNEL_RWX
@@ -9739,5 +9820,5 @@ index 27360b8..1614fee 100644
 -
 - -- Tim Gardner <tim.gardner@canonical.com>  Mon, 20 Mar 2017 05:15:32 -0600
 -- 
-2.7.4
+2.17.1
 

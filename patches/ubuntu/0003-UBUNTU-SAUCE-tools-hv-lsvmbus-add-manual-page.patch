@@ -1,4 +1,4 @@
-From 4782f6e482d003eff3992e421d690b26f54786b3 Mon Sep 17 00:00:00 2001
+From 87f5bfcfe236761b19a7d1886d345785d4a8b45b Mon Sep 17 00:00:00 2001
 From: Andy Whitcroft <apw@canonical.com>
 Date: Fri, 27 May 2016 13:52:22 +0100
 Subject: [PATCH 3/5] UBUNTU: SAUCE: tools/hv/lsvmbus -- add manual page
@@ -16,7 +16,7 @@ Signed-off-by: Kamal Mostafa <kamal@canonical.com>
 
 diff --git a/tools/hv/lsvmbus.8 b/tools/hv/lsvmbus.8
 new file mode 100644
-index 00000000..ba07d66
+index 000000000000..ba07d664950e
 --- /dev/null
 +++ b/tools/hv/lsvmbus.8
 @@ -0,0 +1,23 @@
@@ -44,5 +44,5 @@ index 00000000..ba07d66
 +.nf
 +Written by Dexuan Cui <decui@microsoft.com>
 -- 
-2.7.4
+2.17.1
 
