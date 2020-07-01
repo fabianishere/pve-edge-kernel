@@ -1,3 +1,13 @@
+pve-kernel (5.4.44-2) pve pmg; urgency=medium
+
+  * fix #2814: config: disable lockdown
+
+  * backport: cgroup: fix cgroup_sk_alloc() for sk_clone_lock()
+
+  * bump ABI to 5.4.44-2
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 01 Jul 2020 16:37:57 +0200
+
 pve-kernel (5.4.44-1) pve pmg; urgency=medium
 
   * update sources to Ubuntu-5.4.0-38.42
