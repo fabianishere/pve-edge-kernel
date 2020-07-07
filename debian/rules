@@ -15,6 +15,7 @@ CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
 PVE_KERNEL_PKG=pve-edge-kernel-${KVNAME}
 PVE_HEADER_PKG=pve-edge-headers-${KVNAME}
+PVE_USR_HEADER_PKG=pve-kernel-libc-dev
 LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
 KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 
@@ -35,6 +36,7 @@ PVE_CONFIG_OPTS= \
 -m CONFIG_JFS_FS \
 -m CONFIG_HFS_FS \
 -m CONFIG_HFSPLUS_FS \
+-e CIFS_SMB_DIRECT \
 -e CONFIG_BRIDGE \
 -e CONFIG_BRIDGE_NETFILTER \
 -e CONFIG_BLK_DEV_SD \
@@ -49,6 +51,21 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_MEMCG_DISABLED \
 -e CONFIG_MEMCG_SWAP_ENABLED \
 -e CONFIG_HYPERV \
+-m CONFIG_VFIO_IOMMU_TYPE1 \
+-m CONFIG_VFIO_VIRQFD \
+-m CONFIG_VFIO \
+-m CONFIG_VFIO_PCI \
+-m CONFIG_USB_XHCI_HCD \
+-m CONFIG_USB_XHCI_PCI \
+-m CONFIG_USB_EHCI_HCD \
+-m CONFIG_USB_EHCI_PCI \
+-m CONFIG_USB_EHCI_HCD_PLATFORM \
+-m CONFIG_USB_OHCI_HCD \
+-m CONFIG_USB_OHCI_HCD_PCI \
+-m CONFIG_USB_OHCI_HCD_PLATFORM \
+-d CONFIG_USB_OHCI_HCD_SSB \
+-m CONFIG_USB_UHCI_HCD \
+-d CONFIG_USB_SL811_HCD_ISO \
 -e CONFIG_MEMCG_KMEM \
 -d CONFIG_DEFAULT_CFQ \
 -e CONFIG_DEFAULT_DEADLINE \
@@ -59,6 +76,9 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_UNWINDER_ORC \
 -d CONFIG_UNWINDER_GUESS \
 -e CONFIG_UNWINDER_FRAME_POINTER \
+-d CONFIG_SECURITY_LOCKDOWN_LSM \
+-d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
+--set-str CONFIG_LSM yama,integrity,apparmor \
 -e CONFIG_PAGE_TABLE_ISOLATION
 
 debian/control: $(wildcard debian/*.in)
@@ -74,7 +94,7 @@ debian/control: $(wildcard debian/*.in)
 
 build: .compile_mark .tools_compile_mark .modules_compile_mark
 
-install: .install_mark .tools_install_mark .headers_install_mark
+install: .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
 	dh_installchangelogs
 	dh_installman
@@ -84,7 +104,7 @@ install: .install_mark .tools_install_mark .headers_install_mark
 
 binary: install
 	debian/rules fwcheck abicheck
-	dh_strip -N${PVE_HEADER_PKG}
+	dh_strip -N${PVE_HEADER_PKG} -N${PVE_USR_HEADER_PKG}
 	dh_makeshlibs
 	dh_shlibdeps
 	dh_installdeb
@@ -192,6 +212,23 @@ binary: install
 	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
+	touch $@
+
+.usr_headers_install_mark: PKG_DIR = debian/${PVE_USR_HEADER_PKG}
+.usr_headers_install_mark: OUT_DIR = ${PKG_DIR}/usr
+.usr_headers_install_mark: .config_mark
+	rm -rf '${PKG_DIR}'
+	mkdir -p  '${PKG_DIR}'
+	$(MAKE) -C ${KERNEL_SRC} headers_check ARCH=$(KERNEL_HEADER_ARCH)
+	$(MAKE) -C ${KERNEL_SRC} headers_install ARCH=$(KERNEL_HEADER_ARCH) INSTALL_HDR_PATH='$(CURDIR)'/$(OUT_DIR)
+	rm -rf $(OUT_DIR)/include/drm $(OUT_DIR)/include/scsi
+	find $(OUT_DIR)/include \( -name .install -o -name ..install.cmd \) -execdir rm {} +
+
+# Move include/asm to arch-specific directory
+	mkdir -p $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)
+	mv $(OUT_DIR)/include/asm $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
+	test ! -d $(OUT_DIR)/include/arch || \
+		mv $(OUT_DIR)/include/arch $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
 	touch $@
 
 .modules_compile_mark: ${MODULES}/zfs.ko
