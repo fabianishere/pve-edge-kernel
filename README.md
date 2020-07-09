@@ -27,7 +27,7 @@ apt install ./pve-edge-kernel-VERSION-MARCH_VERSION_amd64.deb
 When using these kernels, Proxmox's AppArmor profiles may fail to load since it uses an older AppArmor feature set
 which is not supported by these kernels anymore. This issue also appears when launching LXC containers.
 To fix this, tell AppArmor to use the stock features file as opposed to Proxmox's features file, which is done
-by updating `/etc/apparmor.d/parser.conf` as follows:
+by updating `/etc/apparmor/parser.conf` as follows:
 
 ```
 ## Pin feature set (avoid regressions when policy is lagging behind
