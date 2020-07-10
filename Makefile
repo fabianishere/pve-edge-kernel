@@ -47,7 +47,7 @@ SKIPABI=0
 
 BUILD_DIR=build
 
-KERNEL_SRC=linux-stable
+KERNEL_SRC=ubuntu-mainline
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
@@ -110,7 +110,6 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
-	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/ubuntu/*.patch; do echo "applying Ubuntu patch '$$patch'" && patch -p1 < $${patch}; done
 # TODO: split for archs, track and diff in our repository?
 	cat ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/config.common.ubuntu ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.common.${ARCH} ${BUILD_DIR}/${KERNEL_SRC}/debian.master/config/${ARCH}/config.flavour.generic > ${KERNEL_CFG_ORG}
 	cp ${KERNEL_CFG_ORG} ${BUILD_DIR}/${KERNEL_SRC}/.config

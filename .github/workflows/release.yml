@@ -25,7 +25,7 @@ jobs:
       with:
           submodules: recursive
     - name: Build Kernel
-      run: PATH="/usr/lib/ccache:${PATH}" make
+      run: make
       env:
           PVE_BUILD_TYPE: ${{ matrix.build_type }}
           PVE_BUILD_CC: ${{ matrix.build_cc }}

@@ -1,0 +1,113 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Cong Wang <xiyou.wangcong@gmail.com>
+Date: Tue, 16 Jun 2020 11:03:52 -0700
+Subject: [PATCH] cgroup: fix cgroup_sk_alloc() for sk_clone_lock()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When we clone a socket in sk_clone_lock(), its sk_cgrp_data is
+copied, so the cgroup refcnt must be taken too. And, unlike the
+sk_alloc() path, sock_update_netprioidx() is not called here.
+Therefore, it is safe and necessary to grab the cgroup refcnt
+even when cgroup_sk_alloc is disabled.
+
+sk_clone_lock() is in BH context anyway, the in_interrupt()
+would terminate this function if called there. And for sk_alloc()
+skcd->val is always zero. So it's safe to factor out the code
+to make it more readable.
+
+Fixes: 090e28b229af92dc5b ("netprio_cgroup: Fix unlimited memory leak of v2 cgroups")
+Reported-by: Cameron Berkenpas <cam@neo-zeon.de>
+Reported-by: Peter Geis <pgwipeout@gmail.com>
+Reported-by: Lu Fengqi <lufq.fnst@cn.fujitsu.com>
+Reported-by: Daniël Sonck <dsonck92@gmail.com>
+Tested-by: Cameron Berkenpas <cam@neo-zeon.de>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Zefan Li <lizefan@huawei.com>
+Cc: Tejun Heo <tj@kernel.org>
+Signed-off-by: Cong Wang <xiyou.wangcong@gmail.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ include/linux/cgroup.h |  2 ++
+ kernel/cgroup/cgroup.c | 26 ++++++++++++++------------
+ net/core/sock.c        |  2 +-
+ 3 files changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
+index 57577075d204..14452a801d95 100644
+--- a/include/linux/cgroup.h
++++ b/include/linux/cgroup.h
+@@ -822,6 +822,7 @@ extern spinlock_t cgroup_sk_update_lock;
+ 
+ void cgroup_sk_alloc_disable(void);
+ void cgroup_sk_alloc(struct sock_cgroup_data *skcd);
++void cgroup_sk_clone(struct sock_cgroup_data *skcd);
+ void cgroup_sk_free(struct sock_cgroup_data *skcd);
+ 
+ static inline struct cgroup *sock_cgroup_ptr(struct sock_cgroup_data *skcd)
+@@ -847,6 +848,7 @@ static inline struct cgroup *sock_cgroup_ptr(struct sock_cgroup_data *skcd)
+ #else	/* CONFIG_CGROUP_DATA */
+ 
+ static inline void cgroup_sk_alloc(struct sock_cgroup_data *skcd) {}
++static inline void cgroup_sk_clone(struct sock_cgroup_data *skcd) {}
+ static inline void cgroup_sk_free(struct sock_cgroup_data *skcd) {}
+ 
+ #endif	/* CONFIG_CGROUP_DATA */
+diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
+index 7c9e97553a00..d56ee72f4a07 100644
+--- a/kernel/cgroup/cgroup.c
++++ b/kernel/cgroup/cgroup.c
+@@ -6382,18 +6382,6 @@ void cgroup_sk_alloc(struct sock_cgroup_data *skcd)
+ 	if (cgroup_sk_alloc_disabled)
+ 		return;
+ 
+-	/* Socket clone path */
+-	if (skcd->val) {
+-		/*
+-		 * We might be cloning a socket which is left in an empty
+-		 * cgroup and the cgroup might have already been rmdir'd.
+-		 * Don't use cgroup_get_live().
+-		 */
+-		cgroup_get(sock_cgroup_ptr(skcd));
+-		cgroup_bpf_get(sock_cgroup_ptr(skcd));
+-		return;
+-	}
+-
+ 	/* Don't associate the sock with unrelated interrupted task's cgroup. */
+ 	if (in_interrupt())
+ 		return;
+@@ -6415,6 +6403,20 @@ void cgroup_sk_alloc(struct sock_cgroup_data *skcd)
+ 	rcu_read_unlock();
+ }
+ 
++void cgroup_sk_clone(struct sock_cgroup_data *skcd)
++{
++	/* Socket clone path */
++	if (skcd->val) {
++		/*
++		 * We might be cloning a socket which is left in an empty
++		 * cgroup and the cgroup might have already been rmdir'd.
++		 * Don't use cgroup_get_live().
++		 */
++		cgroup_get(sock_cgroup_ptr(skcd));
++		cgroup_bpf_get(sock_cgroup_ptr(skcd));
++	}
++}
++
+ void cgroup_sk_free(struct sock_cgroup_data *skcd)
+ {
+ 	struct cgroup *cgrp = sock_cgroup_ptr(skcd);
+diff --git a/net/core/sock.c b/net/core/sock.c
+index 0adf7a9e5a90..6ef468767ab0 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -1836,7 +1836,7 @@ struct sock *sk_clone_lock(const struct sock *sk, const gfp_t priority)
+ 		/* sk->sk_memcg will be populated at accept() time */
+ 		newsk->sk_memcg = NULL;
+ 
+-		cgroup_sk_alloc(&newsk->sk_cgrp_data);
++		cgroup_sk_clone(&newsk->sk_cgrp_data);
+ 
+ 		rcu_read_lock();
+ 		filter = rcu_dereference(sk->sk_filter);
