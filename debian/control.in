@@ -32,6 +32,7 @@ Build-Depends: asciidoc-base,
                tar,
                xmlto,
                zlib1g-dev,
+               dwarves
 Build-Conflicts: pve-edge-headers-@KVNAME@,
 Vcs-Git: git://github.com/fabianishere/pve-edge-kernel.git
 Vcs-Browser: https://github.com/fabianishere/pve-edge-kernel

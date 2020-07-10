@@ -1,3 +1,9 @@
+pve-edge-kernel (5.7.8-1) edge; urgency=medium
+
+  * update to Linux 5.7.8 based on Ubuntu 5.7.0-15.16
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Fri, 10 Jul 2020 15:39:00 +0200
+
 pve-edge-kernel (5.7.7-1) edge; urgency=medium
 
   * update to Linux 5.7.7 based on Ubuntu 5.7.0-14.15
