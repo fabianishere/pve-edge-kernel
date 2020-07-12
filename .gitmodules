@@ -2,6 +2,6 @@
 	path = submodules/zfsonlinux
 	url = git://git.proxmox.com/git/zfsonlinux.git
 
-[submodule "submodules/linux-stable"]
-	path = submodules/linux-stable
-	url = git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+[submodule "submodules/ubuntu-mainline"]
+	path = submodules/ubuntu-mainline
+	url = git://git.launchpad.net/~ubuntu-kernel-test/ubuntu/+source/linux/+git/mainline-crack

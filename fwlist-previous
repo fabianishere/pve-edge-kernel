@@ -14,8 +14,6 @@ advansys/mcode.bin kernel/drivers/scsi/advansys.ko
 agere_ap_fw.bin kernel/drivers/net/wireless/intersil/orinoco/orinoco.ko
 agere_sta_fw.bin kernel/drivers/net/wireless/intersil/orinoco/orinoco.ko
 aic94xx-seq.fw kernel/drivers/scsi/aic94xx/aic94xx.ko
-amdgpu/arcturus_smc.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
-amdgpu/arcturus_vcn.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/banks_k_2_smc.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/bonaire_ce.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/bonaire_k_smc.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
@@ -110,8 +108,6 @@ amdgpu/navi10_sdma.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/navi10_smc.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/navi10_sos.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/navi10_vcn.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
-amdgpu/navi12_smc.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
-amdgpu/navi12_vcn.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/navi14_asd.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/navi14_ce.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 amdgpu/navi14_ce_wks.bin kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
