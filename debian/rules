@@ -118,7 +118,7 @@ binary: install
 	touch $@
 
 .compile_mark: .config_mark
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} (${CHANGELOG_DATE})"
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_TYPE} (${CHANGELOG_DATE})"
 	touch $@
 
 .install_mark: .compile_mark .modules_compile_mark

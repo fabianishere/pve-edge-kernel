@@ -7,6 +7,8 @@ KERNEL_PATCHLEVEL=8
 KREL=1
 
 PKGREL=1
+PKGRELLOCAL=1
+PKGRELFULL=${PKGREL}
 
 KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
 KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
@@ -22,10 +24,9 @@ endif
 # Default to generic micro architecture
 PVE_BUILD_TYPE ?= generic
 
-# Append Linux build type to EXTRAVERSION
 ifneq (${PVE_BUILD_TYPE},generic)
 	_ := $(info Using build type: ${PVE_BUILD_TYPE})
-	EXTRAVERSION:=${EXTRAVERSION}-${PVE_BUILD_TYPE}
+	PKGRELFULL:=${PKGRELFULL}+${PVE_BUILD_TYPE}${PKGRELLOCAL}
 endif
 
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
@@ -60,9 +61,9 @@ MODULE_DIRS=${ZFSDIR}
 # exported to debian/rules via debian/rules.d/dirs.mk
 DIRS=KERNEL_SRC ZFSDIR MODULES
 
-DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
-HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
-LINUX_TOOLS_DEB=linux-tools-$(KERNEL_MAJMIN)_${KERNEL_VER}-${PKGREL}_${ARCH}.deb
+DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGRELFULL}_${ARCH}.deb
+HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGRELFULL}_${ARCH}.deb
+LINUX_TOOLS_DEB=linux-tools-$(KERNEL_MAJMIN)_${KERNEL_VER}-${PKGRELFULL}_${ARCH}.deb
 
 DEBS=${DST_DEB} ${HDR_DEB} ${LINUX_TOOLS_DEB}
 
@@ -104,6 +105,9 @@ debian.prepared: debian
 	echo "KVNAME=${KVNAME}" >> ${BUILD_DIR}/debian/rules.d/env.mk
 	echo "KERNEL_MAJMIN=${KERNEL_MAJMIN}" >> ${BUILD_DIR}/debian/rules.d/env.mk
 	cd ${BUILD_DIR}; debian/rules debian/control
+ifneq (${PVE_BUILD_TYPE},generic)
+	cd ${BUILD_DIR}; debchange -l +${PVE_BUILD_TYPE} -D edge --force-distribution -U -M "Specialization for ${PVE_BUILD_TYPE}"
+endif
 	touch $@
 
 PVE_PATCHES=$(wildcard patches/pve/*.patch)
@@ -156,4 +160,4 @@ abi-tmp-${KVNAME}:
 .PHONY: clean
 clean:
 	rm -rf *~ build *.prepared ${KERNEL_CFG_ORG}
-	rm -f *.deb *.changes *.buildinfo
+	rm -f *.deb *.changes *.buildinfo release.txt artifacts.txt
