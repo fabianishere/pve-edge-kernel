@@ -106,6 +106,8 @@ debian.prepared: debian
 	cd ${BUILD_DIR}; debian/rules debian/control
 	touch $@
 
+PVE_PATCHES=$(wildcard patches/pve/*.patch)
+
 ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
@@ -115,17 +117,19 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	cp ${KERNEL_CFG_ORG} ${BUILD_DIR}/${KERNEL_SRC}/.config
 	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian ${BUILD_DIR}/${KERNEL_SRC}/debian.master
-	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ../../patches/pve/*.patch; do echo "applying PVE patch '$$patch'" && patch -p1 < $${patch}; done
+	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ${PVE_PATCHES}; do echo "applying PVE patch '$$patch'" && patch -p1 < ../../$${patch}; done
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
 	touch $@
 
+ZFS_PATCHES=$(wildcard patches/zfs/*.patch)
+
 ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
 	mkdir -p ${BUILD_DIR}/${MODULES}/tmp
 	cp -a ${ZFSONLINUX_SUBMODULE}/* ${BUILD_DIR}/${MODULES}/tmp
-	# set -e; cd ${BUILD_DIR}/${MODULES}/tmp/upstream; for patch in ../../../../patches/zfsonlinux/*.patch; do echo "applying patch '$$patch'" && patch -p1 < $${patch}; done
+	set -e; cd ${BUILD_DIR}/${MODULES}/tmp/upstream; for patch in ${ZFS_PATCHES}; do echo "applying patch '$$patch'" && patch -p1 < ../../../../$${patch}; done
 	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
 	touch ${ZFSDIR}.prepared
