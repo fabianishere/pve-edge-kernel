@@ -75,5 +75,6 @@ jobs:
         files: |
             artifacts/debs-generic/pve-edge-headers-*.deb
             artifacts/debs-generic/linux-tools-*.deb
+            artifacts/debs-generic/pve-kernel-libc-*.deb
             artifacts/debs-*/pve-edge-kernel-*.deb
 
