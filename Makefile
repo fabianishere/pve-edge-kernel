@@ -15,6 +15,9 @@ KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
 
 EXTRAVERSION=-${KREL}
 
+# Linux flavor
+PVE_BUILD_FLAVOR ?= navi-reset
+
 # Append Linux flavor name to EXTRAVERSION
 ifdef PVE_BUILD_FLAVOR
 	_ := $(info Using build flavor: ${PVE_BUILD_FLAVOR})

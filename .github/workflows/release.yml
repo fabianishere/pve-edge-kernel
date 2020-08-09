@@ -13,12 +13,6 @@ jobs:
           - build_type: 'generic'
             build_cc: gcc-10
             build_cflags: ''
-          - build_type: zen2
-            build_cc: gcc-10
-            build_cflags: '-march=znver2'
-          - build_type: cascadelake
-            build_cc: gcc-10
-            build_cflags: '-march=cascadelake'
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
