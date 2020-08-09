@@ -6,7 +6,7 @@ KERNEL_PATCHLEVEL=19
 # rebuild packages with new KREL and run 'make abiupdate'
 KREL=1
 
-PKGREL=2
+PKGREL=1
 PKGRELLOCAL=1
 PKGRELFULL=${PKGREL}
 
@@ -14,6 +14,9 @@ KERNEL_MAJMIN=$(KERNEL_MAJ).$(KERNEL_MIN)
 KERNEL_VER=$(KERNEL_MAJMIN).$(KERNEL_PATCHLEVEL)
 
 EXTRAVERSION=-${KREL}
+
+# Linux flavor
+PVE_BUILD_FLAVOR ?= navi-reset
 
 # Append Linux flavor name to EXTRAVERSION
 ifdef PVE_BUILD_FLAVOR
