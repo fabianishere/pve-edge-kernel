@@ -12,13 +12,13 @@ jobs:
         include:
           - build_type: 'generic'
             build_cc: gcc-10
-            build_cflags: '-O3 -Wno-error=maybe-uninitialized'
+            build_cflags: ''
           - build_type: zen2
             build_cc: gcc-10
-            build_cflags: '-O3 -march=znver2 -Wno-error=maybe-uninitialized'
+            build_cflags: '-march=znver2'
           - build_type: cascadelake
             build_cc: gcc-10
-            build_cflags: '-O3 -march=cascadelake -Wno-error=maybe-uninitialized'
+            build_cflags: '-march=cascadelake'
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
