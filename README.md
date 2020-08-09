@@ -8,7 +8,7 @@ Custom Linux kernels for Promox VE 6.
 
 #### Flavors
 1. Proxmox
-2. Clear Linux
+2. [Navi Reset](https://github.com/fabianishere/pve-edge-kernel/issues/5)
 
 #### Microarchitectures
 1. Generic
