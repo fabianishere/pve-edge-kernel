@@ -37,6 +37,49 @@ by updating `/etc/apparmor/parser.conf` as follows:
 features-file=/usr/share/apparmor-features/features.stock
 ```
 
+## Building manually
+You may also choose to manually build one of these kernels yourself.
+
+#### Prerequisites
+Make sure you have at least 30GB of free space available and have the following
+packages installed:
+
+```bash
+apt install devscripts asciidoc-base automake bc bison cpio dh-python flex git kmod libdw-dev libelf-dev libiberty-dev libnuma-dev libpve-common-perl libslang2-dev libssl-dev libtool lintian lz4 perl-modules python2-minimal rsync sed sphinx-common tar xmlto zlib1g-dev dwarves
+```
+In case you are building a kernel version >= 5.8, make sure you have installed at least [dwarves >= 1.16.0](https://packages.debian.org/bullseye/dwarves).
+
+#### Obtaining the source
+```bash
+git clone https://github.com/fabianishere/pve-edge-kernel
+cd pve-ede-kernel
+git submodule update --init --recursive --depth 1
+```
+Afterwards, select the branch of your likings (e.g. `v5.8.x`).
+
+#### Building
+Invoking the following command will build the kernel and its associated packages:
+```bash
+make
+```
+The Makefile provides several environmental variables to control:
+
+1. `PVE_BUILD_FLAVOR`  
+   The name of the kernel flavor which represents a selection of kernel
+   functionality (e.g. [hardened](https://github.com/anthraxx/linux-hardened) or [zen](https://github.com/zen-kernel/zen-kernel)).
+   This name is part of the kernel version and package name, which means that you
+   can have multiple flavors of the same kernel installed alongside each other.
+2. `PVE_BUILD_TYPE` (default `generic`)  
+   The name of the kernel build type which represents the compilation options of
+   the kernel (e.g. optimization level or micro architecture).
+   This name is appended as suffix to the Debian package version in case it is not
+   the default value.
+3. `PVE_BUILD_CC`  
+   The compiler to use for the kernel build.
+4. `PVE_BUILD_CFLAGS`  
+   The compilation options to use for the kernel build. Use this variable to specify
+   the optimization level or micro architecture to build for.
+
 ## Questions
 If you have any questions or want to see additional versions, flavors or micro architectures being built, feel
 free to open an issue on Github.
