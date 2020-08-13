@@ -1,3 +1,9 @@
+pve-edge-kernel (5.8.1-1) edge; urgency=medium
+
+  * update to Linux 5.8.1 based on Ubuntu 5.8.0-14.15
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Thu, 13 Aug 2020 12:41:00 +0200
+
 pve-edge-kernel (5.8.0-1) edge; urgency=medium
 
   * update to Linux 5.8 based on Ubuntu 5.8.0-12.13
