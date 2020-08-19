@@ -1428,6 +1428,7 @@ rtl_nic/rtl8168e-2.fw kernel/drivers/net/ethernet/realtek/r8169.ko
 rtl_nic/rtl8168e-3.fw kernel/drivers/net/ethernet/realtek/r8169.ko
 rtl_nic/rtl8168f-1.fw kernel/drivers/net/ethernet/realtek/r8169.ko
 rtl_nic/rtl8168f-2.fw kernel/drivers/net/ethernet/realtek/r8169.ko
+rtl_nic/rtl8168fp-3.fw kernel/drivers/net/ethernet/realtek/r8169.ko
 rtl_nic/rtl8168g-2.fw kernel/drivers/net/ethernet/realtek/r8169.ko
 rtl_nic/rtl8168g-3.fw kernel/drivers/net/ethernet/realtek/r8169.ko
 rtl_nic/rtl8168h-1.fw kernel/drivers/net/ethernet/realtek/r8169.ko
