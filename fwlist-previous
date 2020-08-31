@@ -868,12 +868,12 @@ mrvl/sd8887_uapsta.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
 mrvl/sd8887_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
 mrvl/sd8897_uapsta.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
 mrvl/sd8897_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
-mrvl/sd8977_uapsta.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
-mrvl/sd8977_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
 mrvl/sd8987_uapsta.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
 mrvl/sd8987_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
-mrvl/sd8997_uapsta.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
-mrvl/sd8997_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
+mrvl/sdsd8977_combo_v2.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
+mrvl/sdsd8977_combo_v2.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
+mrvl/sdsd8997_combo_v4.bin kernel/drivers/bluetooth/btmrvl_sdio.ko
+mrvl/sdsd8997_combo_v4.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_sdio.ko
 mrvl/usb8766_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_usb.ko
 mrvl/usb8797_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_usb.ko
 mrvl/usb8801_uapsta.bin kernel/drivers/net/wireless/marvell/mwifiex/mwifiex_usb.ko
