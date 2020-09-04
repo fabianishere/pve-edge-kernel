@@ -1,3 +1,10 @@
+pve-kernel (5.4.60-2) pve pmg; urgency=medium
+
+  * improve guards against a packet offset calculation overflow for certain raw
+    packet sockets
+
+ -- Proxmox Support Team <support@proxmox.com>  Fri, 04 Sep 2020 10:24:50 +0200
+
 pve-kernel (5.4.60-1) pve pmg; urgency=medium
 
   * update sources to Ubuntu-5.4.0-46.50
