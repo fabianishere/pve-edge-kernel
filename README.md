@@ -53,7 +53,8 @@ In case you are building a kernel version >= 5.8, make sure you have installed a
 ```bash
 git clone https://github.com/fabianishere/pve-edge-kernel
 cd pve-ede-kernel
-git submodule update --init --recursive --depth 1
+git submodule update --init --depth=1 --recursive submodules/ubuntu-mainline
+git submodule update --init --recursive
 ```
 Afterwards, select the branch of your likings (e.g. `v5.8.x`).
 
