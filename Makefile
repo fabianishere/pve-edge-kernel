@@ -157,4 +157,5 @@ abi-tmp-${KVNAME}:
 .PHONY: clean
 clean:
 	rm -rf *~ build *.prepared ${KERNEL_CFG_ORG}
-	rm -f *.deb *.changes *.buildinfo release.txt artifacts.txt
+	rm -f *.deb *.ddeb *.changes *.buildinfo release.txt artifacts.txt
+	rm -f debian/control debian/pve-edge-*.postinst debian/pve-edge-*.prerm debian/pve-edge-*.postrm debian/rules.d/env.mk
