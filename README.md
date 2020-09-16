@@ -81,6 +81,7 @@ The Makefile provides several environmental variables to control:
    functionality (e.g. [hardened](https://github.com/anthraxx/linux-hardened) or [zen](https://github.com/zen-kernel/zen-kernel)).
    This name is part of the kernel version and package name, which means that you
    can have multiple flavors of the same kernel installed alongside each other.
+   Note that the name itself does not control the selection of kernel functionality.
 2. `PVE_BUILD_TYPE` (default `generic`)  
    The name of the kernel build type which represents the compilation options of
    the kernel (e.g. optimization level or micro architecture).
@@ -91,6 +92,9 @@ The Makefile provides several environmental variables to control:
 4. `PVE_BUILD_CFLAGS`  
    The compilation options to use for the kernel build. Use this variable to specify
    the optimization level or micro architecture to build for.
+
+Kernel options may be controlled from the [debian/rules](debian/rules) file. To build with
+additional patches, you may add them to the [patches/pve](patches/pve) directory.
 
 ## Questions
 If you have any questions or want to see additional versions, flavors or micro architectures being built, feel
