@@ -48,6 +48,17 @@ packages installed:
 apt install devscripts asciidoc-base automake bc bison cpio dh-python flex git kmod libdw-dev libelf-dev libiberty-dev libnuma-dev libpve-common-perl libslang2-dev libssl-dev libtool lintian lz4 perl-modules python2-minimal rsync sed sphinx-common tar xmlto zlib1g-dev dwarves
 ```
 In case you are building a kernel version >= 5.8, make sure you have installed at least [dwarves >= 1.16.0](https://packages.debian.org/bullseye/dwarves).
+Unfortunately, this version is currently only available in the Debian Testing and Debian Unstable repositories. To work around this issue, we describe two options:
+
+1. You may add the Debian Testing repository to your APT sources as described [here](https://serverfault.com/a/382101) and install the newer `dwarves` package as follows:
+```shell
+apt install -t testing dwarves
+```
+2. Alternatively, you may [download](https://packages.debian.org/bullseye/dwarves) the newer `dwarves` (>= 1.16) package from the Debian website and install the package manually, for example:
+```shell
+wget http://ftp.us.debian.org/debian/pool/main/d/dwarves-dfsg/dwarves_1.17-1_amd64.deb
+apt install ./dwarves_1.17-1_amd64.deb
+```
 
 #### Obtaining the source
 ```bash
