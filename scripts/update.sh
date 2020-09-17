@@ -5,9 +5,9 @@ set -o pipefail
 
 LINUX_REPOSITORY=submodules/ubuntu-mainline
 
-while getopts "r:t:b:v:h" OPTION; do
+while getopts "R:t:b:v:r:h" OPTION; do
     case $OPTION in
-    r)
+    R)
         LINUX_REPOSITORY=$OPTARG
         ;;
     t)
@@ -19,13 +19,16 @@ while getopts "r:t:b:v:h" OPTION; do
     v)
         LINUX_VERSION=$OPTARG
         ;;
-
+    r)
+        LINUX_PACKAGE_RELEASE=$OPTARG
+        ;;
     h)
         echo "update.sh -rtbh"
-        echo "  -r  path to Linux Git repository"
+        echo "  -R  path to Linux Git repository"
         echo "  -t  tag in Linux Git repository to pick"
         echo "  -b  manual basis for this kernel"
         echo "  -v  manual version for this kernel"
+        echo "  -r  manual release version for this kernel"
         echo "  -h  this help message"
         exit 1
         ;;
@@ -66,7 +69,9 @@ LINUX_VERSION_PATCH=${LINUX_VERSION_PATCH:-0} # Default to 0
 LINUX_PACKAGE_RELEASE_PREVIOUS=$(scripts/version.sh -r)
 
 # Check whether we need to increment the package release
-if [[ $LINUX_VERSION == "$(scripts/version.sh -L)" ]]; then
+if [[ -n $LINUX_PACKAGE_RELEASE ]]; then
+    echo "Using custom package release $LINUX_PACKAGE_RELEASE"
+elif [[ $LINUX_VERSION == "$(scripts/version.sh -L)" ]]; then
     LINUX_PACKAGE_RELEASE=$((LINUX_PACKAGE_RELEASE_PREVIOUS + 1))
     echo "Incrementing package release to $LINUX_PACKAGE_RELEASE"
 else
