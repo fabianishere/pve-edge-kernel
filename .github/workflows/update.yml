@@ -1,0 +1,42 @@
+name: Kernel Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag of the Linux Kernel to update to'
+        required: true
+
+jobs:
+  update:
+    name: Update
+    runs-on: [ubuntu-latest]
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v2
+      with:
+          submodules: recursive
+    - name: Setup System Dependencies
+      run: sudo apt install devscripts
+    - name: Update Kernel
+      id: update
+      run: |
+        ./scripts/update.sh -t ${{ github.event.inputs.tag }}
+        echo "::set-output name=version::$(scripts/version.sh -L)"
+        changelog=$(dpkg-parsechangelog -c 1 -l debian/changelog)
+        changelog="${changelog//'%'/'%25'}"
+        changelog="${changelog//$'\n'/'%0A'}"
+        changelog="${changelog//$'\r'/'%0D'}"
+        echo "::set-output name=changelog::$changelog"
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        delete-branch: true
+        title: "Add Linux ${{ steps.update.outputs.version }}"
+        description: |
+          Automated pull request to update the kernel to Linux ${{ steps.update.outputs.version }}.
+
+          **Changelog:**
+          > ${{ steps.update.outputs.changelog }}
+        branch-suffix: short-commit-hash
+        reviewers: fabianishere
