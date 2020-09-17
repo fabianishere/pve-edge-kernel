@@ -1,2 +1,6 @@
-ubuntu-zesty
+# Build artifacts
+build
 *.prepared
+config*.org
+*.deb
+*.ddeb
