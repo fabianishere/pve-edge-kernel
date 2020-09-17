@@ -9,7 +9,7 @@ LINUX_VERSION_MINOR=$(sed -n "s/^KERNEL_MIN=\([0-9]*$\)/\1/p" < Makefile | xargs
 LINUX_VERSION_PATCHLEVEL=$(sed -n "s/^KERNEL_PATCHLEVEL=\([0-9]*$\)/\1/p" < Makefile | xargs)
 LINUX_VERSION_PATCHLEVEL=${LINUX_VERSION_PATCHLEVEL:-0}
 LINUX_VERSION=$LINUX_VERSION_MAJOR.$LINUX_VERSION_MINOR.$LINUX_VERSION_PATCHLEVEL
-LINUX_PACKAGE_RELEASE=$(sed -n "s/^PKGREL=\([0-9]*$\)/\1/p" < Makefile | xargs)
+LINUX_PACKAGE_RELEASE=$(sed -n "s/^PKGREL=\(.*\)$/\1/p" < Makefile | xargs)
 LINUX_FLAVOR=$(sed -n "s/^PVE_BUILD_TYPE ?=\(.*\)$/\1/p" < Makefile | xargs)
 
 while getopts "MmprfdLBh" OPTION; do
