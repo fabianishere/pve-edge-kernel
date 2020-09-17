@@ -1,0 +1,38 @@
+name: Kernel Build
+
+on: pull_request
+
+jobs:
+  build:
+    name: Build
+    runs-on: [self-hosted]
+    strategy:
+      matrix:
+        include:
+          - build_type: 'generic'
+            build_cc: gcc-10
+    if: "contains( github.event.pull_request.labels.*.name, 'release') && !contains(github.event.head_commit.message, 'skip ci')"
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v2
+      with:
+          submodules: recursive
+    - name: Build Kernel
+      run: make
+      env:
+          PVE_BUILD_TYPE: ${{ matrix.build_type }}
+          PVE_BUILD_CC: ${{ matrix.build_cc }}
+          PVE_BUILD_CFLAGS: ${{ matrix.build_cflags }}
+    - name: Read Build Information
+      id: read_build_info
+      run: |
+        echo "::set-output name=release::$(sed '1q;d' release.txt)"
+        echo "::set-output name=dst::$(sed '1q;d' artifacts.txt)"
+        echo "::set-output name=hdr::$(sed '2q;d' artifacts.txt)"
+        echo "::set-output name=tools::$(sed '3q;d' artifacts.txt)"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: debs-${{ matrix.build_type }}
+        path: "*.deb"
+
