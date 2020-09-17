@@ -3,6 +3,7 @@
 set -e 
 set -o pipefail
 
+LINUX_REPOSITORY=submodules/ubuntu-mainline
 LINUX_VERSION_MAJOR=$(sed -n "s/^KERNEL_MAJ=\([0-9]*$\)/\1/p" < Makefile | xargs)
 LINUX_VERSION_MINOR=$(sed -n "s/^KERNEL_MIN=\([0-9]*$\)/\1/p" < Makefile | xargs)
 LINUX_VERSION_PATCHLEVEL=$(sed -n "s/^KERNEL_PATCHLEVEL=\([0-9]*$\)/\1/p" < Makefile | xargs)
@@ -11,8 +12,7 @@ LINUX_VERSION=$LINUX_VERSION_MAJOR.$LINUX_VERSION_MINOR.$LINUX_VERSION_PATCHLEVE
 LINUX_PACKAGE_RELEASE=$(sed -n "s/^PKGREL=\([0-9]*$\)/\1/p" < Makefile | xargs)
 LINUX_FLAVOR=$(sed -n "s/^PVE_BUILD_TYPE ?=\(.*\)$/\1/p" < Makefile | xargs)
 
-
-while getopts "MmprfdLh" OPTION; do
+while getopts "MmprfdLBh" OPTION; do
     case $OPTION in
     M)
         echo $LINUX_VERSION_MAJOR
@@ -42,7 +42,11 @@ while getopts "MmprfdLh" OPTION; do
     L)
         echo $LINUX_VERSION
         exit 0
-        ;; 
+        ;;
+    B)
+        echo $(git --git-dir $LINUX_REPOSITORY/.git log -1 --pretty=%B | sed -n "s/^.*Ubuntu-\([0-9.-]*\).*$/\1/p")
+        exit 0
+        ;;
     h)
         echo "commit.sh [-Mmprfh]]"
         echo "  -M  major version"
