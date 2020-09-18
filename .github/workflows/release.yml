@@ -2,7 +2,9 @@ name: Kernel Release
 
 on:
   push:
-    tags: v*
+    tags:
+      - v*
+      - flavor/*/v*
 
 jobs:
    build:
