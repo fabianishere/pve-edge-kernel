@@ -2,10 +2,13 @@ name: Kernel Release
 
 on:
   push:
-    tags: v*
+    tags:
+      - v*
+      - flavor/*/v*
 
 jobs:
    build:
+    name: Build
     runs-on: [self-hosted, build]
     strategy:
       matrix:
@@ -43,6 +46,7 @@ jobs:
         name: debs-${{ matrix.build_type }}
         path: "*.deb"
    publish:
+    name: Publish
     runs-on: [self-hosted]
     needs: build
     steps:
@@ -68,7 +72,7 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         name: pve-edge-kernel ${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
