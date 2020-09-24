@@ -1,20 +1,16 @@
-name: Kernel Build
+name: Kernel Build (Trusted)
 
-on:
-  push:
-    branches: 
-      - master
-      - flavor/*
+on: pull_request
 
 jobs:
-   build:
+  build:
+    name: Build
     runs-on: [self-hosted]
     strategy:
       matrix:
         include:
-          - build_type: 'generic'
-            build_cc: gcc-10
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+          - build_cc: gcc-10
+    if: github.event.pull_request.head.repo.full_name == github.repository && !contains(github.event.head_commit.message, 'skip ci')
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
@@ -23,9 +19,7 @@ jobs:
     - name: Build Kernel
       run: make
       env:
-          PVE_BUILD_TYPE: ${{ matrix.build_type }}
           PVE_BUILD_CC: ${{ matrix.build_cc }}
-          PVE_BUILD_CFLAGS: ${{ matrix.build_cflags }}
     - name: Read Build Information
       id: read_build_info
       run: |
@@ -38,3 +32,4 @@ jobs:
       with:
         name: debs-${{ matrix.build_type }}
         path: "*.deb"
+

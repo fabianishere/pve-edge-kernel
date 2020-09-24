@@ -1,7 +1,7 @@
 # also bump pve-kernel-meta if either of MAJ.MIN, PATCHLEVEL or KREL change
 KERNEL_MAJ=5
 KERNEL_MIN=8
-KERNEL_PATCHLEVEL=9
+KERNEL_PATCHLEVEL=11
 # increment KREL if the ABI changes (abicheck target in debian/rules)
 # rebuild packages with new KREL and run 'make abiupdate'
 KREL=1
@@ -160,4 +160,5 @@ abi-tmp-${KVNAME}:
 .PHONY: clean
 clean:
 	rm -rf *~ build *.prepared ${KERNEL_CFG_ORG}
-	rm -f *.deb *.changes *.buildinfo release.txt artifacts.txt
+	rm -f *.deb *.ddeb *.changes *.buildinfo release.txt artifacts.txt
+	rm -f debian/control debian/pve-edge-*.postinst debian/pve-edge-*.prerm debian/pve-edge-*.postrm debian/rules.d/env.mk
