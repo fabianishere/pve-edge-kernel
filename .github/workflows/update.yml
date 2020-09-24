@@ -45,8 +45,7 @@ jobs:
         changelog="${changelog//$'\n'/'%0A'}"
         changelog="${changelog//$'\r'/'%0D'}"
         echo "::set-output name=changelog::$changelog"
-        base=$(scripts/version.sh -B)
-        echo "::set-output name=base::$base"
+        echo "::set-output name=base::$(scripts/version.sh -B)"
         echo "::set-output name=branch::${GITHUB_REF##*/}"
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
@@ -55,7 +54,7 @@ jobs:
         commit-message: |
           Add Linux ${{ steps.update.outputs.version }}
 
-          This change updates the kernel to Linux ${{ steps.update.outputs.version }} based on Ubuntu ${{ steps.update.output.base }}.
+          This change updates the kernel to Linux ${{ steps.update.outputs.version }} based on Ubuntu ${{ steps.update.outputs.base }}.
         branch: staging/v${{ steps.update.outputs.full }}
         branch-suffix: short-commit-hash
         delete-branch: true
