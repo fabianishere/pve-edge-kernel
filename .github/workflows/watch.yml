@@ -3,7 +3,7 @@ name: Kernel Watch
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 14 * * 1' # Every week
+    - cron: '0 12 * * *' # Every day
 
 jobs:
   check:
@@ -11,7 +11,7 @@ jobs:
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
-        branch: []
+        branch: ['v5.10.x']
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2

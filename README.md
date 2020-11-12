@@ -6,6 +6,7 @@ Custom Linux kernels for Promox VE 6.
 2. Linux 5.7 (EOL)
 3. Linux 5.8 (EOL)
 4. Linux 5.9 (EOL)
+5. Linux 5.10
 
 #### Flavors
 1. Proxmox
