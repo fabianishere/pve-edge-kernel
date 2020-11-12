@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Thomas Lamprecht <t.lamprecht@proxmox.com>
+Date: Wed, 7 Oct 2020 17:18:28 +0200
+Subject: [PATCH] net: core: downgrade unregister_netdevice refcount leak from
+ emergency to error
+
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ net/core/dev.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/core/dev.c b/net/core/dev.c
+index e1aeceb96cdd..06879dd34d8f 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -9279,7 +9279,7 @@ static void netdev_wait_allrefs(struct net_device *dev)
+ 		refcnt = netdev_refcnt_read(dev);
+ 
+ 		if (refcnt && time_after(jiffies, warning_time + 10 * HZ)) {
+-			pr_emerg("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
++			pr_err("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
+ 				 dev->name, refcnt);
+ 			warning_time = jiffies;
+ 		}
