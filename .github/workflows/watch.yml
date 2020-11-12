@@ -1,0 +1,51 @@
+name: Kernel Watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 14 * * 1' # Every week
+
+jobs:
+  check:
+    name: Check for new Release
+    runs-on: [ubuntu-latest]
+    strategy:
+      matrix:
+        branch: ['v5.9.x']
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ matrix.branch }}
+    - uses: tibdex/github-app-token@v1
+      id: generate-token
+      with:
+        app_id: ${{ secrets.APP_ID }}
+        private_key: ${{ secrets.APP_PRIVATE_KEY }}
+    - name: Setup System Dependencies
+      run: sudo apt install jq curl
+    - name: Check for Release
+      id: check
+      run: |
+        NEW=$(scripts/check.sh ${{ matrix.branch }})
+        if [[ -z $NEW ]]; then
+            echo "No new release found"
+            exit 0
+        fi
+        echo "Found new Linux kernel version $NEW"
+        STAGING=$(git ls-remote --heads origin "staging/v$NEW*")
+        if [[ $STAGING ]]; then
+            echo "Existing staging update found"
+            exit 0
+        fi
+        echo "No staging update found: triggering update"
+        echo "::set-output name=version::$NEW"
+    - name: Trigger Update
+      if: ${{ steps.check.outputs.version }}
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: Kernel Update
+        token: ${{ steps.generate-token.outputs.token }} # Custom token needed to recursively trigger workflows
+        inputs: '{ "tag": "cod/mainline/v${{ steps.check.outputs.version }}" }'
+        ref: ${{ matrix.branch }}
+
