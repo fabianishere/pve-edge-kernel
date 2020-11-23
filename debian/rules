@@ -172,7 +172,7 @@ binary: install
 	install -m 0644 ${KERNEL_SRC}/.config debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	# copy to allow building in parallel to kernel/module compilation without interference
 	rm -rf ${KERNEL_SRC_COPY}
-	cp -ar ${KERNEL_SRC} ${KERNEL_SRC_COPY}
+	-cp -ar ${KERNEL_SRC} ${KERNEL_SRC_COPY}
 	make -C ${KERNEL_SRC_COPY} mrproper
 	cd ${KERNEL_SRC_COPY}; find . -path './debian/*' -prune \
 	    -o -path './include/*' -prune \
