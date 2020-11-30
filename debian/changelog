@@ -1,3 +1,9 @@
+pve-kernel (5.4.78-1) pve pmg; urgency=medium
+
+  * update sources to Ubuntu-5.4.0-57.63
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 30 Nov 2020 10:57:47 +0100
+
 pve-kernel (5.4.73-1) pve pmg; urgency=medium
 
   * update sources to Ubuntu-5.4.0-55.61
