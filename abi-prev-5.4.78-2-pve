@@ -9379,7 +9379,6 @@ EXPORT_SYMBOL	 vmlinux 0xb203d0bb	legacy_pic
 EXPORT_SYMBOL	 vmlinux 0xb219d56c	wbinvd_on_cpu
 EXPORT_SYMBOL	 vmlinux 0xb22e16d5	radix_tree_maybe_preload
 EXPORT_SYMBOL	 vmlinux 0xb269cf86	netif_napi_del
-EXPORT_SYMBOL	 vmlinux 0xb275f31f	vfs_whiteout
 EXPORT_SYMBOL	 vmlinux 0xb285b0ac	jbd2_log_start_commit
 EXPORT_SYMBOL	 vmlinux 0xb288be59	scsi_scan_target
 EXPORT_SYMBOL	 vmlinux 0xb299eb29	refcount_add_not_zero_checked
