@@ -1,3 +1,14 @@
+pve-kernel (5.4.78-2) pve pmg; urgency=medium
+
+  * revert commit 552b270b5784dc3 "scsi: be2iscsi: Fix a theoretical leak in
+    beiscsi_create_eqs()" to avoid hangs and kernel oopses on module load
+
+  * cherry-pick patch to allow unprivileged whiteout device creation
+
+  * bump ABI to 5.4.78-2
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 03 Dec 2020 14:26:17 +0100
+
 pve-kernel (5.4.78-1) pve pmg; urgency=medium
 
   * update sources to Ubuntu-5.4.0-57.63
