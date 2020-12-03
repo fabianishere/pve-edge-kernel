@@ -1,0 +1,122 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Miklos Szeredi <mszeredi@redhat.com>
+Date: Thu, 14 May 2020 16:44:23 +0200
+Subject: [PATCH] vfs: allow unprivileged whiteout creation
+
+Whiteouts, unlike real device node should not require privileges to create.
+
+The general concern with device nodes is that opening them can have side
+effects.  The kernel already avoids zero major (see
+Documentation/admin-guide/devices.txt).  To be on the safe side the patch
+explicitly forbids registering a char device with 0/0 number (see
+cdev_add()).
+
+This guarantees that a non-O_PATH open on a whiteout will fail with ENODEV;
+i.e. it won't have any side effect.
+
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+(cherry picked from commit a3c751a50fe6bbe50eb7622a14b18b361804ee0c)
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ fs/char_dev.c                 |  3 +++
+ fs/namei.c                    | 21 +++------------------
+ include/linux/device_cgroup.h |  3 +++
+ include/linux/fs.h            |  6 +++++-
+ 4 files changed, 14 insertions(+), 19 deletions(-)
+
+diff --git a/fs/char_dev.c b/fs/char_dev.c
+index c5e6eff5a381..ba0ded7842a7 100644
+--- a/fs/char_dev.c
++++ b/fs/char_dev.c
+@@ -483,6 +483,9 @@ int cdev_add(struct cdev *p, dev_t dev, unsigned count)
+ 	p->dev = dev;
+ 	p->count = count;
+ 
++	if (WARN_ON(dev == WHITEOUT_DEV))
++		return -EBUSY;
++
+ 	error = kobj_map(cdev_map, dev, count, NULL,
+ 			 exact_match, exact_lock, p);
+ 	if (error)
+diff --git a/fs/namei.c b/fs/namei.c
+index 311da290a58d..4d46e093c4ea 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -3690,12 +3690,14 @@ EXPORT_SYMBOL(user_path_create);
+ 
+ int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
+ {
++	bool is_whiteout = S_ISCHR(mode) && dev == WHITEOUT_DEV;
+ 	int error = may_create(dir, dentry);
+ 
+ 	if (error)
+ 		return error;
+ 
+-	if ((S_ISCHR(mode) || S_ISBLK(mode)) && !capable(CAP_MKNOD))
++	if ((S_ISCHR(mode) || S_ISBLK(mode)) && !is_whiteout &&
++	    !capable(CAP_MKNOD))
+ 		return -EPERM;
+ 
+ 	if (!dir->i_op->mknod)
+@@ -4530,9 +4532,6 @@ static int do_renameat2(int olddfd, const char __user *oldname, int newdfd,
+ 	    (flags & RENAME_EXCHANGE))
+ 		return -EINVAL;
+ 
+-	if ((flags & RENAME_WHITEOUT) && !capable(CAP_MKNOD))
+-		return -EPERM;
+-
+ 	if (flags & RENAME_EXCHANGE)
+ 		target_flags = 0;
+ 
+@@ -4668,20 +4667,6 @@ SYSCALL_DEFINE2(rename, const char __user *, oldname, const char __user *, newna
+ 	return do_renameat2(AT_FDCWD, oldname, AT_FDCWD, newname, 0);
+ }
+ 
+-int vfs_whiteout(struct inode *dir, struct dentry *dentry)
+-{
+-	int error = may_create(dir, dentry);
+-	if (error)
+-		return error;
+-
+-	if (!dir->i_op->mknod)
+-		return -EPERM;
+-
+-	return dir->i_op->mknod(dir, dentry,
+-				S_IFCHR | WHITEOUT_MODE, WHITEOUT_DEV);
+-}
+-EXPORT_SYMBOL(vfs_whiteout);
+-
+ int readlink_copy(char __user *buffer, int buflen, const char *link)
+ {
+ 	int len = PTR_ERR(link);
+diff --git a/include/linux/device_cgroup.h b/include/linux/device_cgroup.h
+index 8557efe096dc..fc989487c273 100644
+--- a/include/linux/device_cgroup.h
++++ b/include/linux/device_cgroup.h
+@@ -62,6 +62,9 @@ static inline int devcgroup_inode_mknod(int mode, dev_t dev)
+ 	if (!S_ISBLK(mode) && !S_ISCHR(mode))
+ 		return 0;
+ 
++	if (S_ISCHR(mode) && dev == WHITEOUT_DEV)
++		return 0;
++
+ 	if (S_ISBLK(mode))
+ 		type = DEVCG_DEV_BLOCK;
+ 	else
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 21f93dfaf9d0..ae31b55fb69c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1719,7 +1719,11 @@ extern int vfs_link(struct dentry *, struct inode *, struct dentry *, struct ino
+ extern int vfs_rmdir(struct inode *, struct dentry *);
+ extern int vfs_unlink(struct inode *, struct dentry *, struct inode **);
+ extern int vfs_rename(struct inode *, struct dentry *, struct inode *, struct dentry *, struct inode **, unsigned int);
+-extern int vfs_whiteout(struct inode *, struct dentry *);
++
++static inline int vfs_whiteout(struct inode *dir, struct dentry *dentry)
++{
++	return vfs_mknod(dir, dentry, S_IFCHR | WHITEOUT_MODE, WHITEOUT_DEV);
++}
+ 
+ extern struct dentry *vfs_tmpfile(struct dentry *dentry, umode_t mode,
+ 				  int open_flag);
