@@ -31,7 +31,7 @@ SKIPABI=0
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-focal
+KERNEL_SRC=ubuntu-hirsute
 KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 

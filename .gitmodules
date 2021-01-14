@@ -1,6 +1,6 @@
 [submodule "submodules/zfsonlinux"]
 	path = submodules/zfsonlinux
 	url = ../zfsonlinux
-[submodule "submodules/ubuntu-focal"]
-	path = submodules/ubuntu-focal
-	url = ../mirror_ubuntu-focal-kernel
+[submodule "submodules/ubuntu-hirsute"]
+	path = submodules/ubuntu-hirsute
+	url = ../mirror_ubuntu-hirsute-kernel

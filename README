@@ -3,7 +3,7 @@ KERNEL SOURCE:
 
 We currently use the Ubuntu kernel sources, available from:
 
- http://kernel.ubuntu.com/git/ubuntu/ubuntu-focal.git/
+ http://kernel.ubuntu.com/git/ubuntu/ubuntu-hirsute.git/
 
 Ubuntu will maintain those kernels till:
 
@@ -31,7 +31,7 @@ get applied with the `patch` tool. From a git point-of-view, the copied
 directory remains clean even with extra patches applied since it does not
 contain a .git directory, but a reference to the (still pristine) submodule:
 
-$ cat build/ubuntu-focal/.git
+$ cat build/ubuntu-hirsute/.git
 
 If you mistakenly cloned the upstream repo as "normal" clone (not via the
 submodule mechanics) this means that you have a real .git directory with its
