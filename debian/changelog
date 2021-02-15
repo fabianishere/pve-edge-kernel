@@ -1,3 +1,9 @@
+pve-edge-kernel (5.11.0-1) edge; urgency=medium
+
+  * Update to Linux 5.11.0 based on Ubuntu .
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Mon, 15 Feb 2021 10:51:52 +0000
+
 pve-edge-kernel (5.11.0-0rc7) edge; urgency=medium
 
   * Update to Linux 5.11-rc7 based on unstable/master.
