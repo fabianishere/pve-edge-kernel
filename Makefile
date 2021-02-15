@@ -6,7 +6,7 @@ KERNEL_PATCHLEVEL=0
 # rebuild packages with new KREL and run 'make abiupdate'
 KREL=1
 
-PKGREL=0rc7
+PKGREL=1
 PKGRELLOCAL=1
 PKGRELFULL=${PKGREL}
 
