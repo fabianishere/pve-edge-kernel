@@ -194,6 +194,10 @@ binary: install
 	        xargs -n1 -i: find : -type f \
 	    ) | \
 	    cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+	# Workaround for #48
+	mv ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds.S \
+	    ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds
+	sed -i '$$ d' ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds
 	touch $@
 
 .headers_compile_mark: .headers_prepare_mark
