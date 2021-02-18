@@ -12,29 +12,28 @@ LINUX_VERSION=$LINUX_VERSION_MAJOR.$LINUX_VERSION_MINOR.$LINUX_VERSION_PATCHLEVE
 LINUX_PACKAGE_RELEASE=$(sed -n "s/^PKGREL=\(.*\)$/\1/p" < Makefile | xargs)
 LINUX_FLAVOR=$(sed -n "s/^PVE_BUILD_TYPE ?=\(.*\)$/\1/p" < Makefile | xargs)
 
-while getopts "MmprfdLBh" OPTION; do
+while getopts "MmnprfdLBh" OPTION; do
     case $OPTION in
     M)
         echo $LINUX_VERSION_MAJOR
         exit 0
         ;;
-
     m)
         echo $LINUX_VERSION_MINOR
         exit 0
-        ;; 
+        ;;
+    n)
+        echo $LINUX_VERSION_MAJOR.$LINUX_VERSION_MINOR
+        exit 0
+        ;;
     p)
         echo $LINUX_VERSION_PATCHLEVEL
         exit 0
-        ;; 
+        ;;
     r)
         echo $LINUX_PACKAGE_RELEASE
         exit 0
         ;;
-    f)
-        echo $LINUX_FLAVOR
-        exit 0
-        ;; 
     f)
         echo $LINUX_FLAVOR
         exit 0
@@ -48,9 +47,10 @@ while getopts "MmprfdLBh" OPTION; do
         exit 0
         ;;
     h)
-        echo "commit.sh [-Mmprfh]]"
+        echo "version.sh [-Mmnprfh]]"
         echo "  -M  major version"
         echo "  -m  minor version"
+        echo "  -n  major minor version"
         echo "  -p  patch version"
         echo "  -r  package release"
         echo "  -f  flavor name"
