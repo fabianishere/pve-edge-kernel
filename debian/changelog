@@ -1,3 +1,9 @@
+pve-edge-kernel (5.11.1-1) edge; urgency=medium
+
+  * Update to Linux 5.11.1 based on Ubuntu .
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 24 Feb 2021 12:39:57 +0000
+
 pve-edge-kernel (5.11.0-2) edge; urgency=medium
 
   * Properly add module.lds to headers package.
