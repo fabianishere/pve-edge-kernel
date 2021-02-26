@@ -79,7 +79,8 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_SECURITY_LOCKDOWN_LSM \
 -d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
 --set-str CONFIG_LSM yama,integrity,apparmor \
--e CONFIG_PAGE_TABLE_ISOLATION
+-e CONFIG_PAGE_TABLE_ISOLATION \
+--set-str CONFIG_SYSTEM_TRUSTED_KEYS ""
 
 debian/control: $(wildcard debian/*.in)
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
