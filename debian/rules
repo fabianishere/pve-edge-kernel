@@ -114,7 +114,7 @@ binary: install
 
 .config_mark:
 	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} oldconfig
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} olddefconfig
 	touch $@
 
 .compile_mark: .config_mark
