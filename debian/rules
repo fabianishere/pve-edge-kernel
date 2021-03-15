@@ -76,6 +76,7 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_UNWINDER_ORC \
 -d CONFIG_UNWINDER_GUESS \
 -e CONFIG_UNWINDER_FRAME_POINTER \
+--set-str CONFIG_SYSTEM_TRUSTED_KEYS ""\
 -d CONFIG_SECURITY_LOCKDOWN_LSM \
 -d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
 --set-str CONFIG_LSM yama,integrity,apparmor \
@@ -131,7 +132,7 @@ binary: install
 	${MAKE} -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
 	# install zfs drivers
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
-	install -m 644 $(addprefix ${MODULES}/,zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko icp.ko zlua.ko spl.ko) debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 $(addprefix ${MODULES}/,zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko icp.ko zlua.ko spl.ko zzstd.ko) debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
 	# remove firmware
 	rm -rf debian/${PVE_KERNEL_PKG}/lib/firmware
 	# strip debug info
@@ -250,6 +251,7 @@ ${MODULES}/zfs.ko: .compile_mark
 	cp ${MODULES}/${ZFSDIR}/module/zfs/zfs.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/lua/zlua.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/spl/spl.ko ${MODULES}/
+	cp ${MODULES}/${ZFSDIR}/module/zstd/zzstd.ko ${MODULES}/
 
 fwlist-${KVNAME}: .compile_mark .modules_compile_mark
 	debian/scripts/find-firmware.pl debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME} >fwlist.tmp
