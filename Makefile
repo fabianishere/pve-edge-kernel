@@ -1,7 +1,6 @@
-# also bump pve-kernel-meta if either of MAJ.MIN, PATCHLEVEL or KREL change
 KERNEL_MAJ=5
-KERNEL_MIN=9
-KERNEL_PATCHLEVEL=16
+KERNEL_MIN=11
+KERNEL_PATCHLEVEL=0
 
 KREL=1
 
