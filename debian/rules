@@ -104,7 +104,7 @@ install: .install_mark .tools_install_mark .headers_install_mark .usr_headers_in
 	dh_fixperms
 
 binary: install
-	debian/rules fwcheck abicheck
+	debian/rules
 	dh_strip -N${PVE_HEADER_PKG} -N${PVE_USR_HEADER_PKG}
 	dh_makeshlibs
 	dh_shlibdeps
@@ -252,28 +252,5 @@ ${MODULES}/zfs.ko: .compile_mark
 	cp ${MODULES}/${ZFSDIR}/module/lua/zlua.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/spl/spl.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/zstd/zzstd.ko ${MODULES}/
-
-fwlist-${KVNAME}: .compile_mark .modules_compile_mark
-	debian/scripts/find-firmware.pl debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME} >fwlist.tmp
-	mv fwlist.tmp $@
-
-.PHONY: fwcheck
-fwcheck: fwlist-${KVNAME} fwlist-previous
-	@echo "checking fwlist for changes since last built firmware package.."
-	@echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
-	sort fwlist-previous | uniq > fwlist-previous.sorted
-	sort fwlist-${KVNAME} | uniq > fwlist-${KVNAME}.sorted
-	-diff -up -N fwlist-previous.sorted fwlist-${KVNAME}.sorted > fwlist.diff
-	@test -s fwlist.diff \
-		&& echo "done, no need to rebuild pve-firmware" \
-		|| echo "Please rebuild pve-firmware"
-
-
-abi-${KVNAME}: .compile_mark
-	debian/scripts/abi-generate debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/Module.symvers abi-${KVNAME} ${KVNAME}
-
-.PHONY: abicheck
-abicheck: debian/scripts/abi-check abi-${KVNAME} abi-prev-* abi-blacklist
-	debian/scripts/abi-check abi-${KVNAME} abi-prev-* ${SKIPABI}
 
 .PHONY: clean

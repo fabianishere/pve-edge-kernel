@@ -3,8 +3,6 @@ KERNEL_MAJ=5
 KERNEL_MIN=9
 KERNEL_PATCHLEVEL=16
 
-# increment KREL if the ABI changes (abicheck target in debian/rules)
-# rebuild packages with new KREL and run 'make abiupdate'
 KREL=1
 
 PKGREL=1
@@ -44,8 +42,6 @@ KERNEL_ARCH=${ARCH}
 endif
 
 GITVERSION:=$(shell git rev-parse HEAD)
-
-SKIPABI=0
 
 BUILD_DIR=build
 
@@ -89,9 +85,6 @@ ${DST_DEB}: ${BUILD_DIR}.prepared
 	cd ${BUILD_DIR}; dpkg-buildpackage --jobs=auto -b -uc -us
 
 ${BUILD_DIR}.prepared: $(addsuffix .prepared,${KERNEL_SRC} ${MODULES} debian)
-	cp -a fwlist-previous ${BUILD_DIR}/
-	cp -a abi-prev-* ${BUILD_DIR}/
-	cp -a abi-blacklist ${BUILD_DIR}/
 	touch $@
 
 debian.prepared: debian
@@ -135,25 +128,6 @@ ${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
 	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
 	rm -rf ${BUILD_DIR}/${MODULES}/tmp
 	touch ${ZFSDIR}.prepared
-
-# call after ABI bump with header deb in working directory
-.PHONY: abiupdate
-abiupdate: abi-prev-${KVNAME}
-abi-prev-${KVNAME}: abi-tmp-${KVNAME}
-ifneq ($(strip $(shell git status --untracked-files=no --porcelain -z)),)
-	@echo "working directory unclean, aborting!"
-	@false
-else
-	git rm "abi-prev-*"
-	mv $< $@
-	git add $@
-	git commit -s -m "update ABI file for ${KVNAME}" -m "(generated with debian/scripts/abi-generate)"
-	@echo "update abi-prev-${KVNAME} committed!"
-endif
-
-abi-tmp-${KVNAME}:
-	@ test -e ${HDR_DEB} || (echo "need ${HDR_DEB} to extract ABI data!" && false)
-	debian/scripts/abi-generate ${HDR_DEB} $@ ${KVNAME} 1
 
 .PHONY: clean
 clean:
