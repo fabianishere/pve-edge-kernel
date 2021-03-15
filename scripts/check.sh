@@ -1,4 +1,4 @@
-#1/bin/bash
+#!/bin/bash
 # Script to check for new kernel release
 set -e
 set -o pipefail

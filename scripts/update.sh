@@ -1,4 +1,4 @@
-#1/bin/bash
+#!/bin/bash
 # Script to prepare update for new kernel release
 set -e 
 set -o pipefail
