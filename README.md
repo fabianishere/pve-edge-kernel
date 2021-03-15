@@ -67,7 +67,7 @@ apt install ./dwarves_1.17-1_amd64.deb
 ```bash
 git clone https://github.com/fabianishere/pve-edge-kernel
 cd pve-ede-kernel
-git submodule update --init --depth=1 --recursive submodules/ubuntu-mainline
+git submodule update --init --depth=1 --recursive linux
 git submodule update --init --recursive
 ```
 Afterwards, select the branch of your likings (e.g. `v5.8.x`).

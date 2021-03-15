@@ -1,9 +1,9 @@
 #!/bin/bash
 # Script to prepare update for new kernel release
-set -e 
+set -e
 set -o pipefail
 
-LINUX_REPOSITORY=submodules/ubuntu-mainline
+LINUX_REPOSITORY=linux
 
 while getopts "R:t:b:v:r:h" OPTION; do
     case $OPTION in

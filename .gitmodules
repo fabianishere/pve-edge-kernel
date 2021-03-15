@@ -1,7 +1,8 @@
-[submodule "submodules/zfsonlinux"]
-	path = submodules/zfsonlinux
+[submodule "zfs"]
+	path = zfs
 	url = git://git.proxmox.com/git/zfsonlinux.git
 
-[submodule "submodules/ubuntu-mainline"]
-	path = submodules/ubuntu-mainline
+[submodule "linux"]
+	path = linux
 	url = git://git.launchpad.net/~ubuntu-kernel-test/ubuntu/+source/linux/+git/mainline-crack
+	shallow = true

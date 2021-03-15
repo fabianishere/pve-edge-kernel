@@ -45,11 +45,11 @@ GITVERSION:=$(shell git rev-parse HEAD)
 
 BUILD_DIR=build
 
-KERNEL_SRC=ubuntu-mainline
-KERNEL_SRC_SUBMODULE=submodules/$(KERNEL_SRC)
+KERNEL_SRC=linux
+KERNEL_SRC_SUBMODULE=$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-ZFSONLINUX_SUBMODULE=submodules/zfsonlinux/
+ZFSONLINUX_SUBMODULE=zfs/
 ZFSDIR=pkg-zfs
 
 MODULES=modules

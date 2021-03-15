@@ -1,9 +1,9 @@
 #!/bin/bash
 # Script for parsing version information in the repository
-set -e 
+set -e
 set -o pipefail
 
-LINUX_REPOSITORY=submodules/ubuntu-mainline
+LINUX_REPOSITORY=linux
 LINUX_VERSION_MAJOR=$(sed -n "s/^KERNEL_MAJ=\([0-9]*$\)/\1/p" < Makefile | xargs)
 LINUX_VERSION_MINOR=$(sed -n "s/^KERNEL_MIN=\([0-9]*$\)/\1/p" < Makefile | xargs)
 LINUX_VERSION_PATCHLEVEL=$(sed -n "s/^KERNEL_PATCHLEVEL=\([0-9]*$\)/\1/p" < Makefile | xargs)
