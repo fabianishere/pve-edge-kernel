@@ -98,6 +98,8 @@ endif
 PVE_PATCHES=$(wildcard patches/pve/*.patch)
 
 ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
+	git -C ${KERNEL_SRC} fetch ../crack.bundle $$(git -C ${KERNEL_SRC} ls-remote ../crack.bundle | cut -f1)
+	git -C ${KERNEL_SRC} checkout -f FETCH_HEAD
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}

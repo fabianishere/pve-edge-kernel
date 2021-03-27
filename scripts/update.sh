@@ -4,6 +4,7 @@ set -e
 set -o pipefail
 
 LINUX_REPOSITORY=linux
+LINUX_VERSION_PREVIOUS=$(scripts/version.sh -L)
 
 while getopts "R:t:v:r:h" OPTION; do
     case $OPTION in
@@ -43,7 +44,7 @@ git --git-dir $LINUX_REPOSITORY/.git checkout FETCH_HEAD
 
 if [[ -z "$LINUX_VERSION" ]]; then
     # Parse the Linux version from the Linux repository if it not provided by the user
-    LINUX_VERSION=$(dpkg-parsechangelog -l $LINUX_REPOSITORY/debian.master/changelog --show-field Version | sed -n "s/^\([0-9.]*\).*$/\1/p")
+    LINUX_VERSION=$(scripts/version.sh -L)
 fi
 
 echo "Using Linux $LINUX_VERSION."
@@ -61,13 +62,16 @@ LINUX_PACKAGE_RELEASE_PREVIOUS=$(scripts/version.sh -r)
 # Check whether we need to increment the package release
 if [[ -n $LINUX_PACKAGE_RELEASE ]]; then
     echo "Using custom package release $LINUX_PACKAGE_RELEASE"
-elif [[ $LINUX_VERSION == "$(scripts/version.sh -L)" ]]; then
+elif [[ $LINUX_VERSION == "$LINUX_VERSION_PREVIOUS" ]]; then
     LINUX_PACKAGE_RELEASE=$((LINUX_PACKAGE_RELEASE_PREVIOUS + 1))
     echo "Incrementing package release to $LINUX_PACKAGE_RELEASE"
 else
     LINUX_PACKAGE_RELEASE=1
     echo "New package release"
 fi
+
+echo "Updating crack.bundle..."
+wget https://kernel.ubuntu.com/~kernel-ppa/mainline/v$LINUX_VERSION/crack.bundle -O crack.bundle
 
 echo "Generating entry for change log..."
 # Generate a changelog entry
