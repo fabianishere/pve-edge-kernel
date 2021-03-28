@@ -22,66 +22,6 @@ KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 # If no custom compiler is specified, use the default
 PVE_BUILD_CC ?= ${CC}
 
-# TODO: split for archs, move to files?
-PVE_CONFIG_OPTS= \
--m INTEL_MEI_WDT \
--d CONFIG_SND_PCM_OSS \
--e CONFIG_TRANSPARENT_HUGEPAGE_MADVISE \
--d CONFIG_TRANSPARENT_HUGEPAGE_ALWAYS \
--m CONFIG_CEPH_FS \
--m CONFIG_BLK_DEV_NBD \
--m CONFIG_BLK_DEV_RBD \
--d CONFIG_SND_PCSP \
--m CONFIG_BCACHE \
--m CONFIG_JFS_FS \
--m CONFIG_HFS_FS \
--m CONFIG_HFSPLUS_FS \
--e CIFS_SMB_DIRECT \
--e CONFIG_BRIDGE \
--e CONFIG_BRIDGE_NETFILTER \
--e CONFIG_BLK_DEV_SD \
--e CONFIG_BLK_DEV_SR \
--e CONFIG_BLK_DEV_DM \
--e CONFIG_BLK_DEV_NVME \
--e CONFIG_NLS_ISO8859_1 \
--d CONFIG_INPUT_EVBUG \
--d CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND \
--e CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE \
--d CONFIG_MODULE_SIG \
--d CONFIG_MEMCG_DISABLED \
--e CONFIG_MEMCG_SWAP_ENABLED \
--e CONFIG_HYPERV \
--m CONFIG_VFIO_IOMMU_TYPE1 \
--m CONFIG_VFIO_VIRQFD \
--m CONFIG_VFIO \
--m CONFIG_VFIO_PCI \
--m CONFIG_USB_XHCI_HCD \
--m CONFIG_USB_XHCI_PCI \
--m CONFIG_USB_EHCI_HCD \
--m CONFIG_USB_EHCI_PCI \
--m CONFIG_USB_EHCI_HCD_PLATFORM \
--m CONFIG_USB_OHCI_HCD \
--m CONFIG_USB_OHCI_HCD_PCI \
--m CONFIG_USB_OHCI_HCD_PLATFORM \
--d CONFIG_USB_OHCI_HCD_SSB \
--m CONFIG_USB_UHCI_HCD \
--d CONFIG_USB_SL811_HCD_ISO \
--e CONFIG_MEMCG_KMEM \
--d CONFIG_DEFAULT_CFQ \
--e CONFIG_DEFAULT_DEADLINE \
--e CONFIG_MODVERSIONS \
--d CONFIG_DEFAULT_SECURITY_DAC \
--e CONFIG_DEFAULT_SECURITY_APPARMOR \
---set-str CONFIG_DEFAULT_SECURITY apparmor \
--d CONFIG_UNWINDER_ORC \
--d CONFIG_UNWINDER_GUESS \
--e CONFIG_UNWINDER_FRAME_POINTER \
---set-str CONFIG_SYSTEM_TRUSTED_KEYS ""\
--d CONFIG_SECURITY_LOCKDOWN_LSM \
--d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
---set-str CONFIG_LSM yama,integrity,apparmor \
--e CONFIG_PAGE_TABLE_ISOLATION
-
 debian/control: $(wildcard debian/*.in)
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.postrm.in > debian/${PVE_KERNEL_PKG}.postrm
@@ -113,9 +53,16 @@ binary: install
 	dh_md5sums
 	dh_builddeb
 
-.config_mark:
-	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
+${KERNEL_SRC}/.config:
+	${KERNEL_SRC}/scripts/kconfig/merge_config.sh -m \
+		-O ${KERNEL_SRC} \
+		${KERNEL_SRC}/debian.master/config/config.common.ubuntu \
+		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.common.${DEB_BUILD_ARCH} \
+		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.flavour.generic \
+		debian/config/config.pve
 	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} oldconfig
+
+.config_mark: ${KERNEL_SRC}/.config
 	touch $@
 
 .compile_mark: .config_mark
