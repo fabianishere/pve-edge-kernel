@@ -22,6 +22,9 @@ KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 # If no custom compiler is specified, use the default
 PVE_BUILD_CC ?= ${CC}
 
+%:
+	dh $@
+
 debian/control: $(wildcard debian/*.in)
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.postrm.in > debian/${PVE_KERNEL_PKG}.postrm
@@ -36,25 +39,15 @@ debian/control: $(wildcard debian/*.in)
 debian/SOURCE:
 	echo "git clone git@github.com:fabianishere/pve-kernel-edge.git\\ngit checkout $(shell git rev-parse HEAD)" > $@
 
-build: .compile_mark .tools_compile_mark .modules_compile_mark
+override_dh_auto_build: .compile_mark .tools_compile_mark .modules_compile_mark
 
-install: .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
+override_dh_auto_install: debian/SOURCE .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
 	dh_installchangelogs
 	dh_installman
 	dh_strip_nondeterminism
 	dh_compress
 	dh_fixperms
-
-binary: install
-	debian/rules
-	dh_strip -N${PVE_HEADER_PKG} -N${PVE_USR_HEADER_PKG}
-	dh_makeshlibs
-	dh_shlibdeps
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
 
 ${KERNEL_SRC}/.config:
 	${KERNEL_SRC}/scripts/kconfig/merge_config.sh -m \
@@ -202,5 +195,3 @@ ${MODULES}/zfs.ko: .compile_mark
 	cp ${MODULES}/${ZFSDIR}/module/lua/zlua.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/spl/spl.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/zstd/zzstd.ko ${MODULES}/
-
-.PHONY: clean
