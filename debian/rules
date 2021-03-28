@@ -23,15 +23,18 @@ KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 PVE_BUILD_CC ?= ${CC}
 
 debian/control: $(wildcard debian/*.in)
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.postrm.in > debian/${PVE_KERNEL_PKG}.postrm
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.postinst.in > debian/${PVE_KERNEL_PKG}.postinst
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-headers.postinst.in > debian/${PVE_HEADER_PKG}.postinst
+	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
+	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.postrm.in > debian/${PVE_KERNEL_PKG}.postrm
+	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.postinst.in > debian/${PVE_KERNEL_PKG}.postinst
+	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-headers.postinst.in > debian/${PVE_HEADER_PKG}.postinst
 	chmod +x debian/${PVE_KERNEL_PKG}.prerm
 	chmod +x debian/${PVE_KERNEL_PKG}.postrm
 	chmod +x debian/${PVE_KERNEL_PKG}.postinst
 	chmod +x debian/${PVE_HEADER_PKG}.postinst
-	sed -e 's/@KVNAME@/${KVNAME}/g' -e 's/@KVMAJMIN@/${KERNEL_MAJMIN}/g' < debian/control.in > debian/control
+	sed -e 's/@KVNAME@/${KVNAME}/g' -e 's/@KVMAJMIN@/${KERNEL_MAJMIN}/g' < debian/templates/control.in > debian/control
+
+debian/SOURCE:
+	echo "git clone git@github.com:fabianishere/pve-kernel-edge.git\\ngit checkout $(shell git rev-parse HEAD)" > $@
 
 build: .compile_mark .tools_compile_mark .modules_compile_mark
 
