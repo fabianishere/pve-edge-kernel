@@ -64,13 +64,13 @@ apt install ./dwarves_1.17-1_amd64.deb
 ```
 
 #### Obtaining the source
+Select the branch of your likings (e.g. `v5.8.x`) and update the submodules:
 ```bash
 git clone https://github.com/fabianishere/pve-edge-kernel
 cd pve-ede-kernel
 git submodule update --init --depth=1 --recursive linux
 git submodule update --init --recursive
 ```
-Afterwards, select the branch of your likings (e.g. `v5.8.x`).
 
 #### Building
 Invoking the following command will build the kernel and its associated packages:
@@ -97,7 +97,8 @@ The Makefile provides several environmental variables to control:
    the optimization level or micro architecture to build for.
 
 Kernel options may be controlled from the [debian/rules](debian/rules) file. To build with
-additional patches, you may add them to the [patches/pve](patches/pve) directory.
+additional patches, you may add them to the [debian/patches/pve](debian/patches/pve) directory
+and update the [series](debian/patches/series.linux) file accordingly.
 
 ## Questions
 If you have any questions or want to see additional versions, flavors or micro architectures being built, feel

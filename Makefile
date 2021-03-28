@@ -105,7 +105,6 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
 	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian
-	set -e; cd ${BUILD_DIR}/${KERNEL_SRC}; for patch in ${PVE_PATCHES}; do echo "applying PVE patch '$$patch'" && patch -p1 < ../../$${patch}; done
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})

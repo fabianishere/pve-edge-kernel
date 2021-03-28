@@ -1,9 +1,6 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
-
 # TODO: check for headers not being installed
 BUILD_DIR=$(shell pwd)
 
@@ -23,7 +20,7 @@ KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 PVE_BUILD_CC ?= ${CC}
 
 %:
-	dh $@
+	dh $@ --with quilt
 
 debian/control: $(wildcard debian/*.in)
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
@@ -38,6 +35,19 @@ debian/control: $(wildcard debian/*.in)
 
 debian/SOURCE:
 	echo "git clone git@github.com:fabianishere/pve-kernel-edge.git\\ngit checkout $(shell git rev-parse HEAD)" > $@
+
+override_dh_quilt_patch:
+	cd linux; \
+		QUILT_PATCHES=../debian/patches  \
+		QUILT_SERIES=series.linux \
+		quilt --quiltrc /dev/null --color=always push -a || test $$? = 2
+
+override_dh_quilt_unpatch:
+	cd linux; \
+		QUILT_PATCHES=../debian/patches \
+		QUILT_SERIES=series.linux \
+		quilt --quiltrc /dev/null pop -a || test $$? = 2
+	rm -rf linux/.pc
 
 override_dh_auto_build: .compile_mark .tools_compile_mark .modules_compile_mark
 
