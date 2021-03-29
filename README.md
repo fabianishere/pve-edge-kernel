@@ -50,33 +50,27 @@ packages installed:
 ```bash
 apt install devscripts asciidoc-base automake bc bison cpio dh-python flex git kmod libdw-dev libelf-dev libiberty-dev libnuma-dev libpve-common-perl libslang2-dev libssl-dev libtool lintian lz4 perl-modules python2-minimal rsync sed sphinx-common tar xmlto zlib1g-dev dwarves
 ```
-In case you are building a kernel version >= 5.8, make sure you have installed at least [dwarves >= 1.16.0](https://packages.debian.org/bullseye/dwarves).
-Unfortunately, this version is currently only available in the Debian Testing and Debian Unstable repositories. To work around this issue, we describe two options:
+In case you are building a kernel version >= 5.8, make sure you have installed at least [dwarves >= 1.16.0](https://packages.debian.org/buster-backports/dwarves).
+Unfortunately, this version is not available in the Debian Buster repositories, so you will have to install it from the buster-backports repository:
 
-1. You may add the Debian Testing repository to your APT sources as described [here](https://serverfault.com/a/382101) and install the newer `dwarves` package as follows:
-```shell
-apt install -t testing dwarves
+```bash
+echo deb http://ftp.de.debian.org/debian buster-backports main >> /etc/apt/sources.list
+apt update
+apt install dwarves=1.19-1~bpo10+1
 ```
-2. Alternatively, you may [download](https://packages.debian.org/bullseye/dwarves) the newer `dwarves` (>= 1.16) package from the Debian website and install the package manually, for example:
-```shell
-wget http://ftp.us.debian.org/debian/pool/main/d/dwarves-dfsg/dwarves_1.17-1_amd64.deb
-apt install ./dwarves_1.17-1_amd64.deb
-```
+Or whatever version is available in backports when you are reading this guide.
 
 #### Obtaining the source
 ```bash
 git clone https://github.com/fabianishere/pve-edge-kernel
 cd pve-ede-kernel
+git checkout v5.11.x
 git submodule update --init --depth=1 --recursive submodules/ubuntu-mainline
 git submodule update --init --recursive
 ```
-Afterwards, select the branch of your likings (e.g. `v5.8.x`).
+You can select the branch of your likings by changing `v5.11.x`. This will automatically select the last patchversion for the minor version you have chosen. If you wan to select the patchversion too, you can check the [available tags](https://github.com/fabianishere/pve-edge-kernel/tags), for example `git checkout v5.11.8-1`.
 
 #### Building
-Invoking the following command will build the kernel and its associated packages:
-```bash
-make
-```
 The Makefile provides several environmental variables to control:
 
 1. `PVE_BUILD_FLAVOR`  
@@ -98,6 +92,11 @@ The Makefile provides several environmental variables to control:
 
 Kernel options may be controlled from the [debian/rules](debian/rules) file. To build with
 additional patches, you may add them to the [patches/pve](patches/pve) directory.
+
+Invoking the following command will build the kernel and its associated packages:
+```bash
+make
+```
 
 ## Questions
 If you have any questions or want to see additional versions, flavors or micro architectures being built, feel
