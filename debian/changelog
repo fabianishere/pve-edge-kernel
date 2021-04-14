@@ -1,3 +1,9 @@
+pve-edge-kernel (5.10.30-1) edge; urgency=medium
+
+  * Update to Linux 5.10.30 based on Ubuntu 5.10-5.10.0-9.10.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 14 Apr 2021 12:14:03 +0000
+
 pve-edge-kernel (5.10.29-1) edge; urgency=medium
 
   * Update to Linux 5.10.29 based on Ubuntu 5.10-5.10.0-9.10.
