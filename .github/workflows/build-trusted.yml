@@ -6,30 +6,25 @@ jobs:
   build:
     name: Build
     runs-on: [self-hosted]
-    strategy:
-      matrix:
-        include:
-          - build_cc: gcc-10
     if: github.event.pull_request.head.repo.full_name == github.repository && !contains(github.event.head_commit.message, 'skip ci')
     steps:
+    - name: Clean Workspace
+      run: rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
     - name: Checkout Sources
       uses: actions/checkout@v2
       with:
           submodules: recursive
+          path: pve-edge-kernel
+    - name: Clean Repository
+      run: git -C pve-edge-kernel submodule foreach git clean -ffdx
     - name: Build Kernel
-      run: make
-      env:
-          PVE_BUILD_CC: ${{ matrix.build_cc }}
-    - name: Read Build Information
-      id: read_build_info
       run: |
-        echo "::set-output name=release::$(sed '1q;d' release.txt)"
-        echo "::set-output name=dst::$(sed '1q;d' artifacts.txt)"
-        echo "::set-output name=hdr::$(sed '2q;d' artifacts.txt)"
-        echo "::set-output name=tools::$(sed '3q;d' artifacts.txt)"
+        rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
+        cd pve-edge-kernel
+        debian/rules debian/control
+        debuild -e CC=gcc-10 -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2-preview
       with:
-        name: debs-${{ matrix.build_type }}
+        name: debs
         path: "*.deb"
-

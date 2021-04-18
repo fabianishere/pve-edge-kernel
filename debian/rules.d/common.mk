@@ -25,7 +25,8 @@ ifneq (${PKG_BUILD_PROFILE},generic)
 endif
 
 # Build settings
-PVE_BUILD_CC ?= ${CC}
+PVE_KERNEL_CC ?= ${CC}
+PVE_ZFS_CC ?= ${CC}
 
 ### Debian package names
 EXTRAVERSION=-${KERNEL_RELEASE}-${PKG_BUILD_FLAVOR}

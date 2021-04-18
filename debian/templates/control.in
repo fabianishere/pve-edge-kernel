@@ -55,7 +55,7 @@ Priority: optional
 Architecture: any
 Provides: linux-headers,
           linux-headers-2.6,
-Depends: coreutils | fileutils (>= 4.0),
+Depends:
 Description: The Proxmox PVE Kernel Headers
  This package contains the linux kernel headers
 

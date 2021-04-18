@@ -64,10 +64,14 @@ apt install ./dwarves_1.17-1_amd64.deb
 ```
 
 #### Obtaining the source
-Select the branch of your likings (e.g. `v5.8.x`) and update the submodules:
+Obtain the source code as follows:
 ```bash
 git clone https://github.com/fabianishere/pve-edge-kernel
 cd pve-ede-kernel
+```
+Then, select the branch of your likings (e.g. `v5.10.x`) and update the submodules:
+```bash
+git checkout v5.10.x
 git submodule update --init --depth=1 --recursive linux
 git submodule update --init --recursive
 ```
@@ -75,7 +79,8 @@ git submodule update --init --recursive
 #### Building
 Invoking the following command will build the kernel and its associated packages:
 ```bash
-make
+debian/rules debian/control
+debuild --jobs=auto -ePVE* -b -uc -us
 ```
 The Makefile provides several environmental variables to control:
 
@@ -90,13 +95,13 @@ The Makefile provides several environmental variables to control:
    the kernel (e.g. optimization level or micro architecture).
    This name is appended as suffix to the Debian package version in case it is not
    the default value.
-3. `PVE_BUILD_CC`  
+3. `PVE_KERNEL_CC`  
    The compiler to use for the kernel build.
-4. `PVE_BUILD_CFLAGS`  
+4. `PVE_KERNEL_CFLAGS`  
    The compilation options to use for the kernel build. Use this variable to specify
    the optimization level or micro architecture to build for.
 
-Kernel options may be controlled from the [debian/rules](debian/rules) file. To build with
+Kernel options may be controlled from [debian/config/config.pve](debian/config/config.pve). To build with
 additional patches, you may add them to the [debian/patches/pve](debian/patches/pve) directory
 and update the [series](debian/patches/series.linux) file accordingly.
 
