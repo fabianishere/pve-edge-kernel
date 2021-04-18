@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stoiko Ivanov <s.ivanov@proxmox.com>
+Date: Tue, 15 Sep 2020 19:07:24 +0200
+Subject: [PATCH] Add systemd-unit for importing specific pools
+
+The unit can be instantiated with a specific poolname, which will get imported
+by scanning /dev/disk/by-id, irrespective of the existence and content of
+/etc/zfs/zpool.cache.
+
+the instance name is used unescaped (see systemd.unit(5)), since zpool names
+can contain characters which will be escaped by systemd.
+
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+---
+ etc/systemd/system/50-zfs.preset.in       |  1 +
+ etc/systemd/system/Makefile.am            |  1 +
+ etc/systemd/system/zfs-import@.service.in | 16 ++++++++++++++++
+ 3 files changed, 18 insertions(+)
+ create mode 100644 etc/systemd/system/zfs-import@.service.in
+
+diff --git a/etc/systemd/system/50-zfs.preset.in b/etc/systemd/system/50-zfs.preset.in
+index e4056a92c..030611419 100644
+--- a/etc/systemd/system/50-zfs.preset.in
++++ b/etc/systemd/system/50-zfs.preset.in
+@@ -1,6 +1,7 @@
+ # ZFS is enabled by default
+ enable zfs-import-cache.service
+ disable zfs-import-scan.service
++enable zfs-import@.service
+ enable zfs-import.target
+ enable zfs-mount.service
+ enable zfs-share.service
+diff --git a/etc/systemd/system/Makefile.am b/etc/systemd/system/Makefile.am
+index c374a52ac..25d1b99d7 100644
+--- a/etc/systemd/system/Makefile.am
++++ b/etc/systemd/system/Makefile.am
+@@ -7,6 +7,7 @@ systemdunit_DATA = \
+ 	zfs-zed.service \
+ 	zfs-import-cache.service \
+ 	zfs-import-scan.service \
++	zfs-import@.service \
+ 	zfs-mount.service \
+ 	zfs-share.service \
+ 	zfs-volume-wait.service \
+diff --git a/etc/systemd/system/zfs-import@.service.in b/etc/systemd/system/zfs-import@.service.in
+new file mode 100644
+index 000000000..9b4ee9371
+--- /dev/null
++++ b/etc/systemd/system/zfs-import@.service.in
+@@ -0,0 +1,16 @@
++[Unit]
++Description=Import ZFS pool %i
++Documentation=man:zpool(8)
++DefaultDependencies=no
++After=systemd-udev-settle.service
++After=cryptsetup.target
++After=multipathd.target
++Before=zfs-import.target
++
++[Service]
++Type=oneshot
++RemainAfterExit=yes
++ExecStart=@sbindir@/zpool import -N -d /dev/disk/by-id -o cachefile=none %I
++
++[Install]
++WantedBy=zfs-import.target

@@ -43,14 +43,11 @@ KERNEL_SRC=linux
 KERNEL_SRC_SUBMODULE=$(KERNEL_SRC)
 KERNEL_CFG_ORG=config-${KERNEL_VER}.org
 
-ZFSONLINUX_SUBMODULE=zfs/
-ZFSDIR=pkg-zfs
-
 MODULES=modules
 MODULE_DIRS=${ZFSDIR}
 
 # exported to debian/rules via debian/rules.d/dirs.mk
-DIRS=KERNEL_SRC ZFSDIR MODULES
+DIRS=KERNEL_SRC MODULES
 
 DST_DEB=${PACKAGE}_${KERNEL_VER}-${PKGRELFULL}_${ARCH}.deb
 HDR_DEB=${HDRPACKAGE}_${KERNEL_VER}-${PKGRELFULL}_${ARCH}.deb
@@ -105,21 +102,11 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
 	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian
+	cp -r zfs ${BUILD_DIR}/zfs
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
 	touch $@
-
-ZFS_PATCHES=$(wildcard patches/zfs/*.patch)
-
-${ZFSDIR}.prepared: ${ZFSONLINUX_SUBMODULE}
-	rm -rf ${BUILD_DIR}/${MODULES}/${ZFSDIR} ${BUILD_DIR}/${MODULES}/tmp $@
-	mkdir -p ${BUILD_DIR}/${MODULES}/tmp
-	cp -a ${ZFSONLINUX_SUBMODULE}/* ${BUILD_DIR}/${MODULES}/tmp
-	set -e; cd ${BUILD_DIR}/${MODULES}/tmp/upstream; for patch in ${ZFS_PATCHES}; do echo "applying patch '$$patch'" && patch -p1 < ../../../../$${patch}; done
-	cd ${BUILD_DIR}/${MODULES}/tmp; make kernel
-	rm -rf ${BUILD_DIR}/${MODULES}/tmp
-	touch ${ZFSDIR}.prepared
 
 .PHONY: clean
 clean:

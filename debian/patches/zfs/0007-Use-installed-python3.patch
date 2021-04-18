@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Antonio Russo <antonio.e.russo@gmail.com>
+Date: Tue, 5 May 2020 22:15:16 -0600
+Subject: [PATCH] Use installed python3
+
+---
+ .../functional/cli_root/zfs_program/zfs_program_json.ksh    | 6 +++---
+ .../tests/functional/rsend/send_encrypted_files.ksh         | 2 +-
+ .../tests/functional/rsend/send_realloc_dnode_size.ksh      | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/tests/zfs-tests/tests/functional/cli_root/zfs_program/zfs_program_json.ksh b/tests/zfs-tests/tests/functional/cli_root/zfs_program/zfs_program_json.ksh
+index 3788543b0..c7ee4ae9a 100755
+--- a/tests/zfs-tests/tests/functional/cli_root/zfs_program/zfs_program_json.ksh
++++ b/tests/zfs-tests/tests/functional/cli_root/zfs_program/zfs_program_json.ksh
+@@ -100,10 +100,10 @@ typeset -a pos_cmds_out=(
+ # the same as the input and the --sort-keys option was added.  Detect when
+ # --sort-keys is supported and apply the option to ensure the expected order.
+ #
+-if python -m json.tool --sort-keys <<< "{}"; then
+-	JSON_TOOL_CMD="python -m json.tool --sort-keys"
++if python3 -m json.tool --sort-keys <<< "{}"; then
++	JSON_TOOL_CMD="python3 -m json.tool --sort-keys"
+ else
+-	JSON_TOOL_CMD="python -m json.tool"
++	JSON_TOOL_CMD="python3 -m json.tool"
+ fi
+ 
+ typeset -i cnt=0
+diff --git a/tests/zfs-tests/tests/functional/rsend/send_encrypted_files.ksh b/tests/zfs-tests/tests/functional/rsend/send_encrypted_files.ksh
+index f89cb3b31..375d483f7 100755
+--- a/tests/zfs-tests/tests/functional/rsend/send_encrypted_files.ksh
++++ b/tests/zfs-tests/tests/functional/rsend/send_encrypted_files.ksh
+@@ -87,7 +87,7 @@ log_must xattrtest -f 10 -x 3 -s 32768 -r -k -p /$TESTPOOL/$TESTFS2/xattrsadir
+ # ZoL issue #7432
+ log_must zfs set compression=on xattr=sa $TESTPOOL/$TESTFS2
+ log_must touch /$TESTPOOL/$TESTFS2/attrs
+-log_must eval "python -c 'print \"a\" * 4096' | \
++log_must eval "python3 -c 'print \"a\" * 4096' | \
+ 	set_xattr_stdin bigval /$TESTPOOL/$TESTFS2/attrs"
+ log_must zfs set compression=off xattr=on $TESTPOOL/$TESTFS2
+ 
+diff --git a/tests/zfs-tests/tests/functional/rsend/send_realloc_dnode_size.ksh b/tests/zfs-tests/tests/functional/rsend/send_realloc_dnode_size.ksh
+index 394fe95bb..43560aac5 100755
+--- a/tests/zfs-tests/tests/functional/rsend/send_realloc_dnode_size.ksh
++++ b/tests/zfs-tests/tests/functional/rsend/send_realloc_dnode_size.ksh
+@@ -93,7 +93,7 @@ log_must zfs snapshot $POOL/fs@c
+ # 4. Create an empty file and add xattrs to it to exercise reclaiming a
+ #    dnode that requires more than 1 slot for its bonus buffer (Zol #7433)
+ log_must zfs set compression=on xattr=sa $POOL/fs
+-log_must eval "python -c 'print \"a\" * 512' |
++log_must eval "python3 -c 'print \"a\" * 512' |
+     set_xattr_stdin bigval /$POOL/fs/attrs"
+ log_must zfs snapshot $POOL/fs@d
+ 
