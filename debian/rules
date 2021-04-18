@@ -1,20 +1,16 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
-
-# TODO: check for headers not being installed
-BUILD_DIR=$(shell pwd)
-
 include /usr/share/dpkg/default.mk
 include debian/rules.d/env.mk
 include debian/rules.d/${DEB_BUILD_ARCH}.mk
 
+BUILD_DIR ?= ${CURDIR}
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}
 PVE_HEADER_PKG=pve-headers-${KVNAME}
 PVE_USR_HEADER_PKG=pve-kernel-libc-dev
 LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
-KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
 
 # If no custom compiler is specified, use the default
 PVE_BUILD_CC ?= ${CC}
@@ -132,50 +128,17 @@ ${KERNEL_SRC}/.config:
 	rm -rf debian/${PVE_HEADER_PKG}
 	mkdir -p debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	install -m 0644 ${KERNEL_SRC}/.config debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	# copy to allow building in parallel to kernel/module compilation without interference
-	rm -rf ${KERNEL_SRC_COPY}
-	-cp -ar ${KERNEL_SRC} ${KERNEL_SRC_COPY}
-	make -C ${KERNEL_SRC_COPY} mrproper
-	cd ${KERNEL_SRC_COPY}; find . -path './debian/*' -prune \
-	    -o -path './include/*' -prune \
-	    -o -path './Documentation' -prune \
-	    -o -path './scripts' -prune \
-	    -o -type f \
-	    \( \
-	        -name 'Makefile*' \
-	        -o -name 'Kconfig*' \
-	        -o -name 'Kbuild*' \
-	        -o -name '*.sh' \
-	        -o -name '*.pl' \
-	    \) \
-	    -print | cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC_COPY}; cp -a include scripts ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC_COPY}; \
-	    ( \
-	        find arch/${KERNEL_HEADER_ARCH} -name include -type d -print | \
-	        xargs -n1 -i: find : -type f \
-	    ) | \
-	    cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	# Workaround for #48
-	mv ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds.S \
-	    ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds
-	sed -i '$$ d' ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds
 	touch $@
 
-.headers_compile_mark: .headers_prepare_mark
-	# set output to subdir of source to reduce number of hardcoded paths in output files
-	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
-	mkdir -p ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
-	cp ${KERNEL_SRC}/.config ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/.config
-	${MAKE} -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 syncconfig prepare scripts
-	find ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -name \*.o.ur-\* | xargs rm -f
-	rsync --ignore-existing -r -v -a $(addprefix ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/,arch include kernel scripts tools) ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/
-	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}
-	touch $@
-
-.headers_install_mark: .compile_mark .modules_compile_mark .headers_compile_mark
-	cp ${KERNEL_SRC}/include/generated/compile.h debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/include/generated/compile.h
-	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+.headers_install_mark: .compile_mark .modules_compile_mark .headers_prepare_mark
+	( \
+		cd ${KERNEL_SRC}; \
+		find . arch/${KERNEL_BUILD_ARCH} -maxdepth 1 -name Makefile\*; \
+		find include scripts -type f -o -type l; \
+		find arch/${KERNEL_BUILD_ARCH} -name module.lds -o -name Kbuild.platforms -o -name Platform; \
+		find $$(find arch/${KERNEL_BUILD_ARCH} -name include -o -name scripts -type d) -type f; \
+		find arch/${KERNEL_BUILD_ARCH}/include Module.symvers include scripts -type f \
+	) | rsync -av --files-from=- ${KERNEL_SRC} debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
 	touch $@
