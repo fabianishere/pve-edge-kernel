@@ -28,15 +28,6 @@ HDRPACKAGE=pve-headers-${KVNAME}
 
 ARCH=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
 
-# amd64/x86_64/x86 share the arch subdirectory in the kernel, 'x86' so we need
-# a mapping
-KERNEL_ARCH=x86
-ifneq (${ARCH}, amd64)
-KERNEL_ARCH=${ARCH}
-endif
-
-GITVERSION:=$(shell git rev-parse HEAD)
-
 BUILD_DIR=build
 
 KERNEL_SRC=linux
@@ -82,17 +73,11 @@ debian.prepared: debian
 	rm -rf ${BUILD_DIR}/debian
 	mkdir -p ${BUILD_DIR}
 	cp -a debian ${BUILD_DIR}/debian
-	echo "git clone git@github.com:fabianishere/pve-kernel-edge.git\\ngit checkout ${GITVERSION}" > ${BUILD_DIR}/debian/SOURCE
-	@$(foreach dir, ${DIRS},echo "${dir}=${${dir}}" >> ${BUILD_DIR}/debian/rules.d/env.mk;)
-	echo "KVNAME=${KVNAME}" >> ${BUILD_DIR}/debian/rules.d/env.mk
-	echo "KERNEL_MAJMIN=${KERNEL_MAJMIN}" >> ${BUILD_DIR}/debian/rules.d/env.mk
 	cd ${BUILD_DIR}; debian/rules debian/control
 ifneq (${PVE_BUILD_TYPE},generic)
 	cd ${BUILD_DIR}; debchange -l +${PVE_BUILD_TYPE} -D edge --force-distribution -U -M "Specialization for ${PVE_BUILD_TYPE}"
 endif
 	touch $@
-
-PVE_PATCHES=$(wildcard patches/pve/*.patch)
 
 ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	git -C ${KERNEL_SRC} fetch ../crack.bundle $$(git -C ${KERNEL_SRC} ls-remote ../crack.bundle | cut -f1)
@@ -100,9 +85,8 @@ ${KERNEL_SRC}.prepared: ${KERNEL_SRC_SUBMODULE}
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC} $@
 	mkdir -p ${BUILD_DIR}
 	cp -a ${KERNEL_SRC_SUBMODULE} ${BUILD_DIR}/${KERNEL_SRC}
-	sed -i ${BUILD_DIR}/${KERNEL_SRC}/Makefile -e 's/^EXTRAVERSION.*$$/EXTRAVERSION=${EXTRAVERSION}/'
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC}/debian
-	cp -r zfs ${BUILD_DIR}/zfs
+	cp -r zfs scripts ${BUILD_DIR}/
 	touch $@
 
 ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
@@ -112,4 +96,4 @@ ${MODULES}.prepared: $(addsuffix .prepared,${MODULE_DIRS})
 clean:
 	rm -rf *~ build *.prepared ${KERNEL_CFG_ORG}
 	rm -f *.deb *.ddeb *.changes *.buildinfo release.txt artifacts.txt
-	rm -f debian/control debian/pve-edge-*.postinst debian/pve-edge-*.prerm debian/pve-edge-*.postrm debian/rules.d/env.mk
+	rm -f debian/control debian/pve-edge-*.postinst debian/pve-edge-*.prerm debian/pve-edge-*.postrm

@@ -1,19 +1,16 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 include /usr/share/dpkg/default.mk
-include debian/rules.d/env.mk
-include debian/rules.d/${DEB_BUILD_ARCH}.mk
+
+# Common variables for all architectures
+include debian/rules.d/common.mk
+
+# Pull in some arch specific stuff
+include debian/rules.d/arch/${DEB_BUILD_ARCH}.mk
 
 BUILD_DIR ?= ${CURDIR}
-CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
-
-PVE_KERNEL_PKG=pve-kernel-${KVNAME}
-PVE_HEADER_PKG=pve-headers-${KVNAME}
-PVE_USR_HEADER_PKG=pve-kernel-libc-dev
-LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
-
-# If no custom compiler is specified, use the default
-PVE_BUILD_CC ?= ${CC}
+KERNEL_SRC := linux
+ZFS_SRC := zfs
 
 %:
 	dh $@ --with quilt
@@ -30,7 +27,9 @@ debian/control: $(wildcard debian/*.in)
 	sed -e 's/@KVNAME@/${KVNAME}/g' -e 's/@KVMAJMIN@/${KERNEL_MAJMIN}/g' < debian/templates/control.in > debian/control
 
 debian/SOURCE:
-	echo "git clone git@github.com:fabianishere/pve-kernel-edge.git\\ngit checkout $(shell git rev-parse HEAD)" > $@
+	echo "git clone git@github.com:fabianishere/pve-edge-kernel.git \
+		  git checkout ${PKG_GIT_VERSION} \
+		  git submodule update --init --depth=1" > $@
 
 override_dh_quilt_patch:
 	cd linux; \
@@ -76,7 +75,11 @@ ${KERNEL_SRC}/.config:
 	touch $@
 
 .compile_mark: .config_mark
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_TYPE} (${CHANGELOG_DATE})"
+	${MAKE} -C ${KERNEL_SRC} \
+ 		CC=${PVE_BUILD_CC} \
+ 		KCFLAGS="${PVE_BUILD_CFLAGS}" \
+ 		EXTRAVERSION="${EXTRAVERSION}" \
+ 		KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_PROFILE} (${PKG_DATE})"
 	touch $@
 
 .install_mark: .compile_mark .modules_compile_mark
@@ -100,7 +103,7 @@ ${KERNEL_SRC}/.config:
 	install -m 0755 -d debian/${PVE_KERNEL_PKG}/lib/modprobe.d
 	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > watchdog-blacklist.tmp
 	echo ipmi_watchdog.ko >> watchdog-blacklist.tmp
-	cat watchdog-blacklist.tmp|sed -e 's/^/blacklist /' -e 's/.ko$$//'|sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
+	cat watchdog-blacklist.tmp | sed -e 's/^/blacklist /' -e 's/.ko$$//' | sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/source
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/build
 	touch $@
@@ -160,20 +163,20 @@ ${KERNEL_SRC}/.config:
 		mv $(OUT_DIR)/include/arch $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
 	touch $@
 
-.modules_compile_mark: ${MODULES}/zfs.ko
+.modules_compile_mark: modules/zfs.ko
 	touch $@
 
 modules/zfs.ko: .compile_mark
-	dh_autoreconf -D zfs
-	dh_auto_configure -D zfs -- --with-config=kernel --with-linux=$(realpath linux) --with-linux-obj=$(realpath linux)
-	dh_auto_build -D zfs
+	dh_autoreconf -D ${ZFS_SRC}
+	dh_auto_configure -D ${ZFS_SRC} -- --with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
+	dh_auto_build -D ${ZFS_SRC}
 	mkdir -p modules
-	cp zfs/module/avl/zavl.ko modules/
-	cp zfs/module/nvpair/znvpair.ko modules/
-	cp zfs/module/unicode/zunicode.ko modules/
-	cp zfs/module/zcommon/zcommon.ko modules/
-	cp zfs/module/icp/icp.ko modules/
-	cp zfs/module/zfs/zfs.ko modules/
-	cp zfs/module/lua/zlua.ko modules/
-	cp zfs/module/spl/spl.ko modules/
-	cp zfs/module/zstd/zzstd.ko modules/
+	cp ${ZFS_SRC}/module/avl/zavl.ko modules/
+	cp ${ZFS_SRC}/module/nvpair/znvpair.ko modules/
+	cp ${ZFS_SRC}/module/unicode/zunicode.ko modules/
+	cp ${ZFS_SRC}/module/zcommon/zcommon.ko modules/
+	cp ${ZFS_SRC}/module/icp/icp.ko modules/
+	cp ${ZFS_SRC}/module/zfs/zfs.ko modules/
+	cp ${ZFS_SRC}/module/lua/zlua.ko modules/
+	cp ${ZFS_SRC}/module/spl/spl.ko modules/
+	cp ${ZFS_SRC}/module/zstd/zzstd.ko modules/
