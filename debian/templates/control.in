@@ -1,4 +1,4 @@
-Source: pve-edge-kernel
+Source: pve-kernel
 Section: devel
 Priority: optional
 Maintainer: Fabian Mastenbroek <mail.fabianm@gmail.com>
@@ -34,7 +34,7 @@ Build-Depends: asciidoc-base,
                xmlto,
                zlib1g-dev,
                dwarves (>= 1.16)
-Build-Conflicts: pve-edge-headers-@KVNAME@,
+Build-Conflicts: pve-headers-@KVNAME@,
 Vcs-Git: git://github.com/fabianishere/pve-edge-kernel.git
 Vcs-Browser: https://github.com/fabianishere/pve-edge-kernel
 
@@ -49,7 +49,7 @@ Description: Linux kernel version specific tools for version @KVMAJMIN@
  This package provides the architecture dependent parts for kernel
  version locked tools (such as perf and x86_energy_perf_policy)
 
-Package: pve-edge-headers-@KVNAME@
+Package: pve-headers-@KVNAME@
 Section: devel
 Priority: optional
 Architecture: any
@@ -59,7 +59,7 @@ Depends: coreutils | fileutils (>= 4.0),
 Description: The Proxmox PVE Kernel Headers
  This package contains the linux kernel headers
 
-Package: pve-edge-kernel-@KVNAME@
+Package: pve-kernel-@KVNAME@
 Section: admin
 Priority: optional
 Architecture: any

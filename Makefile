@@ -6,7 +6,7 @@ KERNEL_MAJMIN=$(shell ./scripts/version.sh -n)
 KERNEL_VER=$(shell ./scripts/version.sh -L)
 
 KREL=1
-EXTRAVERSION=-${KREL}
+EXTRAVERSION=-${KREL}-edge
 
 # Append Linux flavor name to EXTRAVERSION
 ifdef PVE_BUILD_FLAVOR
@@ -23,8 +23,8 @@ ifneq (${PVE_BUILD_TYPE},generic)
 endif
 
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
-PACKAGE=pve-edge-kernel-${KVNAME}
-HDRPACKAGE=pve-edge-headers-${KVNAME}
+PACKAGE=pve-kernel-${KVNAME}
+HDRPACKAGE=pve-headers-${KVNAME}
 
 ARCH=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
 

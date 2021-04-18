@@ -23,7 +23,7 @@ Select from the [Releases](https://github.com/fabianishere/pve-edge-kernel/relea
 you want to install and download the appropriate deb package. Then, you can install the package as follows:
 
 ```sh
-apt install ./pve-edge-kernel-VERSION-MARCH_VERSION_amd64.deb
+apt install ./pve-kernel-VERSION-MARCH_VERSION_amd64.deb
 ```
 
 ## AppArmor issues

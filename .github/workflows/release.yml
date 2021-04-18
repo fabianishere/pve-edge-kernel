@@ -77,8 +77,8 @@ jobs:
         name: pve-edge-kernel ${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
         files: |
-            artifacts/debs-generic/pve-edge-headers-*.deb
+            artifacts/debs-generic/pve-headers-*.deb
             artifacts/debs-generic/linux-tools-*.deb
             artifacts/debs-generic/pve-kernel-libc-*.deb
-            artifacts/debs-*/pve-edge-kernel-*.deb
+            artifacts/debs-*/pve-kernel-*.deb
 

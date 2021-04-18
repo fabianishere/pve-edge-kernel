@@ -10,8 +10,8 @@ include debian/rules.d/${DEB_BUILD_ARCH}.mk
 
 CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
 
-PVE_KERNEL_PKG=pve-edge-kernel-${KVNAME}
-PVE_HEADER_PKG=pve-edge-headers-${KVNAME}
+PVE_KERNEL_PKG=pve-kernel-${KVNAME}
+PVE_HEADER_PKG=pve-headers-${KVNAME}
 PVE_USR_HEADER_PKG=pve-kernel-libc-dev
 LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
 KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
