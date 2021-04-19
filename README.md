@@ -41,17 +41,18 @@ Make sure you have at least 10GB of free space available and have the following
 packages installed:
 
 ```bash
-apt install devscripts debuild equivs
+apt install devscripts debhelper equivs git
 ```
 In case you are building a kernel version >= 5.8, make sure you have installed
 at least [dwarves >= 1.16.0](https://packages.debian.org/bullseye/dwarves).
-Unfortunately, this version is currently only available in the Debian Testing
-and Debian Unstable repositories. To work around this issue, we describe two options:
+This version is currently is not available in the main repository.
+To work around this issue, we describe two options:
 
-1. You may add the Debian Testing repository to your APT sources as described
-   [here](https://serverfault.com/a/382101) and install the newer `dwarves` package as follows:
+1. You may add the Debian Buster Backports repository to your APT sources as described
+   [here](https://backports.debian.org/Instructions/) and install the
+   newer `dwarves` package as follows:
    ```shell
-   apt install -t testing dwarves
+   apt install -t buster-backports dwarves
    ```
 2. Alternatively, you may [download](https://packages.debian.org/bullseye/dwarves)
    the newer `dwarves` (>= 1.16) package from the Debian website and install the
@@ -81,11 +82,11 @@ debian/rules debian/control
 ```
 Before we build, make sure you have installed the build dependencies:
 ```bash
-sudo mk-build-deps --install debian/control
+sudo mk-build-deps -i
 ```
 Invoking the following command will build the kernel and its associated packages:
 ```bash
-debuild --jobs=auto -ePVE* -b -uc -us
+debuild -ePVE* --jobs=auto -b -uc -us
 ```
 The Makefile provides several environmental variables to control:
 

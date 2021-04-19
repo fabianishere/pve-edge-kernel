@@ -2,15 +2,13 @@ Source: pve-kernel
 Section: devel
 Priority: optional
 Maintainer: Fabian Mastenbroek <mail.fabianm@gmail.com>
-Build-Depends: asciidoc-base,
+Build-Depends: asciidoc,
                automake,
                bc,
                bison,
                cpio,
                debhelper (>= 10~),
-               dh-python,
-               dwarves,
-               file,
+               dwarves (>= 1.16),
                flex,
                gcc (>= 8.3.0-6),
                git,
@@ -19,21 +17,14 @@ Build-Depends: asciidoc-base,
                libelf-dev,
                libiberty-dev,
                libnuma-dev,
-               libpve-common-perl,
                libslang2-dev,
                libssl-dev,
-               libtool,
-               lintian,
                lz4,
-               perl-modules,
                python3-minimal,
+               quilt,
                rsync,
-               sed,
-               sphinx-common,
-               tar,
                xmlto,
-               zlib1g-dev,
-               dwarves (>= 1.16)
+               zlib1g-dev
 Build-Conflicts: pve-headers-@KVNAME@,
 Vcs-Git: git://github.com/fabianishere/pve-edge-kernel.git
 Vcs-Browser: https://github.com/fabianishere/pve-edge-kernel
