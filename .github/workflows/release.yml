@@ -71,7 +71,7 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT }}
       with:
         name: pve-edge-kernel ${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}

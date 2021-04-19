@@ -22,11 +22,6 @@ jobs:
       uses: actions/checkout@v2
       with:
           submodules: recursive
-    - uses: tibdex/github-app-token@v1
-      id: generate-token
-      with:
-        app_id: ${{ secrets.APP_ID }}
-        private_key: ${{ secrets.APP_PRIVATE_KEY }}
     - name: Setup System Dependencies
       run: sudo apt install devscripts
     - name: Update Kernel
@@ -45,16 +40,16 @@ jobs:
         changelog="${changelog//$'\n'/'%0A'}"
         changelog="${changelog//$'\r'/'%0D'}"
         echo "::set-output name=changelog::$changelog"
-        echo "::set-output name=base::$(scripts/version.sh -B)"
         echo "::set-output name=branch::${GITHUB_REF##*/}"
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
       with:
-        token: ${{ steps.generate-token.outputs.token }} # Custom token needed to recursively trigger workflows
+        token: ${{ secrets.PAT }} # Custom token needed to recursively trigger workflows
+        author: Fabian Mastenbroek <mail.fabianm@gmail.com>
         commit-message: |
           Add Linux ${{ steps.update.outputs.version }}
 
-          This change updates the kernel to Linux ${{ steps.update.outputs.version }} based on Ubuntu ${{ steps.update.outputs.base }}.
+          This change updates the kernel to Linux ${{ steps.update.outputs.version }}.
         branch: staging/v${{ steps.update.outputs.full }}
         branch-suffix: short-commit-hash
         delete-branch: true
