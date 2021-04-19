@@ -1,0 +1,9 @@
+zfs/0001-Check-for-META-and-DCH-consistency-in-autoconf.patch
+zfs/0002-always-load-ZFS-module-on-boot.patch
+zfs/0003-Fix-the-path-to-the-zed-binary-on-the-systemd-unit.patch
+zfs/0004-import-with-d-dev-disk-by-id-in-scan-service.patch
+zfs/0005-Enable-zed-emails.patch
+zfs/0006-dont-symlink-zed-scripts.patch
+zfs/0007-Use-installed-python3.patch
+zfs/0008-Add-systemd-unit-for-importing-specific-pools.patch
+zfs/0009-Patch-move-manpage-arcstat-1-to-arcstat-8.patch

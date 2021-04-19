@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Mon, 24 Oct 2016 13:47:06 +0200
+Subject: [PATCH] import with -d /dev/disk/by-id in scan service
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ etc/systemd/system/zfs-import-scan.service.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/etc/systemd/system/zfs-import-scan.service.in b/etc/systemd/system/zfs-import-scan.service.in
+index f0317e23e..9a5e9cb17 100644
+--- a/etc/systemd/system/zfs-import-scan.service.in
++++ b/etc/systemd/system/zfs-import-scan.service.in
+@@ -13,7 +13,7 @@ ConditionPathIsDirectory=/sys/module/zfs
+ [Service]
+ Type=oneshot
+ RemainAfterExit=yes
+-ExecStart=@sbindir@/zpool import -aN -o cachefile=none
++ExecStart=@sbindir@/zpool import -aN -d /dev/disk/by-id -o cachefile=none
+ 
+ [Install]
+ WantedBy=zfs-import.target

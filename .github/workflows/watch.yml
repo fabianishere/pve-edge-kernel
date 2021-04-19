@@ -17,11 +17,6 @@ jobs:
       uses: actions/checkout@v2
       with:
         ref: ${{ matrix.branch }}
-    - uses: tibdex/github-app-token@v1
-      id: generate-token
-      with:
-        app_id: ${{ secrets.APP_ID }}
-        private_key: ${{ secrets.APP_PRIVATE_KEY }}
     - name: Setup System Dependencies
       run: sudo apt install jq curl
     - name: Check for Release
@@ -45,7 +40,7 @@ jobs:
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: Kernel Update
-        token: ${{ steps.generate-token.outputs.token }} # Custom token needed to recursively trigger workflows
-        inputs: '{ "tag": "cod/mainline/v${{ steps.check.outputs.version }}" }'
+        token: ${{ secrets.PAT }} # Custom token needed to recursively trigger workflows
+        inputs: '{ "tag": "v${{ steps.check.outputs.version }}" }'
         ref: ${{ matrix.branch }}
 
