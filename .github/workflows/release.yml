@@ -1,15 +1,18 @@
 name: Kernel Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     tags:
       - v*
       - flavor/*/v*
+  workflow_dispatch:
 
 jobs:
    build:
     name: Build
     runs-on: [self-hosted, build]
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
     strategy:
       matrix:
         include:
@@ -35,48 +38,46 @@ jobs:
         fi
         debuild -e PVE* -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
       env:
-          PVE_BUILD_PROFILE: ${{ matrix.build_type }}
+          PVE_BUILD_PROFILE: ${{ matrix.build_profile }}
           PVE_KERNEL_CC: ${{ matrix.build_cc }}
           PVE_KERNEL_CFLAGS: ${{ matrix.build_cflags }}
           PVE_ZFS_CC: ${{ matrix.build_cc }}
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2-preview
       with:
-        name: debs-${{ matrix.build_type }}
+        name: debs-${{ matrix.build_profile }}
         path: "*.deb"
    publish:
     name: Publish
-    runs-on: [self-hosted]
+    runs-on: [ubuntu-latest]
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
     needs: build
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Download Artifacts
       uses: actions/download-artifact@v2
       with:
           path: artifacts
-    - name: Display structure of downloaded files
-      run: ls -R artifacts
+    - name: Delete Debug Symbols
+      run: rm -f artifacts/*/*dbgsym*.deb
     - name: Format Release Name
       id: format_release
       run: |
-        ref="${{ github.ref}}"
-        release_name=${ref#"refs/tags/"}
-        echo "::set-output name=release::$release_name"
+        release=$(scripts/version.sh)
+        echo "::set-output name=release::$release"
         changelog=$(dpkg-parsechangelog -c 1 -l debian/changelog)
         changelog="${changelog//'%'/'%25'}"
         changelog="${changelog//$'\n'/'%0A'}"
         changelog="${changelog//$'\r'/'%0D'}"
         echo "::set-output name=changelog::$changelog"
     - name: Create Release
-      uses: softprops/action-gh-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
+      uses: ncipollo/release-action@v1
       with:
-        name: pve-edge-kernel ${{ steps.format_release.outputs.release }}
+        commit: ${{ github.sha }}
+        tag: v${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
-        files: |
-            artifacts/debs-generic/pve-headers-*.deb
-            artifacts/debs-generic/linux-tools-*.deb
-            artifacts/debs-generic/pve-kernel-libc-*.deb
-            artifacts/debs-*/pve-kernel-*.deb
+        token: ${{ secrets.PAT }}
+        artifacts: "artifacts/debs-generic/pve-headers-*.deb,artifacts/debs-generic/linux-tools-*.deb,artifacts/debs-generic/pve-kernel-libc-*.deb,artifacts/debs-*/pve-kernel-*.deb"
