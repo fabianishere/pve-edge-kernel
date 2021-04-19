@@ -16,12 +16,6 @@ jobs:
           - build_profile: 'generic'
             build_cc: gcc-10
             build_cflags: ''
-          - build_profile: zen2
-            build_cc: gcc-10
-            build_cflags: '-march=znver2'
-          - build_profile: cascadelake
-            build_cc: gcc-10
-            build_cflags: '-march=cascadelake'
     steps:
     - name: Clean Workspace
       run: rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
