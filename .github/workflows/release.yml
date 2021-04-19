@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - build_profile: 'generic'
-            build_cc: gcc-10
+            build_cc: gcc
             build_cflags: ''
     steps:
     - name: Clean Workspace

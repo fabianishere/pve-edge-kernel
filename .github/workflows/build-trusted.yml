@@ -22,7 +22,7 @@ jobs:
         rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
         cd pve-edge-kernel
         debian/rules debian/control
-        debuild -e CC=gcc-10 -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
+        debuild -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2-preview
       with:
