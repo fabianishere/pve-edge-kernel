@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Mon, 6 Feb 2017 12:04:35 +0100
+Subject: [PATCH] Fix the path to the zed binary on the systemd unit.
+
+We install zed into /usr/sbin manually meanwhile the upstream default is
+installing it into /sbin. Ubuntu packages also install zed to /usr/sbin, but
+they ship their own zfs-zed unit.
+
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ etc/systemd/system/zfs-zed.service.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/etc/systemd/system/zfs-zed.service.in b/etc/systemd/system/zfs-zed.service.in
+index 008075138..570e27707 100644
+--- a/etc/systemd/system/zfs-zed.service.in
++++ b/etc/systemd/system/zfs-zed.service.in
+@@ -4,7 +4,7 @@ Documentation=man:zed(8)
+ ConditionPathIsDirectory=/sys/module/zfs
+ 
+ [Service]
+-ExecStart=@sbindir@/zed -F
++ExecStart=/usr/sbin/zed -F
+ Restart=on-abort
+ 
+ [Install]

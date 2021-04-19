@@ -13,33 +13,32 @@ jobs:
     strategy:
       matrix:
         include:
-          - build_type: 'generic'
-            build_cc: gcc-10
+          - build_profile: 'generic'
+            build_cc: gcc
             build_cflags: ''
-          - build_type: zen2
-            build_cc: gcc-10
-            build_cflags: '-march=znver2'
-          - build_type: cascadelake
-            build_cc: gcc-10
-            build_cflags: '-march=cascadelake'
     steps:
+    - name: Clean Workspace
+      run: rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
     - name: Checkout Sources
       uses: actions/checkout@v2
       with:
           submodules: recursive
+          path: pve-edge-kernel
+    - name: Clean Repository
+      run: git -C pve-edge-kernel submodule foreach git clean -ffdx
     - name: Build Kernel
-      run: make
-      env:
-          PVE_BUILD_TYPE: ${{ matrix.build_type }}
-          PVE_BUILD_CC: ${{ matrix.build_cc }}
-          PVE_BUILD_CFLAGS: ${{ matrix.build_cflags }}
-    - name: Read Build Information
-      id: read_build_info
       run: |
-        echo "::set-output name=release::$(sed '1q;d' release.txt)"
-        echo "::set-output name=dst::$(sed '1q;d' artifacts.txt)"
-        echo "::set-output name=hdr::$(sed '2q;d' artifacts.txt)"
-        echo "::set-output name=tools::$(sed '3q;d' artifacts.txt)"
+        cd pve-edge-kernel
+        debian/rules debian/control
+        if [ "$PVE_BUILD_PROFILE" != "generic" ]; then
+        	debchange -l +$PVE_BUILD_PROFILE -D edge --force-distribution -U -M "Specialization for $PVE_BUILD_PROFILE"
+        fi
+        debuild -e PVE* -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
+      env:
+          PVE_BUILD_PROFILE: ${{ matrix.build_type }}
+          PVE_KERNEL_CC: ${{ matrix.build_cc }}
+          PVE_KERNEL_CFLAGS: ${{ matrix.build_cflags }}
+          PVE_ZFS_CC: ${{ matrix.build_cc }}
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2-preview
       with:
@@ -72,13 +71,12 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT }}
       with:
         name: pve-edge-kernel ${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
         files: |
-            artifacts/debs-generic/pve-edge-headers-*.deb
+            artifacts/debs-generic/pve-headers-*.deb
             artifacts/debs-generic/linux-tools-*.deb
             artifacts/debs-generic/pve-kernel-libc-*.deb
-            artifacts/debs-*/pve-edge-kernel-*.deb
-
+            artifacts/debs-*/pve-kernel-*.deb
