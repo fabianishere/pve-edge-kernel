@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Fri, 19 Jan 2018 12:13:46 +0100
+Subject: [PATCH] always load ZFS module on boot
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+since zfs-import-scan.service is disabled by default, and
+zfs-import-cache.service only gets started if a cache file exists, this
+is needed for zfs-mount, zfs-share and zfs-zed services in case ZFS is
+not actually used.
+
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ etc/modules-load.d/zfs.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/etc/modules-load.d/zfs.conf b/etc/modules-load.d/zfs.conf
+index 44e1bb3ed..7509b03cb 100644
+--- a/etc/modules-load.d/zfs.conf
++++ b/etc/modules-load.d/zfs.conf
+@@ -1,3 +1,3 @@
+ # The default behavior is to allow udev to load the kernel modules on demand.
+ # Uncomment the following line to unconditionally load them at boot.
+-#zfs
++zfs

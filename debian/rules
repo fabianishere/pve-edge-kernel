@@ -1,101 +1,73 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
-
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
-
-# TODO: check for headers not being installed
-BUILD_DIR=$(shell pwd)
-
 include /usr/share/dpkg/default.mk
-include debian/rules.d/env.mk
-include debian/rules.d/${DEB_BUILD_ARCH}.mk
 
-CHANGELOG_DATE:=$(shell dpkg-parsechangelog -SDate)
+# Common variables for all architectures
+include debian/rules.d/common.mk
 
-PVE_KERNEL_PKG=pve-edge-kernel-${KVNAME}
-PVE_HEADER_PKG=pve-edge-headers-${KVNAME}
-PVE_USR_HEADER_PKG=pve-kernel-libc-dev
-LINUX_TOOLS_PKG=linux-tools-${KERNEL_MAJMIN}
-KERNEL_SRC_COPY=${KERNEL_SRC}_tmp
+# Pull in some arch specific stuff
+include debian/rules.d/arch/${DEB_BUILD_ARCH}.mk
 
-# If no custom compiler is specified, use the default
-PVE_BUILD_CC ?= ${CC}
+BUILD_DIR ?= ${CURDIR}
+KERNEL_SRC := linux
+ZFS_SRC := zfs
 
-# TODO: split for archs, move to files?
-PVE_CONFIG_OPTS= \
--m INTEL_MEI_WDT \
--d CONFIG_SND_PCM_OSS \
--e CONFIG_TRANSPARENT_HUGEPAGE_MADVISE \
--d CONFIG_TRANSPARENT_HUGEPAGE_ALWAYS \
--m CONFIG_CEPH_FS \
--m CONFIG_BLK_DEV_NBD \
--m CONFIG_BLK_DEV_RBD \
--d CONFIG_SND_PCSP \
--m CONFIG_BCACHE \
--m CONFIG_JFS_FS \
--m CONFIG_HFS_FS \
--m CONFIG_HFSPLUS_FS \
--e CIFS_SMB_DIRECT \
--e CONFIG_BRIDGE \
--e CONFIG_BRIDGE_NETFILTER \
--e CONFIG_BLK_DEV_SD \
--e CONFIG_BLK_DEV_SR \
--e CONFIG_BLK_DEV_DM \
--e CONFIG_BLK_DEV_NVME \
--e CONFIG_NLS_ISO8859_1 \
--d CONFIG_INPUT_EVBUG \
--d CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND \
--e CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE \
--d CONFIG_MODULE_SIG \
--d CONFIG_MEMCG_DISABLED \
--e CONFIG_MEMCG_SWAP_ENABLED \
--e CONFIG_HYPERV \
--m CONFIG_VFIO_IOMMU_TYPE1 \
--m CONFIG_VFIO_VIRQFD \
--m CONFIG_VFIO \
--m CONFIG_VFIO_PCI \
--m CONFIG_USB_XHCI_HCD \
--m CONFIG_USB_XHCI_PCI \
--m CONFIG_USB_EHCI_HCD \
--m CONFIG_USB_EHCI_PCI \
--m CONFIG_USB_EHCI_HCD_PLATFORM \
--m CONFIG_USB_OHCI_HCD \
--m CONFIG_USB_OHCI_HCD_PCI \
--m CONFIG_USB_OHCI_HCD_PLATFORM \
--d CONFIG_USB_OHCI_HCD_SSB \
--m CONFIG_USB_UHCI_HCD \
--d CONFIG_USB_SL811_HCD_ISO \
--e CONFIG_MEMCG_KMEM \
--d CONFIG_DEFAULT_CFQ \
--e CONFIG_DEFAULT_DEADLINE \
--e CONFIG_MODVERSIONS \
--d CONFIG_DEFAULT_SECURITY_DAC \
--e CONFIG_DEFAULT_SECURITY_APPARMOR \
---set-str CONFIG_DEFAULT_SECURITY apparmor \
--d CONFIG_UNWINDER_ORC \
--d CONFIG_UNWINDER_GUESS \
--e CONFIG_UNWINDER_FRAME_POINTER \
--d CONFIG_SECURITY_LOCKDOWN_LSM \
--d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
---set-str CONFIG_LSM yama,integrity,apparmor \
--e CONFIG_PAGE_TABLE_ISOLATION \
---set-str CONFIG_SYSTEM_TRUSTED_KEYS ""
+%:
+	dh $@ --with quilt
 
-debian/control: $(wildcard debian/*.in)
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.postrm.in > debian/${PVE_KERNEL_PKG}.postrm
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.postinst.in > debian/${PVE_KERNEL_PKG}.postinst
-	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-headers.postinst.in > debian/${PVE_HEADER_PKG}.postinst
-	chmod +x debian/${PVE_KERNEL_PKG}.prerm
-	chmod +x debian/${PVE_KERNEL_PKG}.postrm
-	chmod +x debian/${PVE_KERNEL_PKG}.postinst
-	chmod +x debian/${PVE_HEADER_PKG}.postinst
-	sed -e 's/@KVNAME@/${KVNAME}/g' -e 's/@KVMAJMIN@/${KERNEL_MAJMIN}/g' < debian/control.in > debian/control
+## Debian package metadata
+debian/control: debian/templates/control.in
+	sed -e 's/@KVNAME@/${KVNAME}/g' -e 's/@KVMAJMIN@/${KERNEL_MAJMIN}/g' < debian/templates/control.in > debian/control
 
-build: .compile_mark .tools_compile_mark .modules_compile_mark
+debian/SOURCE:
+	echo "git clone git@github.com:fabianishere/pve-edge-kernel.git \
+		  git checkout ${PKG_GIT_VERSION} \
+		  git submodule update --init --depth=1" > $@
 
-install: .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
+## Debhelper phases
+override_dh_quilt_patch:
+	# Apply crack bundle
+	git -C ${KERNEL_SRC} fetch ../crack.bundle $$(git -C ${KERNEL_SRC} ls-remote ../crack.bundle | cut -f1)
+	git -C ${KERNEL_SRC} checkout -f FETCH_HEAD
+	# Apply patches
+	cd ${KERNEL_SRC}; \
+		QUILT_PATCHES=../debian/patches  \
+		QUILT_SERIES=series.linux \
+		quilt --quiltrc /dev/null --color=always push -a || test $$? = 2
+	cd ${ZFS_SRC}; \
+    	QUILT_PATCHES=../debian/patches  \
+    	QUILT_SERIES=series.zfs \
+    	quilt --quiltrc /dev/null --color=always push -a || test $$? = 2
+
+override_dh_quilt_unpatch:
+	cd ${KERNEL_SRC}; \
+		QUILT_PATCHES=../debian/patches \
+		QUILT_SERIES=series.linux \
+		quilt --quiltrc /dev/null pop -a || test $$? = 2
+	cd ${ZFS_SRC}; \
+    	QUILT_PATCHES=../debian/patches \
+    	QUILT_SERIES=series.zfs \
+    	quilt --quiltrc /dev/null pop -a || test $$? = 2
+	rm -rf ${KERNEL_SRC}/.pc ${ZFS_SRC}/.pc
+
+override_dh_autoreconf:
+	dh_autoreconf -D ${ZFS_SRC}
+
+override_dh_auto_configure: ${KERNEL_SRC}/.config
+
+override_dh_auto_build:
+	# Kernel
+	dh_auto_build -D ${KERNEL_SRC} -- \
+		CC="${PVE_KERNEL_CC}" \
+		KCFLAGS="${PVE_KERNEL_CFLAGS}" \
+		EXTRAVERSION="${EXTRAVERSION}" \
+		LOCALVERSION="${LOCALVERSION}" \
+		KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_PROFILE} (${PKG_DATE})"
+	# ZFS
+	dh_auto_configure -D ${ZFS_SRC} -- CC="${PVE_ZFS_CC}" --with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
+	dh_auto_build -D ${ZFS_SRC}
+
+override_dh_auto_install: debian/SOURCE .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
 	dh_installchangelogs
 	dh_installman
@@ -103,26 +75,30 @@ install: .install_mark .tools_install_mark .headers_install_mark .usr_headers_in
 	dh_compress
 	dh_fixperms
 
-binary: install
-	debian/rules fwcheck abicheck
-	dh_strip -N${PVE_HEADER_PKG} -N${PVE_USR_HEADER_PKG}
-	dh_makeshlibs
-	dh_shlibdeps
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+override_dh_auto_clean: debian/control
+	dh_clean
+	dh_auto_clean -D ${KERNEL_SRC}
+	dh_auto_clean -D ${ZFS_SRC}
+	rm -f ${PVE_KERNEL_TEMPLATES} ${PVE_HEADER_TEMPLATES}
+	rm -f debian/SOURCE debian/*.tmp .*_mark
 
-.config_mark:
-	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} olddefconfig
-	touch $@
+## Kernel
+PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PVE_KERNEL_PKG}.%, $(wildcard debian/templates/pve-kernel.*.in))
 
-.compile_mark: .config_mark
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_TYPE} (${CHANGELOG_DATE})"
-	touch $@
+${KERNEL_SRC}/.config:
+	${KERNEL_SRC}/scripts/kconfig/merge_config.sh -m \
+		-O ${KERNEL_SRC} \
+		${KERNEL_SRC}/debian.master/config/config.common.ubuntu \
+		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.common.${DEB_BUILD_ARCH} \
+		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.flavour.generic \
+		debian/config/config.pve
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} oldconfig
 
-.install_mark: .compile_mark .modules_compile_mark
+debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
+	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
+	chmod +x debian/${PVE_KERNEL_PKG}.$*
+
+.install_mark: ${PVE_KERNEL_TEMPLATES}
 	rm -rf debian/${PVE_KERNEL_PKG}
 	mkdir -p debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}
 	mkdir debian/${PVE_KERNEL_PKG}/boot
@@ -132,7 +108,15 @@ binary: install
 	${MAKE} -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
 	# install zfs drivers
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
-	install -m 644 $(addprefix ${MODULES}/,zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko icp.ko zlua.ko spl.ko zzstd.ko) debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/avl/zavl.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/nvpair/znvpair.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/unicode/zunicode.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/zcommon/zcommon.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/icp/icp.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/zfs/zfs.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/lua/zlua.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/spl/spl.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	install -m 644 ${ZFS_SRC}/module/zstd/zzstd.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
 	# remove firmware
 	rm -rf debian/${PVE_KERNEL_PKG}/lib/firmware
 	# strip debug info
@@ -141,15 +125,22 @@ binary: install
 	/sbin/depmod -b debian/${PVE_KERNEL_PKG}/ ${KVNAME}
 	# Autogenerate blacklist for watchdog devices (see README)
 	install -m 0755 -d debian/${PVE_KERNEL_PKG}/lib/modprobe.d
-	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > watchdog-blacklist.tmp
-	echo ipmi_watchdog.ko >> watchdog-blacklist.tmp
-	cat watchdog-blacklist.tmp|sed -e 's/^/blacklist /' -e 's/.ko$$//'|sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
+	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > debian/watchdog-blacklist.tmp
+	echo ipmi_watchdog.ko >> debian/watchdog-blacklist.tmp
+	cat debian/watchdog-blacklist.tmp | sed -e 's/^/blacklist /' -e 's/.ko$$//' | sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/source
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/build
 	touch $@
 
-.tools_compile_mark: .compile_mark
-	${MAKE} -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_NO_LIBBFD=1 HAVE_CPLUS_DEMANGLE_SUPPORT=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
+## Kernel tools
+.tools_compile_mark:
+	dh_auto_build -D ${KERNEL_SRC}/tools/perf -- prefix=/usr \
+		HAVE_NO_LIBBFD=1 \
+		HAVE_CPLUS_DEMANGLE_SUPPORT=1 \
+		NO_LIBPYTHON=1 \
+		NO_LIBPERL=1 \
+		NO_LIBCRYPTO=1 \
+		PYTHON=python2.7
 	echo "checking GPL-2 only perf binary for library linkage with incompatible licenses.."
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'
@@ -167,113 +158,42 @@ binary: install
 	done
 	touch $@
 
-.headers_prepare_mark: .config_mark
+## Headers
+PVE_HEADER_TEMPLATES := $(patsubst debian/templates/pve-headers.%.in, debian/${PVE_HEADER_PKG}.%, $(wildcard debian/templates/pve-headers.*.in))
+
+debian/${PVE_HEADER_PKG}.%: debian/templates/pve-headers.%.in
+	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-headers.$*.in > debian/${PVE_HEADER_PKG}.$*
+	chmod +x debian/${PVE_HEADER_PKG}.$*
+
+.headers_install_mark: ${PVE_HEADER_TEMPLATES}
 	rm -rf debian/${PVE_HEADER_PKG}
 	mkdir -p debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	install -m 0644 ${KERNEL_SRC}/.config debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	# copy to allow building in parallel to kernel/module compilation without interference
-	rm -rf ${KERNEL_SRC_COPY}
-	-cp -ar ${KERNEL_SRC} ${KERNEL_SRC_COPY}
-	make -C ${KERNEL_SRC_COPY} mrproper
-	cd ${KERNEL_SRC_COPY}; find . -path './debian/*' -prune \
-	    -o -path './include/*' -prune \
-	    -o -path './Documentation' -prune \
-	    -o -path './scripts' -prune \
-	    -o -type f \
-	    \( \
-	        -name 'Makefile*' \
-	        -o -name 'Kconfig*' \
-	        -o -name 'Kbuild*' \
-	        -o -name '*.sh' \
-	        -o -name '*.pl' \
-	    \) \
-	    -print | cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC_COPY}; cp -a include scripts ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	cd ${KERNEL_SRC_COPY}; \
-	    ( \
-	        find arch/${KERNEL_HEADER_ARCH} -name include -type d -print | \
-	        xargs -n1 -i: find : -type f \
-	    ) | \
-	    cpio -pd --preserve-modification-time ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
-	# Workaround for #48
-	mv ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds.S \
-	    ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds
-	sed -i '$$ d' ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/scripts/module.lds
-	touch $@
-
-.headers_compile_mark: .headers_prepare_mark
-	# set output to subdir of source to reduce number of hardcoded paths in output files
-	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
-	mkdir -p ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
-	cp ${KERNEL_SRC}/.config ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/.config
-	${MAKE} -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 syncconfig prepare scripts
-	find ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -name \*.o.ur-\* | xargs rm -f
-	rsync --ignore-existing -r -v -a $(addprefix ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/,arch include kernel scripts tools) ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/
-	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}
-	touch $@
-
-.headers_install_mark: .compile_mark .modules_compile_mark .headers_compile_mark
-	cp ${KERNEL_SRC}/include/generated/compile.h debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/include/generated/compile.h
-	install -m 0644 ${KERNEL_SRC}/Module.symvers debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
+	( \
+		cd ${KERNEL_SRC}; \
+		find . arch/${KERNEL_BUILD_ARCH} -maxdepth 1 -name Makefile\*; \
+		find include scripts -type f -o -type l; \
+		find arch/${KERNEL_BUILD_ARCH} -name module.lds -o -name Kbuild.platforms -o -name Platform; \
+		find $$(find arch/${KERNEL_BUILD_ARCH} -name include -o -name scripts -type d) -type f; \
+		find arch/${KERNEL_BUILD_ARCH}/include Module.symvers include scripts -type f \
+	) | rsync -avq --files-from=- ${KERNEL_SRC} debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
 	touch $@
 
+## User-space headers
 .usr_headers_install_mark: PKG_DIR = debian/${PVE_USR_HEADER_PKG}
 .usr_headers_install_mark: OUT_DIR = ${PKG_DIR}/usr
-.usr_headers_install_mark: .config_mark
+.usr_headers_install_mark:
 	rm -rf '${PKG_DIR}'
 	mkdir -p  '${PKG_DIR}'
 	$(MAKE) -C ${KERNEL_SRC} headers_check ARCH=$(KERNEL_HEADER_ARCH)
 	$(MAKE) -C ${KERNEL_SRC} headers_install ARCH=$(KERNEL_HEADER_ARCH) INSTALL_HDR_PATH='$(CURDIR)'/$(OUT_DIR)
 	rm -rf $(OUT_DIR)/include/drm $(OUT_DIR)/include/scsi
 	find $(OUT_DIR)/include \( -name .install -o -name ..install.cmd \) -execdir rm {} +
-
-# Move include/asm to arch-specific directory
+	# Move include/asm to arch-specific directory
 	mkdir -p $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)
 	mv $(OUT_DIR)/include/asm $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
 	test ! -d $(OUT_DIR)/include/arch || \
 		mv $(OUT_DIR)/include/arch $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
 	touch $@
-
-.modules_compile_mark: ${MODULES}/zfs.ko
-	touch $@
-
-${MODULES}/zfs.ko: .compile_mark
-	cd ${MODULES}/${ZFSDIR}; ./autogen.sh
-	cd ${MODULES}/${ZFSDIR}; ./configure --with-config=kernel --with-linux=${BUILD_DIR}/${KERNEL_SRC} --with-linux-obj=${BUILD_DIR}/${KERNEL_SRC}
-	${MAKE} -C ${MODULES}/${ZFSDIR}
-	cp ${MODULES}/${ZFSDIR}/module/avl/zavl.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/nvpair/znvpair.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/unicode/zunicode.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/zcommon/zcommon.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/icp/icp.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/zfs/zfs.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/lua/zlua.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/spl/spl.ko ${MODULES}/
-	cp ${MODULES}/${ZFSDIR}/module/zstd/zzstd.ko ${MODULES}/
-
-fwlist-${KVNAME}: .compile_mark .modules_compile_mark
-	debian/scripts/find-firmware.pl debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME} >fwlist.tmp
-	mv fwlist.tmp $@
-
-.PHONY: fwcheck
-fwcheck: fwlist-${KVNAME} fwlist-previous
-	@echo "checking fwlist for changes since last built firmware package.."
-	@echo "if this check fails, add fwlist-${KVNAME} to the pve-firmware repository and upload a new firmware package together with the ${KVNAME} kernel"
-	sort fwlist-previous | uniq > fwlist-previous.sorted
-	sort fwlist-${KVNAME} | uniq > fwlist-${KVNAME}.sorted
-	-diff -up -N fwlist-previous.sorted fwlist-${KVNAME}.sorted > fwlist.diff
-	@test -s fwlist.diff \
-		&& echo "done, no need to rebuild pve-firmware" \
-		|| echo "Please rebuild pve-firmware"
-
-
-abi-${KVNAME}: .compile_mark
-	debian/scripts/abi-generate debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/Module.symvers abi-${KVNAME} ${KVNAME}
-
-.PHONY: abicheck
-abicheck: debian/scripts/abi-check abi-${KVNAME} abi-prev-* abi-blacklist
-	debian/scripts/abi-check abi-${KVNAME} abi-prev-* ${SKIPABI}
-
-.PHONY: clean

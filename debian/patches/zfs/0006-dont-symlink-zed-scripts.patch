@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Antonio Russo <antonio.e.russo@gmail.com>
+Date: Fri, 20 Mar 2020 17:28:43 +0100
+Subject: [PATCH] dont symlink zed scripts
+
+(cherry picked and adapted from 5cee380324d74e640d5dd7a360faba3994c8007f [0])
+
+[0] https://salsa.debian.org/zfsonlinux-team/zfs.git
+
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+
+Description: track default symlinks, instead of symlinking
+Forwarded: no need
+---
+ cmd/zed/zed.d/Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmd/zed/zed.d/Makefile.am b/cmd/zed/zed.d/Makefile.am
+index 8b2d0c200..118c96547 100644
+--- a/cmd/zed/zed.d/Makefile.am
++++ b/cmd/zed/zed.d/Makefile.am
+@@ -48,6 +48,6 @@ install-data-hook:
+ 	for f in $(zedconfdefaults); do \
+ 	  test -f "$(DESTDIR)$(zedconfdir)/$${f}" -o \
+ 	       -L "$(DESTDIR)$(zedconfdir)/$${f}" || \
+-	    ln -s "$(zedexecdir)/$${f}" "$(DESTDIR)$(zedconfdir)"; \
++	    echo "$${f}" >> "$(DESTDIR)$(zedexecdir)/DEFAULT-ENABLED" ; \
+ 	done
+ 	chmod 0600 "$(DESTDIR)$(zedconfdir)/zed.rc"
