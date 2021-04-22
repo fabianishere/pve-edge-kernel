@@ -80,4 +80,4 @@ jobs:
         tag: v${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
         token: ${{ secrets.PAT }}
-        artifacts: "artifacts/debs-generic/pve-headers-*.deb,artifacts/debs-generic/linux-tools-*.deb,artifacts/debs-generic/pve-kernel-libc-*.deb,artifacts/debs-*/pve-kernel-*.deb"
+        artifacts: "artifacts/debs-generic/pve-headers-*.deb,artifacts/debs-generic/linux-tools-*.deb,artifacts/debs-*/pve-kernel-*.deb"
