@@ -39,7 +39,7 @@ done
 # Fetch from Git repository
 echo "Fetching $LINUX_TAG from Linux Git repository..."
 
-git --git-dir $LINUX_REPOSITORY/.git fetch origin --depth 1 $LINUX_TAG
+git --git-dir $LINUX_REPOSITORY/.git fetch origin --depth 1 v$LINUX_TAG
 git --git-dir $LINUX_REPOSITORY/.git checkout FETCH_HEAD
 
 if [[ -z "$LINUX_VERSION" ]]; then
@@ -50,7 +50,7 @@ fi
 echo "Using Linux $LINUX_VERSION."
 
 # Prepare Debian changelog
-sed -e "s/@KVNAME@/$LINUX_VERSION/g" -e "s/@KVMAJMIN@/$LINUX_VERSION_MAJOR.$LINUX_VERSION_MINOR/g" < debian/control.in > debian/control
+sed -e "s/@KVNAME@/$LINUX_VERSION/g" -e "s/@KVMAJMIN@/$LINUX_VERSION_MAJOR.$LINUX_VERSION_MINOR/g" < debian/templates/control.in > debian/control
 
 LINUX_VERSION_MAJOR=$(echo $LINUX_VERSION | cut -d. -f1)
 LINUX_VERSION_MINOR=$(echo $LINUX_VERSION | cut -d. -f2)
