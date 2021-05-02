@@ -76,7 +76,8 @@ git submodule update --init --recursive
 ```
 
 #### Building
-First, create the control file for your kernel:
+First, generate the Debian control file for your kernel by running the following
+in your command prompt:
 ```bash
 debian/rules debian/control
 ```
