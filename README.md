@@ -1,5 +1,5 @@
 # Proxmox Edge kernels
-Custom Linux kernels for Promox VE 6.
+Custom Linux kernels for Proxmox VE 6.
 
 #### Versions
 1. Linux 5.11 (Stable)
@@ -15,7 +15,7 @@ page the kernel version you want to install and download the appropriate Debian 
 Then, you can install the package as follows:
 
 ```sh
-apt install ./pve-kernel-VERSION-MARCH_VERSION_amd64.deb
+apt install ./pve-kernel-VERSION_amd64.deb
 ```
 
 ## AppArmor issues
@@ -37,7 +37,7 @@ features-file=/usr/share/apparmor-features/features.stock
 You may also choose to manually build one of these kernels yourself.
 
 #### Prerequisites
-Make sure you have at least 10GB of free space available and have the following
+Make sure you have at least 10 GB of free space available and have the following
 packages installed:
 
 ```bash
