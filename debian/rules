@@ -171,8 +171,21 @@ debian/${PVE_HEADER_PKG}.%: debian/templates/pve-headers.%.in
 	install -m 0644 ${KERNEL_SRC}/.config debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	( \
 		cd ${KERNEL_SRC}; \
-		find . arch/${KERNEL_BUILD_ARCH} -maxdepth 1 -name Makefile\*; \
+		find . -path './debian/*' -prune \
+               	-o -path './include/*' -prune \
+            	-o -path './Documentation' -prune \
+                -o -path './scripts' -prune \
+                -o -type f \
+					\( \
+						-name 'Makefile*' \
+						-o -name 'Kconfig*' \
+						-o -name 'Kbuild*' \
+						-o -name '*.sh' \
+						-o -name '*.pl' \
+					\) \
+					-print; \
 		find include scripts -type f -o -type l; \
+		find arch/${KERNEL_BUILD_ARCH} -maxdepth 1 -name Makefile\*; \
 		find arch/${KERNEL_BUILD_ARCH} -name module.lds -o -name Kbuild.platforms -o -name Platform; \
 		find $$(find arch/${KERNEL_BUILD_ARCH} -name include -o -name scripts -type d) -type f; \
 		find arch/${KERNEL_BUILD_ARCH}/include Module.symvers include scripts -type f \
