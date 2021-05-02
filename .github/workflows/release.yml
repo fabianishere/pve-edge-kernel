@@ -3,7 +3,7 @@ name: Kernel Release
 on:
   pull_request:
     types: [closed]
-    tags:
+    branches:
       - v*
       - flavor/*/v*
   workflow_dispatch:
