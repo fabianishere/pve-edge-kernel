@@ -39,7 +39,7 @@ done
 # Fetch from Git repository
 echo "Fetching $LINUX_TAG from Linux Git repository..."
 
-git --git-dir $LINUX_REPOSITORY/.git fetch origin --depth 1 v$LINUX_TAG
+git --git-dir $LINUX_REPOSITORY/.git fetch origin --depth 1 $LINUX_TAG
 git --git-dir $LINUX_REPOSITORY/.git checkout FETCH_HEAD
 
 if [[ -z "$LINUX_VERSION" ]]; then
