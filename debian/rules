@@ -173,7 +173,6 @@ debian/${PVE_HEADER_PKG}.%: debian/templates/pve-headers.%.in
 		cd ${KERNEL_SRC}; \
 		find . -path './debian/*' -prune \
                	-o -path './include/*' -prune \
-            	-o -path './Documentation' -prune \
                 -o -path './scripts' -prune \
                 -o -type f \
 					\( \
