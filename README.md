@@ -2,6 +2,7 @@
 Custom Linux kernels for Proxmox VE 6.
 
 #### Versions
+1. Linux 5.12 (Stable)
 1. Linux 5.11 (Stable) [EOL]
 1. Linux 5.10 (Long-term)
 

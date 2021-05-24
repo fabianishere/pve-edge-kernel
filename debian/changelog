@@ -1,3 +1,10 @@
+pve-kernel (5.12.0-1) edge; urgency=medium
+
+  * Update to Linux 5.12.
+  * Update to OpenZFS 2.1.0-rc5.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Thu, 18 Feb 2021 10:49:30 +0000
+
 pve-kernel (5.11.0-1) edge; urgency=medium
 
   * Update to Linux 5.11.
