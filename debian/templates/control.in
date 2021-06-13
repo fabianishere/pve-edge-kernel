@@ -40,6 +40,26 @@ Description: Linux kernel version specific tools for version @KVMAJMIN@
  This package provides the architecture dependent parts for kernel
  version locked tools (such as perf and x86_energy_perf_policy)
 
+Package: pve-headers-@KVMAJMIN@-edge
+Architecture: all
+Section: admin
+Priority: optional
+Depends: pve-headers-@KVNAME@,
+Description: Latest Proxmox Edge Kernel Headers
+ This is a metapackage which will install the kernel headers
+ for the latest available Proxmox Edge kernel from the @KVMAJMIN@
+ series.
+
+Package: pve-kernel-@KVMAJMIN@-edge
+Architecture: all
+Section: admin
+Priority: optional
+Depends: pve-firmware,
+         pve-kernel-@KVNAME@,
+Description: Latest Proxmox Edge Kernel Image
+ This is a metapackage which will install the latest available
+ Proxmox Edge kernel from the @KVMAJMIN@ series.
+
 Package: pve-headers-@KVNAME@
 Section: devel
 Priority: optional
@@ -47,8 +67,8 @@ Architecture: any
 Provides: linux-headers,
           linux-headers-2.6,
 Depends:
-Description: The Proxmox PVE Kernel Headers
- This package contains the linux kernel headers
+Description: The Proxmox Edge Kernel Headers
+ This package contains the Proxmox Edge Linux kernel headers
 
 Package: pve-kernel-@KVNAME@
 Section: admin
@@ -61,7 +81,7 @@ Depends: busybox,
          initramfs-tools,
 Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub-efi-arm64,
 Description: The Proxmox PVE Kernel Image
- This package contains the linux kernel and initial ramdisk used for booting
+ This package contains the Linux kernel and initial ramdisk used for booting
 
 Package: pve-kernel-libc-dev
 Section: devel
