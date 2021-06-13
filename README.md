@@ -11,7 +11,30 @@ Custom Linux kernels for Proxmox VE 6.
 2. [Navi Reset](https://github.com/fabianishere/pve-edge-kernel/issues/5)
 
 ## Installation
-Select from the [Releases](https://github.com/fabianishere/pve-edge-kernel/releases)
+[![Hosted By: Cloudsmith](https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square)](https://cloudsmith.com)
+
+First, set up our Debian repository on your Proxmox installation: 
+1. Add the repository's GPG key:
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7.key' | apt-key add -
+```
+2. Set up the `pve-edge-kernel` repository:
+```bash
+echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian bullseye main" > /etc/apt/sources.list.d/pve-edge-kernel.list
+```
+3. Install a kernel package:
+```bash
+apt update
+apt install pve-kernel-5.12-edge
+```
+
+Package repository hosting is graciously provided by  [Cloudsmith](https://cloudsmith.com).
+Cloudsmith is the only fully hosted, cloud-native, universal package management solution, that
+enables your organization to create, store and share packages in any format, to any place, with total
+confidence.
+
+### Manual
+Alternatively, you may manually install the kernels. Select from the [Releases](https://github.com/fabianishere/pve-edge-kernel/releases)
 page the kernel version you want to install and download the appropriate Debian package. 
 Then, you can install the package as follows:
 
