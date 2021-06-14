@@ -1,11 +1,13 @@
 name: Kernel Build (Trusted)
 
-on: pull_request
+on:
+  pull_request:
+    branches: [master]
 
 jobs:
   build:
     name: Build
-    runs-on: [self-hosted]
+    runs-on: self-hosted
     if: github.event.pull_request.head.repo.full_name == github.repository && !contains(github.event.head_commit.message, 'skip ci')
     steps:
     - name: Clean Workspace
