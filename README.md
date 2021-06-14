@@ -20,7 +20,7 @@ curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7
 ```
 2. Set up the `pve-edge-kernel` repository:
 ```bash
-echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian bullseye main" > /etc/apt/sources.list.d/pve-edge-kernel.list
+echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian buster main" > /etc/apt/sources.list.d/pve-edge-kernel.list
 ```
 3. Install a kernel package:
 ```bash
@@ -35,7 +35,7 @@ confidence.
 
 ### Manual
 Alternatively, you may manually install the kernels. Select from the [Releases](https://github.com/fabianishere/pve-edge-kernel/releases)
-page the kernel version you want to install and download the appropriate Debian package. 
+page the kernel version you want to install and download the appropriate Debian package.
 Then, you can install the package as follows:
 
 ```sh
