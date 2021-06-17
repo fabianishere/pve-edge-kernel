@@ -1,3 +1,9 @@
+pve-kernel (5.10.44-1) edge; urgency=medium
+
+  * Update to Linux 5.10.44.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Thu, 17 Jun 2021 12:10:18 +0000
+
 pve-kernel (5.10.43-2) edge; urgency=medium
 
   * Release via Cloudsmith.
