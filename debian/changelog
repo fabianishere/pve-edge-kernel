@@ -1,3 +1,9 @@
+pve-kernel (5.12.11-1) edge; urgency=medium
+
+  * Update to Linux 5.12.11.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 16 Jun 2021 12:11:17 +0000
+
 pve-kernel (5.12.10-2) edge; urgency=medium
 
   * Release packages via Cloudsmith.
