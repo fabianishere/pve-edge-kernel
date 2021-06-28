@@ -8,47 +8,29 @@ Originally-By: Antonio Russo <aerusso@aerusso.net>
 
 Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
 ---
- man/man1/Makefile.am                   | 2 +-
- man/man8/Makefile.am                   | 1 +
- man/{man1/arcstat.1 => man8/arcstat.8} | 2 +-
- 3 files changed, 3 insertions(+), 2 deletions(-)
- rename man/{man1/arcstat.1 => man8/arcstat.8} (99%)
-
-diff --git a/man/man1/Makefile.am b/man/man1/Makefile.am
-index 8d7457a3e..101af7b6c 100644
---- a/man/man1/Makefile.am
-+++ b/man/man1/Makefile.am
-@@ -1,4 +1,4 @@
--dist_man_MANS = zhack.1 ztest.1 raidz_test.1 zvol_wait.1 arcstat.1
-+dist_man_MANS = zhack.1 ztest.1 raidz_test.1 zvol_wait.1
- EXTRA_DIST = cstyle.1
- 
- if BUILD_LINUX
-diff --git a/man/man8/Makefile.am b/man/man8/Makefile.am
-index 07f6aefa6..a757b1c62 100644
---- a/man/man8/Makefile.am
-+++ b/man/man8/Makefile.am
-@@ -1,6 +1,7 @@
- include $(top_srcdir)/config/Substfiles.am
- 
- dist_man_MANS = \
-+	arcstat.8 \
- 	fsck.zfs.8 \
- 	mount.zfs.8 \
- 	vdev_id.8 \
-diff --git a/man/man1/arcstat.1 b/man/man8/arcstat.8
-similarity index 99%
-rename from man/man1/arcstat.1
-rename to man/man8/arcstat.8
-index ca508b49c..0aa81849a 100644
+diff --git a/man/Makefile.am b/man/Makefile.am
+index 8ab1b7572..5485076f9 100644
+--- a/man/Makefile.am
++++ b/man/Makefile.am
+@@ -8,7 +8,7 @@ dist_man_MANS = \
+ 	man1/ztest.1 \
+ 	man1/raidz_test.1 \
+ 	man1/zvol_wait.1 \
+-	man1/arcstat.1 \
++	man8/arcstat.8 \
+ 	\
+ 	man5/vdev_id.conf.5 \
+ 	\
+diff --git a/man/man1/arcstat.1 b/man/man1/arcstat.1
+index a69cd8937..dfe9c971b 100644
 --- a/man/man1/arcstat.1
-+++ b/man/man8/arcstat.8
++++ b/man/man1/arcstat.1
 @@ -13,7 +13,7 @@
- .\" Copyright (c) 2015 by Delphix. All rights reserved.
  .\" Copyright (c) 2020 by AJ Jordan. All rights reserved.
  .\"
--.TH ARCSTAT 1 "Oct 20, 2020" OpenZFS
-+.TH ARCSTAT 8 "Oct 20, 2020" OpenZFS
- .SH NAME
- arcstat \- report ZFS ARC and L2ARC statistics
- .SH SYNOPSIS
+ .Dd May 26, 2021
+-.Dt ARCSTAT 1
++.Dt ARCSTAT 8
+ .Os
+ .
+ .Sh NAME

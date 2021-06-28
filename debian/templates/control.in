@@ -24,7 +24,8 @@ Build-Depends: asciidoc,
                quilt,
                rsync,
                xmlto,
-               zlib1g-dev
+               zlib1g-dev,
+               zstd
 Build-Conflicts: pve-headers-@KVNAME@,
 Vcs-Git: git://github.com/fabianishere/pve-edge-kernel.git
 Vcs-Browser: https://github.com/fabianishere/pve-edge-kernel
