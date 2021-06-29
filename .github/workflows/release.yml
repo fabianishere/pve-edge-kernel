@@ -9,12 +9,13 @@ on:
   workflow_dispatch:
 
 jobs:
-   build:
-    name: Build
-    runs-on: [self-hosted, build]
+  build:
+    name: Build (${{ matrix.debian }})
+    runs-on: [self-hosted, '${{ matrix.debian }}']
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
     strategy:
       matrix:
+        debian: [buster, bullseye]
         include:
           - build_profile: 'generic'
             build_cc: gcc
@@ -43,11 +44,11 @@ jobs:
           PVE_KERNEL_CFLAGS: ${{ matrix.build_cflags }}
           PVE_ZFS_CC: ${{ matrix.build_cc }}
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
-        name: debs-${{ matrix.build_profile }}
+        name: ${{ matrix.debian }}-${{ matrix.build_profile }}
         path: "*.deb"
-   publish:
+  publish:
     name: Publish
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
@@ -80,13 +81,17 @@ jobs:
         tag: v${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
         token: ${{ secrets.PAT }}
-        artifacts: "artifacts/debs-generic/pve-headers-*.deb,artifacts/debs-generic/linux-tools-*.deb,artifacts/debs-*/pve-kernel-*.deb"
+        artifacts: "artifacts/buster-generic/pve-headers-*.deb,artifacts/buster-generic/pve-kernel-*.deb,artifacts/buster-generic/linux-tools-*.deb"
     - name: Release to CloudSmith
       run: |
         pip install --upgrade cloudsmith-cli
-        find artifacts/debs-generic \
+        find artifacts/buster-generic \
           -name '*.deb' \
           -not -name "*dbgsym*" \
-          -exec cloudsmith push deb pve-edge/kernel/any-distro/any-version {} --republish \;
+          -exec cloudsmith push deb pve-edge/kernel/debian/buster {} --republish \;
+        find artifacts/bullseye-generic \
+             -name '*.deb' \
+             -not -name "*dbgsym*" \
+             -exec cloudsmith push deb pve-edge/kernel/debian/bullseye {} --republish \;
       env:
         CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
