@@ -37,7 +37,7 @@ jobs:
         if [ "$PVE_BUILD_PROFILE" != "generic" ]; then
         	debchange -l +$PVE_BUILD_PROFILE -D edge --force-distribution -U -M "Specialization for $PVE_BUILD_PROFILE"
         fi
-        debuild -e PVE* -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
+        debuild --no-lintian -e PVE* -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
       env:
           PVE_BUILD_PROFILE: ${{ matrix.build_profile }}
           PVE_KERNEL_CC: ${{ matrix.build_cc }}
