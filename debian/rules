@@ -140,7 +140,7 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 		NO_LIBPYTHON=1 \
 		NO_LIBPERL=1 \
 		NO_LIBCRYPTO=1 \
-		PYTHON=python2.7
+		PYTHON=python3
 	echo "checking GPL-2 only perf binary for library linkage with incompatible licenses.."
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'
