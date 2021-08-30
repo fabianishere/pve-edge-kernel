@@ -21,8 +21,8 @@ index c1111c73a..c5e12c2c6 100644
  [Service]
  Type=oneshot
  RemainAfterExit=yes
--ExecStart=@sbindir@/zpool import -aN -o cachefile=none ${ZPOOL_IMPORT_OPTS}
-+ExecStart=@sbindir@/zpool import -aN -d /dev/disk/by-id -o cachefile=none ${ZPOOL_IMPORT_OPTS}
+-ExecStart=@sbindir@/zpool import -aN -o cachefile=none $ZPOOL_IMPORT_OPTS
++ExecStart=@sbindir@/zpool import -aN -d /dev/disk/by-id -o cachefile=none $ZPOOL_IMPORT_OPTS
  
  [Install]
  WantedBy=zfs-import.target

@@ -1,0 +1,84 @@
+diff --git a/config/kernel-vfs-set_page_dirty.m4 b/config/kernel-vfs-set_page_dirty.m4
+new file mode 100644
+index 00000000000..a9d252e4e01
+--- /dev/null
++++ b/config/kernel-vfs-set_page_dirty.m4
+@@ -0,0 +1,34 @@
++dnl #
++dnl # Linux 5.14 adds a change to require set_page_dirty to be manually
++dnl # wired up in struct address_space_operations. Determine if this needs
++dnl # to be done. This patch set also introduced __set_page_dirty_nobuffers
++dnl # declaration in linux/pagemap.h, so these tests look for the presence
++dnl # of that function to tell the compiler to assign set_page_dirty in
++dnl # module/os/linux/zfs/zpl_file.c
++dnl #
++AC_DEFUN([ZFS_AC_KERNEL_SRC_VFS_SET_PAGE_DIRTY_NOBUFFERS], [
++	ZFS_LINUX_TEST_SRC([vfs_has_set_page_dirty_nobuffers], [
++		#include <linux/pagemap.h>
++		#include <linux/fs.h>
++
++		static const struct address_space_operations
++		    aops __attribute__ ((unused)) = {
++			.set_page_dirty = __set_page_dirty_nobuffers,
++		};
++	],[])
++])
++
++AC_DEFUN([ZFS_AC_KERNEL_VFS_SET_PAGE_DIRTY_NOBUFFERS], [
++	dnl #
++	dnl # Linux 5.14 change requires set_page_dirty() to be assigned
++	dnl # in address_space_operations()
++	dnl #
++	AC_MSG_CHECKING([__set_page_dirty_nobuffers exists])
++	ZFS_LINUX_TEST_RESULT([vfs_has_set_page_dirty_nobuffers], [
++		AC_MSG_RESULT([yes])
++		AC_DEFINE(HAVE_VFS_SET_PAGE_DIRTY_NOBUFFERS, 1,
++			[__set_page_dirty_nobuffers exists])
++	],[
++		AC_MSG_RESULT([no])
++	])
++])
+diff --git a/config/kernel.m4 b/config/kernel.m4
+index 7196e66ca28..5ea2286dbcc 100644
+--- a/config/kernel.m4
++++ b/config/kernel.m4
+@@ -132,6 +132,7 @@ AC_DEFUN([ZFS_AC_KERNEL_TEST_SRC], [
+ 	ZFS_AC_KERNEL_SRC_SIGNAL_STOP
+ 	ZFS_AC_KERNEL_SRC_SIGINFO
+ 	ZFS_AC_KERNEL_SRC_SET_SPECIAL_STATE
++	ZFS_AC_KERNEL_SRC_VFS_SET_PAGE_DIRTY_NOBUFFERS
+ 
+ 	AC_MSG_CHECKING([for available kernel interfaces])
+ 	ZFS_LINUX_TEST_COMPILE_ALL([kabi])
+@@ -237,6 +238,7 @@ AC_DEFUN([ZFS_AC_KERNEL_TEST_RESULT], [
+ 	ZFS_AC_KERNEL_SIGNAL_STOP
+ 	ZFS_AC_KERNEL_SIGINFO
+ 	ZFS_AC_KERNEL_SET_SPECIAL_STATE
++	ZFS_AC_KERNEL_VFS_SET_PAGE_DIRTY_NOBUFFERS
+ ])
+ 
+ dnl #
+diff --git a/module/os/linux/zfs/zpl_file.c b/module/os/linux/zfs/zpl_file.c
+index 0319148b983..63002fe3b93 100644
+--- a/module/os/linux/zfs/zpl_file.c
++++ b/module/os/linux/zfs/zpl_file.c
+@@ -33,6 +33,9 @@
+ #include <sys/zfs_vfsops.h>
+ #include <sys/zfs_vnops.h>
+ #include <sys/zfs_project.h>
++#ifdef HAVE_VFS_SET_PAGE_DIRTY_NOBUFFERS
++#include <linux/pagemap.h>
++#endif
+ 
+ /*
+  * When using fallocate(2) to preallocate space, inflate the requested
+@@ -1018,6 +1021,9 @@ const struct address_space_operations zpl_address_space_operations = {
+ 	.writepage	= zpl_writepage,
+ 	.writepages	= zpl_writepages,
+ 	.direct_IO	= zpl_direct_IO,
++#ifdef HAVE_VFS_SET_PAGE_DIRTY_NOBUFFERS
++	.set_page_dirty = __set_page_dirty_nobuffers,
++#endif
+ };
+ 
+ const struct file_operations zpl_file_operations = {

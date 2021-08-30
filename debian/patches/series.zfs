@@ -7,3 +7,5 @@ zfs/0006-dont-symlink-zed-scripts.patch
 zfs/0007-Use-installed-python3.patch
 zfs/0008-Add-systemd-unit-for-importing-specific-pools.patch
 zfs/0009-Patch-move-manpage-arcstat-1-to-arcstat-8.patch
+zfs/0010-linux-5.14-compat-pg-dirty.patch
+zfs/0011-linux-5.14-compat-blk_alloc_disk.patch
