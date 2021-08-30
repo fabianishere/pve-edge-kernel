@@ -1,0 +1,133 @@
+diff --git a/config/kernel-make-request-fn.m4 b/config/kernel-make-request-fn.m4
+index 290ef6b8da7..86b202a7a27 100644
+--- a/config/kernel-make-request-fn.m4
++++ b/config/kernel-make-request-fn.m4
+@@ -42,6 +42,13 @@ AC_DEFUN([ZFS_AC_KERNEL_SRC_MAKE_REQUEST_FN], [
+ 		struct block_device_operations o;
+ 		o.submit_bio = NULL;
+ 	])
++
++	ZFS_LINUX_TEST_SRC([blk_alloc_disk], [
++		#include <linux/blkdev.h>
++	],[
++		struct gendisk *disk  __attribute__ ((unused));
++		disk = blk_alloc_disk(NUMA_NO_NODE);
++	])
+ ])
+ 
+ AC_DEFUN([ZFS_AC_KERNEL_MAKE_REQUEST_FN], [
+@@ -56,6 +63,19 @@ AC_DEFUN([ZFS_AC_KERNEL_MAKE_REQUEST_FN], [
+ 
+ 		AC_DEFINE(HAVE_SUBMIT_BIO_IN_BLOCK_DEVICE_OPERATIONS, 1,
+ 		    [submit_bio is member of struct block_device_operations])
++
++		dnl #
++		dnl # Linux 5.14 API Change:
++		dnl # blk_alloc_queue() + alloc_disk() combo replaced by
++		dnl # a single call to blk_alloc_disk().
++		dnl #
++		AC_MSG_CHECKING([whether blk_alloc_disk() exists])
++		ZFS_LINUX_TEST_RESULT([blk_alloc_disk], [
++			AC_MSG_RESULT(yes)
++			AC_DEFINE([HAVE_BLK_ALLOC_DISK], 1, [blk_alloc_disk() exists])
++		], [
++			AC_MSG_RESULT(no)
++		])
+ 	],[
+ 		AC_MSG_RESULT(no)
+ 
+diff --git a/module/os/linux/zfs/zvol_os.c b/module/os/linux/zfs/zvol_os.c
+index 741979f11af..8b29d73a3e0 100644
+--- a/module/os/linux/zfs/zvol_os.c
++++ b/module/os/linux/zfs/zvol_os.c
+@@ -762,7 +762,7 @@ static struct block_device_operations zvol_ops = {
+ 	.getgeo			= zvol_getgeo,
+ 	.owner			= THIS_MODULE,
+ #ifdef HAVE_SUBMIT_BIO_IN_BLOCK_DEVICE_OPERATIONS
+-    .submit_bio		= zvol_submit_bio,
++	.submit_bio		= zvol_submit_bio,
+ #endif
+ };
+ 
+@@ -795,13 +795,40 @@ zvol_alloc(dev_t dev, const char *name)
+ 	mutex_init(&zv->zv_state_lock, NULL, MUTEX_DEFAULT, NULL);
+ 
+ #ifdef HAVE_SUBMIT_BIO_IN_BLOCK_DEVICE_OPERATIONS
++#ifdef HAVE_BLK_ALLOC_DISK
++	zso->zvo_disk = blk_alloc_disk(NUMA_NO_NODE);
++	if (zso->zvo_disk == NULL)
++		goto out_kmem;
++
++	zso->zvo_disk->minors = ZVOL_MINORS;
++	zso->zvo_queue = zso->zvo_disk->queue;
++#else
+ 	zso->zvo_queue = blk_alloc_queue(NUMA_NO_NODE);
++	if (zso->zvo_queue == NULL)
++		goto out_kmem;
++
++	zso->zvo_disk = alloc_disk(ZVOL_MINORS);
++	if (zso->zvo_disk == NULL) {
++		blk_cleanup_queue(zso->zvo_queue);
++		goto out_kmem;
++	}
++
++	zso->zvo_disk->queue = zso->zvo_queue;
++#endif /* HAVE_BLK_ALLOC_DISK */
+ #else
+ 	zso->zvo_queue = blk_generic_alloc_queue(zvol_request, NUMA_NO_NODE);
+-#endif
+ 	if (zso->zvo_queue == NULL)
+ 		goto out_kmem;
+ 
++	zso->zvo_disk = alloc_disk(ZVOL_MINORS);
++	if (zso->zvo_disk == NULL) {
++		blk_cleanup_queue(zso->zvo_queue);
++		goto out_kmem;
++	}
++
++	zso->zvo_disk->queue = zso->zvo_queue;
++#endif /* HAVE_SUBMIT_BIO_IN_BLOCK_DEVICE_OPERATIONS */
++
+ 	blk_queue_set_write_cache(zso->zvo_queue, B_TRUE, B_TRUE);
+ 
+ 	/* Limit read-ahead to a single page to prevent over-prefetching. */
+@@ -810,10 +837,6 @@ zvol_alloc(dev_t dev, const char *name)
+ 	/* Disable write merging in favor of the ZIO pipeline. */
+ 	blk_queue_flag_set(QUEUE_FLAG_NOMERGES, zso->zvo_queue);
+ 
+-	zso->zvo_disk = alloc_disk(ZVOL_MINORS);
+-	if (zso->zvo_disk == NULL)
+-		goto out_queue;
+-
+ 	zso->zvo_queue->queuedata = zv;
+ 	zso->zvo_dev = dev;
+ 	zv->zv_open_count = 0;
+@@ -844,14 +867,11 @@ zvol_alloc(dev_t dev, const char *name)
+ 	zso->zvo_disk->first_minor = (dev & MINORMASK);
+ 	zso->zvo_disk->fops = &zvol_ops;
+ 	zso->zvo_disk->private_data = zv;
+-	zso->zvo_disk->queue = zso->zvo_queue;
+ 	snprintf(zso->zvo_disk->disk_name, DISK_NAME_LEN, "%s%d",
+ 	    ZVOL_DEV_NAME, (dev & MINORMASK));
+ 
+ 	return (zv);
+ 
+-out_queue:
+-	blk_cleanup_queue(zso->zvo_queue);
+ out_kmem:
+ 	kmem_free(zso, sizeof (struct zvol_state_os));
+ 	kmem_free(zv, sizeof (zvol_state_t));
+@@ -882,8 +902,13 @@ zvol_free(zvol_state_t *zv)
+ 	zfs_rangelock_fini(&zv->zv_rangelock);
+ 
+ 	del_gendisk(zv->zv_zso->zvo_disk);
++#if defined(HAVE_SUBMIT_BIO_IN_BLOCK_DEVICE_OPERATIONS) && \
++	defined(HAVE_BLK_ALLOC_DISK)
++	blk_cleanup_disk(zv->zv_zso->zvo_disk);
++#else
+ 	blk_cleanup_queue(zv->zv_zso->zvo_queue);
+ 	put_disk(zv->zv_zso->zvo_disk);
++#endif
+ 
+ 	ida_simple_remove(&zvol_ida,
+ 	    MINOR(zv->zv_zso->zvo_dev) >> ZVOL_MINOR_BITS);
