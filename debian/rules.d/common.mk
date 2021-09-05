@@ -2,9 +2,6 @@
 KERNEL_MAJMIN=$(shell ./scripts/version.sh -n)
 KERNEL_VER=$(shell ./scripts/version.sh -L)
 
-# Increment KERNEL_RELEASE if the ABI changes (abicheck target in debian/rules)
-KERNEL_RELEASE=1
-
 ## Debian package information
 PKG_RELEASE=$(shell ./scripts/version.sh -r)
 PKG_DATE:=$(shell dpkg-parsechangelog -SDate)
@@ -29,7 +26,7 @@ PVE_KERNEL_CC ?= ${CC}
 PVE_ZFS_CC ?= ${CC}
 
 ### Debian package names
-EXTRAVERSION=-${KERNEL_RELEASE}-${PKG_BUILD_FLAVOR}
+EXTRAVERSION=-${PKG_BUILD_FLAVOR}
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}
