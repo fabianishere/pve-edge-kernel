@@ -1,3 +1,9 @@
+pve-kernel (5.15.1-2) edge; urgency=medium
+
+  * Disable UBNSAN (see issue #164 and #200).
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 10 Nov 2021 10:15:00 +0000
+
 pve-kernel (5.15.1-1) edge; urgency=medium
 
   * Update to Linux 5.15.1.
