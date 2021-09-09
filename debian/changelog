@@ -1,3 +1,9 @@
+pve-kernel (5.13.15-1) edge; urgency=medium
+
+  * Update to Linux 5.13.15.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 08 Sep 2021 12:09:53 +0000
+
 pve-kernel (5.13.14-2) edge; urgency=medium
 
   * Disable UBNSAN (see issue #164).
