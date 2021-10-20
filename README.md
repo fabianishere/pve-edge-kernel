@@ -1,5 +1,5 @@
 # Proxmox Edge kernels
-Custom Linux kernels for Proxmox VE 6.
+Custom Linux kernels for Proxmox VE.
 
 #### Versions
 1. Linux 5.14 (Stable)
@@ -14,19 +14,24 @@ Custom Linux kernels for Proxmox VE 6.
 [![Hosted By: Cloudsmith](https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square)](https://cloudsmith.com)
 
 First, set up our Debian repository on your Proxmox installation: 
-1. Add the repository's GPG key:
-```bash
-curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7.key' | apt-key add -
-```
-2. Set up the `pve-edge-kernel` repository:
-```bash
-echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian buster main" > /etc/apt/sources.list.d/pve-edge-kernel.list
-```
-3. Install a kernel package:
-```bash
-apt update
-apt install pve-kernel-5.12-edge
-```
+1. **Add the repository's GPG key:**  
+   ```bash
+   curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7.key' | apt-key add -
+   ```
+2. **Set up the `pve-edge-kernel` repository:**  
+   If you are still on _Proxmox VE 6_, pick the Buster-based repository:
+   ```bash
+   echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian buster main" > /etc/apt/sources.list.d/pve-edge-kernel.list
+   ```
+   If you are already on _Proxmox VE 7_, pick the Bullseye-based repository:
+   ```bash
+   echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian bullseye main" > /etc/apt/sources.list.d/pve-edge-kernel.list
+   ```
+3. **Install a kernel package:**  
+   ```bash
+   apt update
+   apt install pve-kernel-5.12-edge
+   ```
 
 Package repository hosting is graciously provided by  [Cloudsmith](https://cloudsmith.com).
 Cloudsmith is the only fully hosted, cloud-native, universal package management solution, that
