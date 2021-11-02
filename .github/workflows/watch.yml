@@ -11,7 +11,7 @@ jobs:
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
-        branch: ['v5.14.x']
+        branch: ['v5.14.x', 'v5.15.x']
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v2
