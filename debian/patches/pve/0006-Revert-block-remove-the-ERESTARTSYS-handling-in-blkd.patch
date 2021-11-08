@@ -1,0 +1,38 @@
+From 3adfa0931a5d23fd6744f4d0e0320e245d1104f0 Mon Sep 17 00:00:00 2001
+From: Fabian Mastenbroek <mail.fabianm@gmail.com>
+Date: Mon, 8 Nov 2021 18:06:29 +0100
+Subject: [PATCH] Revert "block: remove the -ERESTARTSYS handling in
+ blkdev_get_by_dev"
+
+This reverts commit a8ed1a0607cfa5478ff6009539f44790c4d0956d.
+---
+ fs/block_dev.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 9ef4f1fc2cb0..edadf5816e02 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1394,6 +1394,10 @@ struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder)
+ 	if (ret)
+ 		return ERR_PTR(ret);
+ 
++	/*
++	 * If we lost a race with 'disk' being deleted, try again.  See md.c.
++	 */
++retry:
+ 	bdev = blkdev_get_no_open(dev);
+ 	if (!bdev)
+ 		return ERR_PTR(-ENXIO);
+@@ -1446,6 +1450,8 @@ struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder)
+ 	disk_unblock_events(disk);
+ put_blkdev:
+ 	blkdev_put_no_open(bdev);
++	if (ret == -ERESTARTSYS)
++		goto retry;
+ 	return ERR_PTR(ret);
+ }
+ EXPORT_SYMBOL(blkdev_get_by_dev);
+-- 
+2.33.1
+
