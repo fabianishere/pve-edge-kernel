@@ -187,7 +187,8 @@ debian/${PVE_HEADER_PKG}.%: debian/templates/pve-headers.%.in
 		find arch/${KERNEL_BUILD_ARCH} -maxdepth 1 -name Makefile\*; \
 		find arch/${KERNEL_BUILD_ARCH} -name module.lds -o -name Kbuild.platforms -o -name Platform; \
 		find $$(find arch/${KERNEL_BUILD_ARCH} -name include -o -name scripts -type d) -type f; \
-		find arch/${KERNEL_BUILD_ARCH}/include Module.symvers include scripts -type f \
+		find arch/${KERNEL_BUILD_ARCH}/include Module.symvers include scripts -type f; \
+		find tools/ -name 'objtool' -type f \
 	) | rsync -avq --files-from=- ${KERNEL_SRC} debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}
 	mkdir -p debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}
 	ln -sf /usr/src/linux-headers-${KVNAME} debian/${PVE_HEADER_PKG}/lib/modules/${KVNAME}/build
