@@ -3,30 +3,18 @@ KERNEL_MAJMIN=$(shell ./scripts/version.sh -n)
 KERNEL_VER=$(shell ./scripts/version.sh -L)
 
 ## Debian package information
-PKG_RELEASE=$(shell ./scripts/version.sh -r)
-PKG_DATE:=$(shell dpkg-parsechangelog -SDate)
-PKG_GIT_VERSION:=$(shell git rev-parse HEAD)
-
-## Build flavor
-# Default to PVE flavor
-PKG_BUILD_FLAVOR ?= edge
-ifneq (${PKG_BUILD_FLAVOR},edge)
-	_ := $(info Using custom build flavor: ${PKG_BUILD_FLAVOR})
-endif
-
-## Build profile
-# Default to generic march optimizations
-PKG_BUILD_PROFILE ?= generic
-ifneq (${PKG_BUILD_PROFILE},generic)
-	_ := $(info Using custom build profile: ${PKG_BUILD_PROFILE})
-endif
+PKG_DISTRIBUTOR ?= PVE Edge
+PKG_RELEASE = $(shell ./scripts/version.sh -r)
+PKG_DATE := $(shell dpkg-parsechangelog -SDate)
+PKG_DATE_UTC_ISO := $(shell date -u -d '$(PKG_DATE)' +%Y-%m-%d)
+PKG_GIT_VERSION := $(shell git rev-parse HEAD)
 
 # Build settings
 PVE_KERNEL_CC ?= ${CC}
 PVE_ZFS_CC ?= ${CC}
 
 ### Debian package names
-EXTRAVERSION=-${PKG_BUILD_FLAVOR}
+EXTRAVERSION=-edge
 KVNAME=${KERNEL_VER}${EXTRAVERSION}
 
 PVE_KERNEL_PKG=pve-kernel-${KVNAME}

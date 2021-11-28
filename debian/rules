@@ -62,7 +62,7 @@ override_dh_auto_build:
 		KCFLAGS="${PVE_KERNEL_CFLAGS}" \
 		EXTRAVERSION="${EXTRAVERSION}" \
 		LOCALVERSION="${LOCALVERSION}" \
-		KBUILD_BUILD_VERSION_TIMESTAMP="PVE Edge ${DEB_VERSION} ${PVE_BUILD_PROFILE} (${PKG_DATE})"
+		KBUILD_BUILD_VERSION_TIMESTAMP="${PKG_DISTRIBUTOR} ${DEB_VERSION} (${PKG_DATE_UTC_ISO})"
 	# ZFS
 	dh_auto_configure -D ${ZFS_SRC} -- CC="${PVE_ZFS_CC}" --with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
 	dh_auto_build -D ${ZFS_SRC}
