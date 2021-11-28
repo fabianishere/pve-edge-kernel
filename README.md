@@ -121,20 +121,9 @@ debuild -ePVE* --jobs=auto -b -uc -us
 ```
 The Makefile provides several environmental variables to control:
 
-1. `PVE_BUILD_FLAVOR`  
-   The name of the kernel flavor which represents a selection of kernel
-   functionality (e.g. [hardened](https://github.com/anthraxx/linux-hardened) or [zen](https://github.com/zen-kernel/zen-kernel)).
-   This name is part of the kernel version and package name, which means that you
-   can have multiple flavors of the same kernel installed alongside each other.
-   Note that the name itself does not control the selection of kernel functionality.
-2. `PVE_BUILD_PROFILE` (default `generic`)  
-   The name of the kernel build type which represents the compilation options of
-   the kernel (e.g. optimization level or micro architecture).
-   This name is appended as suffix to the Debian package version in case it is not
-   the default value.
-3. `PVE_KERNEL_CC`  
+1. `PVE_KERNEL_CC`  
    The compiler to use for the kernel build.
-4. `PVE_KERNEL_CFLAGS`  
+2. `PVE_KERNEL_CFLAGS`  
    The compilation options to use for the kernel build. Use this variable to specify
    the optimization level or micro architecture to build for.
 
