@@ -1,6 +1,7 @@
 pve-kernel (5.16.0-1) edge; urgency=medium
 
   * Disable UBNSAN (see issue #164 and #200).
+  * Update to ZFS 2.1.2
 
  -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 10 Nov 2021 10:15:00 +0000
 
