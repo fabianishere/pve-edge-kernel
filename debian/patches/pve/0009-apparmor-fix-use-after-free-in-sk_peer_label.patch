@@ -1,0 +1,57 @@
+From e9243f6a285589f49161faf0f96f4cf15c1dafae Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Tue, 26 Jun 2018 20:19:19 -0700
+Subject: UBUNTU: SAUCE: apparmor: fix use after free in sk_peer_label
+
+BugLink: http://bugs.launchpad.net/bugs/1778646
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+---
+ security/apparmor/lsm.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+(limited to 'security/apparmor')
+
+diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
+index 59a8ddd..b1216ee 100644
+--- a/security/apparmor/lsm.c
++++ b/security/apparmor/lsm.c
+@@ -1162,9 +1162,10 @@ static struct aa_label *sk_peer_label(struct sock *sk)
+ {
+ 	struct sock *peer_sk;
+ 	struct aa_sk_ctx *ctx = SK_CTX(sk);
++	struct aa_label *label = ERR_PTR(-ENOPROTOOPT);
+ 
+ 	if (ctx->peer)
+-		return ctx->peer;
++		return aa_get_label(ctx->peer);
+ 
+ 	if (sk->sk_family != PF_UNIX)
+ 		return ERR_PTR(-ENOPROTOOPT);
+@@ -1172,14 +1173,15 @@ static struct aa_label *sk_peer_label(struct sock *sk)
+ 	/* check for sockpair peering which does not go through
+ 	 * security_unix_stream_connect
+ 	 */
+-	peer_sk = unix_peer(sk);
++	peer_sk = unix_peer_get(sk);
+ 	if (peer_sk) {
+ 		ctx = SK_CTX(peer_sk);
+ 		if (ctx->label)
+-			return ctx->label;
++			label = aa_get_label(ctx->label);
++		sock_put(peer_sk);
+ 	}
+ 
+-	return ERR_PTR(-ENOPROTOOPT);
++	return label;
+ }
+ 
+ /**
+@@ -1223,6 +1225,7 @@ out:
+ 
+ 	}
+ 
++	aa_put_label(peer);
+ done:
+ 	end_current_label_crit_section(label);
+ 

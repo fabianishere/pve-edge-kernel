@@ -44,19 +44,14 @@ Then, you can install the package as follows:
 apt install ./pve-kernel-VERSION_amd64.deb
 ```
 
-## AppArmor issues
-When using these kernels, Proxmox's AppArmor profiles may fail to load since it
-uses an older AppArmor feature set  which is not supported by these kernels anymore. 
-This issue also appears when launching LXC containers.
-To fix this, tell AppArmor to use the stock features file as opposed to 
-Proxmox's features file, which is done by updating `/etc/apparmor/parser.conf` as follows:
-
+## AppArmor intervention
+Previously, these kernels required changing the AppArmor feature file to a non-default version.
+This issue has been fixed since version 5.16.
+If you have used the workaround, please update back to the default configuration in `/etc/apparmor/parser.conf` as follows:
 ```
 ## Pin feature set (avoid regressions when policy is lagging behind
 ## the kernel)
-# lxc-pve diverts to old feature file that is incompatible with kernel
-# features-file=/usr/share/apparmor-features/features
-features-file=/usr/share/apparmor-features/features.stock
+features-file=/usr/share/apparmor-features/features
 ```
 
 ## Building manually
