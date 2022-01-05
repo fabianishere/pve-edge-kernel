@@ -4,7 +4,7 @@ pve-kernel (5.16.0-1) edge; urgency=medium
   * Update to ZFS 2.1.2
   * Fix AppArmor incompatibilities
 
- -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 10 Nov 2021 10:15:00 +0000
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Mon, 10 Jan 2022 11:00:00 +0000
 
 pve-kernel (5.15.0-1) edge; urgency=medium
 
