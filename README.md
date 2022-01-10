@@ -52,8 +52,8 @@ If you have used the workaround, please update back to the default configuration
 ```diff
 ## Pin feature set (avoid regressions when policy is lagging behind
 ## the kernel) 
-- features-file=/usr/share/apparmor-features/features.stock
-+ features-file=/usr/share/apparmor-features/features
+- compile-features=/usr/share/apparmor-features/features.stock
++ compile-features=/usr/share/apparmor-features/features
 ```
 
 ## Building manually
