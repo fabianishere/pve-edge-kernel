@@ -48,10 +48,11 @@ apt install ./pve-kernel-VERSION_amd64.deb
 Previously, these kernels required changing the AppArmor feature file to a non-default version.
 This issue has been fixed since version 5.16.
 If you have used the workaround, please update back to the default configuration in `/etc/apparmor/parser.conf` as follows:
-```
+```diff
 ## Pin feature set (avoid regressions when policy is lagging behind
-## the kernel)
-features-file=/usr/share/apparmor-features/features
+## the kernel) 
+- features-file=/usr/share/apparmor-features/features.stock
++ features-file=/usr/share/apparmor-features/features
 ```
 
 ## Building manually
