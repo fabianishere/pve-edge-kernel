@@ -1,6 +1,6 @@
 [submodule "zfs"]
 	path = zfs
-	url = git://github.com/openzfs/zfs.git
+	url = git@github.com:openzfs/zfs.git
 
 [submodule "linux"]
 	path = linux
