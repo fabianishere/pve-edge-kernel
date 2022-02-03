@@ -1,0 +1,112 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Thomas Lamprecht <t.lamprecht@proxmox.com>
+Date: Wed, 10 Nov 2021 09:29:47 +0100
+Subject: [PATCH] arc stat/summary: guard access to l2arc MFU/MRU stats
+
+commit 085321621e79a75bea41c2b6511da6ebfbf2ba0a added printing MFU
+and MRU stats for 2.1 user space tools, but those keys are not
+available in the 2.0 module. That means it may break the arcstat and
+arc_summary tools after upgrade to 2.1 (user space), before a reboot
+to the new 2.1 ZFS kernel-module happened, due to python raising a
+KeyError on the dict access then.
+
+Move those two keys to a .get accessor with `0` as fallback, as it
+should be better to show some possible wrong data for new stat-keys
+than throwing an exception.
+
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+
+also move l2_mfu_asize  l2_mru_asize l2_prefetch_asize
+l2_bufc_data_asize l2_bufc_metadata_asize to .get accessor
+(these are only present with a cache device in the pool)
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+---
+ cmd/arc_summary/arc_summary3 | 28 ++++++++++++++--------------
+ cmd/arcstat/arcstat.in       | 14 +++++++-------
+ 2 files changed, 21 insertions(+), 21 deletions(-)
+
+diff --git a/cmd/arc_summary/arc_summary3 b/cmd/arc_summary/arc_summary3
+index 7b28012ed..fe6a6d9e2 100755
+--- a/cmd/arc_summary/arc_summary3
++++ b/cmd/arc_summary/arc_summary3
+@@ -617,13 +617,13 @@ def section_arc(kstats_dict):
+     prt_i1('L2 cached evictions:', f_bytes(arc_stats['evict_l2_cached']))
+     prt_i1('L2 eligible evictions:', f_bytes(arc_stats['evict_l2_eligible']))
+     prt_i2('L2 eligible MFU evictions:',
+-           f_perc(arc_stats['evict_l2_eligible_mfu'],
++           f_perc(arc_stats.get('evict_l2_eligible_mfu', 0), # 2.0 module compat
+            arc_stats['evict_l2_eligible']),
+-           f_bytes(arc_stats['evict_l2_eligible_mfu']))
++           f_bytes(arc_stats.get('evict_l2_eligible_mfu', 0)))
+     prt_i2('L2 eligible MRU evictions:',
+-           f_perc(arc_stats['evict_l2_eligible_mru'],
++           f_perc(arc_stats.get('evict_l2_eligible_mru', 0), # 2.0 module compat
+            arc_stats['evict_l2_eligible']),
+-           f_bytes(arc_stats['evict_l2_eligible_mru']))
++           f_bytes(arc_stats.get('evict_l2_eligible_mru', 0)))
+     prt_i1('L2 ineligible evictions:',
+            f_bytes(arc_stats['evict_l2_ineligible']))
+     print()
+@@ -765,20 +765,20 @@ def section_l2arc(kstats_dict):
+            f_perc(arc_stats['l2_hdr_size'], arc_stats['l2_size']),
+            f_bytes(arc_stats['l2_hdr_size']))
+     prt_i2('MFU allocated size:',
+-           f_perc(arc_stats['l2_mfu_asize'], arc_stats['l2_asize']),
+-           f_bytes(arc_stats['l2_mfu_asize']))
++           f_perc(arc_stats.get('l2_mfu_asize', 0), arc_stats['l2_asize']),
++           f_bytes(arc_stats.get('l2_mfu_asize', 0))) # 2.0 module compat
+     prt_i2('MRU allocated size:',
+-           f_perc(arc_stats['l2_mru_asize'], arc_stats['l2_asize']),
+-           f_bytes(arc_stats['l2_mru_asize']))
++           f_perc(arc_stats.get('l2_mru_asize', 0), arc_stats['l2_asize']),
++           f_bytes(arc_stats.get('l2_mru_asize', 0))) # 2.0 module compat
+     prt_i2('Prefetch allocated size:',
+-           f_perc(arc_stats['l2_prefetch_asize'], arc_stats['l2_asize']),
+-           f_bytes(arc_stats['l2_prefetch_asize']))
++           f_perc(arc_stats.get('l2_prefetch_asize', 0), arc_stats['l2_asize']),
++           f_bytes(arc_stats.get('l2_prefetch_asize',0))) # 2.0 module compat
+     prt_i2('Data (buffer content) allocated size:',
+-           f_perc(arc_stats['l2_bufc_data_asize'], arc_stats['l2_asize']),
+-           f_bytes(arc_stats['l2_bufc_data_asize']))
++           f_perc(arc_stats.get('l2_bufc_data_asize', 0), arc_stats['l2_asize']),
++           f_bytes(arc_stats.get('l2_bufc_data_asize', 0))) # 2.0 module compat
+     prt_i2('Metadata (buffer content) allocated size:',
+-           f_perc(arc_stats['l2_bufc_metadata_asize'], arc_stats['l2_asize']),
+-           f_bytes(arc_stats['l2_bufc_metadata_asize']))
++           f_perc(arc_stats.get('l2_bufc_metadata_asize', 0), arc_stats['l2_asize']),
++           f_bytes(arc_stats.get('l2_bufc_metadata_asize', 0))) # 2.0 module compat
+ 
+     print()
+     prt_1('L2ARC breakdown:', f_hits(l2_access_total))
+diff --git a/cmd/arcstat/arcstat.in b/cmd/arcstat/arcstat.in
+index cd9a803a2..ea45dc602 100755
+--- a/cmd/arcstat/arcstat.in
++++ b/cmd/arcstat/arcstat.in
+@@ -482,8 +482,8 @@ def calculate():
+     v["el2skip"] = d["evict_l2_skip"] // sint
+     v["el2cach"] = d["evict_l2_cached"] // sint
+     v["el2el"] = d["evict_l2_eligible"] // sint
+-    v["el2mfu"] = d["evict_l2_eligible_mfu"] // sint
+-    v["el2mru"] = d["evict_l2_eligible_mru"] // sint
++    v["el2mfu"] = d.get("evict_l2_eligible_mfu", 0) // sint
++    v["el2mru"] = d.get("evict_l2_eligible_mru", 0) // sint
+     v["el2inel"] = d["evict_l2_ineligible"] // sint
+     v["mtxmis"] = d["mutex_miss"] // sint
+ 
+@@ -498,11 +498,11 @@ def calculate():
+         v["l2size"] = cur["l2_size"]
+         v["l2bytes"] = d["l2_read_bytes"] // sint
+ 
+-        v["l2pref"] = cur["l2_prefetch_asize"]
+-        v["l2mfu"] = cur["l2_mfu_asize"]
+-        v["l2mru"] = cur["l2_mru_asize"]
+-        v["l2data"] = cur["l2_bufc_data_asize"]
+-        v["l2meta"] = cur["l2_bufc_metadata_asize"]
++        v["l2pref"] = cur.get("l2_prefetch_asize", 0)
++        v["l2mfu"] = cur.get("l2_mfu_asize", 0)
++        v["l2mru"] = cur.get("l2_mru_asize", 0)
++        v["l2data"] = cur.get("l2_bufc_data_asize", 0)
++        v["l2meta"] = cur.get("l2_bufc_metadata_asize", 0)
+         v["l2pref%"] = 100 * v["l2pref"] // v["l2asize"]
+         v["l2mfu%"] = 100 * v["l2mfu"] // v["l2asize"]
+         v["l2mru%"] = 100 * v["l2mru"] // v["l2asize"]
