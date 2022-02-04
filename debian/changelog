@@ -1,3 +1,11 @@
+pve-kernel (5.15.19-2) edge; urgency=medium
+
+  * Synchronize kernel patches with Proxmox.
+  * Synchronize ZFS patches with Proxmox.
+  * Separate Ubuntu patches from Proxmox patches.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Fri, 04 Feb 2022 11:00:00 +0000
+
 pve-kernel (5.15.19-1) edge; urgency=medium
 
   * Update to Linux 5.15.19.
