@@ -1,0 +1,13 @@
+diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+index 25dc20175bba..7ff51a3f65e6 100644
+--- a/lib/Kconfig.debug
++++ b/lib/Kconfig.debug
+@@ -314,7 +314,7 @@ config PAHOLE_HAS_SPLIT_BTF
+ 	def_bool $(success, test `$(PAHOLE) --version | sed -E 's/v([0-9]+)\.([0-9]+)/\1\2/'` -ge "119")
+ 
+ config DEBUG_INFO_BTF_MODULES
+-	def_bool y
++	def_bool n
+ 	depends on DEBUG_INFO_BTF && MODULES && PAHOLE_HAS_SPLIT_BTF
+ 	help
+ 	  Generate compact split BTF type information for kernel modules.
