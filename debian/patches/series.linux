@@ -1,10 +1,14 @@
+ubuntu/0001-apparmor-compatibility-v2.x-net-rules.patch
+ubuntu/0002-apparmor-af_unix-mediation.patch
+ubuntu/0003-apparmor-fix-apparmor-mediating-locking-non-fs-unix-sockets.patch
+ubuntu/0004-apparmor-fix-use-after-free-in-sk_peer_label.patch
+
 pve/0001-Make-mkcompile_h-accept-an-alternate-timestamp-strin.patch
 pve/0002-bridge-keep-MAC-of-first-assigned-port.patch
 pve/0003-pci-Enable-overrides-for-missing-ACS-capabilities-4..patch
 pve/0004-kvm-disable-default-dynamic-halt-polling-growth.patch
 pve/0005-net-core-downgrade-unregister_netdevice-refcount-lea.patch
-pve/0006-disable-split-btf.patch
-pve/0007-apparmor-compatibility-v2.x-net-rules.patch
-pve/0008-apparmor-af_unix-mediation.patch
-pve/0009-apparmor-fix-apparmor-mediating-locking-non-fs-unix-sockets.patch
-pve/0010-apparmor-fix-use-after-free-in-sk_peer_label.patch
+# pve/0006-Revert-PCI-Coalesce-host-bridge-contiguous-apertures.patch
+# pve/0007-PCI-Reinstate-PCI-Coalesce-host-bridge-contiguous-ap.patch
+pve/0008-do-not-generate-split-BTF-type-info-per-default.patch
+pve/0009-blk-cgroup-always-terminate-io.stat-lines.patch
