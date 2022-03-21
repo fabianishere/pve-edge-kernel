@@ -200,7 +200,6 @@ debian/${PVE_HEADER_PKG}.%: debian/templates/pve-headers.%.in
 .usr_headers_install_mark:
 	rm -rf '${PKG_DIR}'
 	mkdir -p  '${PKG_DIR}'
-	$(MAKE) -C ${KERNEL_SRC} headers_check ARCH=$(KERNEL_HEADER_ARCH)
 	$(MAKE) -C ${KERNEL_SRC} headers_install ARCH=$(KERNEL_HEADER_ARCH) INSTALL_HDR_PATH='$(CURDIR)'/$(OUT_DIR)
 	rm -rf $(OUT_DIR)/include/drm $(OUT_DIR)/include/scsi
 	find $(OUT_DIR)/include \( -name .install -o -name ..install.cmd \) -execdir rm {} +
