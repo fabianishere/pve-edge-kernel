@@ -1,7 +1,13 @@
+pve-kernel (5.17.0-2) edge; urgency=high
+
+  * Update to ZFS 2.1.4
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Sat, 26 Mar 2022 20:00:00 +0000
+
 pve-kernel (5.17.0-1) edge; urgency=medium
 
   * Update to Linux 5.17
-  * Update to ZFS 2.1.2
+  * Update to ZFS 2.1.3
 
  -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Mon, 21 Mar 2022 13:00:00 +0000
 
