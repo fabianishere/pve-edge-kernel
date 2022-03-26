@@ -31,7 +31,7 @@ index e4056a92c..030611419 100644
  enable zfs-mount.service
  enable zfs-share.service
 diff --git a/etc/systemd/system/Makefile.am b/etc/systemd/system/Makefile.am
-index c374a52ac..25d1b99d7 100644
+index 5e65e1db4..8e6baeb68 100644
 --- a/etc/systemd/system/Makefile.am
 +++ b/etc/systemd/system/Makefile.am
 @@ -7,6 +7,7 @@ systemdunit_DATA = \
