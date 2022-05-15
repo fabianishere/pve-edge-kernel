@@ -3,7 +3,7 @@ Custom Linux kernels for Proxmox VE.
 
 #### Available Versions
 1. Linux 5.17
-1. Linux 5.16
+1. Linux 5.16 **[EOL]**
 
 Older builds are still available at the [Releases](https://github.com/fabianishere/pve-edge-kernel/releases) page.
 
