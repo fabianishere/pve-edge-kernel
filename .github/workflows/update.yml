@@ -23,7 +23,7 @@ jobs:
       with:
           submodules: recursive
     - name: Setup System Dependencies
-      run: sudo apt install devscripts
+      run: sudo apt update && sudo apt install devscripts
     - name: Update Kernel
       id: update
       run: |
