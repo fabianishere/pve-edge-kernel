@@ -2,8 +2,8 @@
 Custom Linux kernels for Proxmox VE.
 
 #### Available Versions
-1. Linux 5.17
-1. Linux 5.16 **[EOL]**
+1. Linux 5.18
+1. Linux 5.17 **[EOL]**
 
 Older builds are still available at the [Releases](https://github.com/fabianishere/pve-edge-kernel/releases) page.
 
@@ -27,7 +27,7 @@ First, set up our Debian repository on your Proxmox installation:
 3. **Install a kernel package:**  
    ```bash
    apt update
-   apt install pve-kernel-5.16-edge
+   apt install pve-kernel-5.18-edge
    ```
 
 Package repository hosting is graciously provided by  [Cloudsmith](https://cloudsmith.com).
