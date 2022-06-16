@@ -1,3 +1,9 @@
+pve-kernel (5.17.15-1) edge; urgency=medium
+
+  * Update to Linux 5.17.15.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 15 Jun 2022 12:11:22 +0000
+
 pve-kernel (5.17.14-1) edge; urgency=medium
 
   * Update to Linux 5.17.14.
