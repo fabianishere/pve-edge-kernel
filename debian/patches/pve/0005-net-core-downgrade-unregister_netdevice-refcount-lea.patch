@@ -10,15 +10,15 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/net/core/dev.c b/net/core/dev.c
-index ef8cf7619b..787d7dc1c7 100644
+index 2771fd22dc6a..37e18f93de23 100644
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -10488,7 +10488,7 @@ static void netdev_wait_allrefs(struct net_device *dev)
- 		if (refcnt != 1 &&
- 		    time_after(jiffies, warning_time +
+@@ -10177,7 +10177,7 @@ static struct net_device *netdev_wait_allrefs_any(struct list_head *list)
+ 		if (time_after(jiffies, warning_time +
  			       netdev_unregister_timeout_secs * HZ)) {
--			pr_emerg("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
-+			pr_err("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
- 				 dev->name, refcnt);
- 			warning_time = jiffies;
- 		}
+ 			list_for_each_entry(dev, list, todo_list) {
+-				pr_emerg("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
++				pr_err("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
+ 					 dev->name, netdev_refcnt_read(dev));
+ 				ref_tracker_dir_print(&dev->refcnt_tracker, 10);
+ 			}

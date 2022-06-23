@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 3607849df47822151b05df440759e2dc70160755 Mon Sep 17 00:00:00 2001
 From: Wolfgang Bumiller <w.bumiller@proxmox.com>
 Date: Tue, 11 Jan 2022 09:31:59 +0100
-Subject: [PATCH] blk-cgroup: always terminate io.stat lines
+Subject: blk-cgroup: always terminate io.stat lines
 
 With the removal of seq_get_buf in blkcg_print_one_stat, we
 cannot make adding the newline conditional on there being
@@ -13,19 +13,20 @@ file format.
 
 Signed-off-by: Wolfgang Bumiller <w.bumiller@proxmox.com>
 Fixes: 252c651a4c85 ("blk-cgroup: stop using seq_get_buf")
-Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+Acked-by: Tejun Heo <tj@kernel.org>
+Link: https://lore.kernel.org/r/20220111083159.42340-1-w.bumiller@proxmox.com
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- block/blk-cgroup.c         | 9 ++-------
- block/blk-iocost.c         | 5 ++---
- block/blk-iolatency.c      | 8 +++-----
- include/linux/blk-cgroup.h | 2 +-
- 4 files changed, 8 insertions(+), 16 deletions(-)
+ block/blk-cgroup.c | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
+
+(limited to 'block/blk-cgroup.c')
 
 diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
-index 0eec59e4df65..38c62a44905a 100644
+index a91f8ae18b49b..204442fad33cf 100644
 --- a/block/blk-cgroup.c
 +++ b/block/blk-cgroup.c
-@@ -887,7 +887,6 @@ static void blkcg_print_one_stat(struct blkcg_gq *blkg, struct seq_file *s)
+@@ -949,7 +949,6 @@ static void blkcg_print_one_stat(struct blkcg_gq *blkg, struct seq_file *s)
  {
  	struct blkg_iostat_set *bis = &blkg->iostat;
  	u64 rbytes, wbytes, rios, wios, dbytes, dios;
@@ -33,115 +34,36 @@ index 0eec59e4df65..38c62a44905a 100644
  	const char *dname;
  	unsigned seq;
  	int i;
-@@ -913,14 +912,12 @@ static void blkcg_print_one_stat(struct blkcg_gq *blkg, struct seq_file *s)
+@@ -975,14 +974,12 @@ static void blkcg_print_one_stat(struct blkcg_gq *blkg, struct seq_file *s)
  	} while (u64_stats_fetch_retry(&bis->sync, seq));
-
+ 
  	if (rbytes || wbytes || rios || wios) {
 -		has_stats = true;
  		seq_printf(s, "rbytes=%llu wbytes=%llu rios=%llu wios=%llu dbytes=%llu dios=%llu",
  			rbytes, wbytes, rios, wios,
  			dbytes, dios);
  	}
-
+ 
  	if (blkcg_debug_stats && atomic_read(&blkg->use_delay)) {
 -		has_stats = true;
  		seq_printf(s, " use_delay=%d delay_nsec=%llu",
  			atomic_read(&blkg->use_delay),
  			atomic64_read(&blkg->delay_nsec));
-@@ -932,12 +929,10 @@ static void blkcg_print_one_stat(struct blkcg_gq *blkg, struct seq_file *s)
+@@ -994,12 +991,10 @@ static void blkcg_print_one_stat(struct blkcg_gq *blkg, struct seq_file *s)
  		if (!blkg->pd[i] || !pol->pd_stat_fn)
  			continue;
-
+ 
 -		if (pol->pd_stat_fn(blkg->pd[i], s))
 -			has_stats = true;
 +		pol->pd_stat_fn(blkg->pd[i], s);
  	}
-
+ 
 -	if (has_stats)
 -		seq_printf(s, "\n");
 +	seq_puts(s, "\n");
  }
-
+ 
  static int blkcg_print_stat(struct seq_file *sf, void *v)
-diff --git a/block/blk-iocost.c b/block/blk-iocost.c
-index eb7b0d6bd11f..381c28f9561e 100644
---- a/block/blk-iocost.c
-+++ b/block/blk-iocost.c
-@@ -2995,13 +2995,13 @@ static void ioc_pd_free(struct blkg_policy_data *pd)
- 	kfree(iocg);
- }
+-- 
+cgit 
 
--static bool ioc_pd_stat(struct blkg_policy_data *pd, struct seq_file *s)
-+static void ioc_pd_stat(struct blkg_policy_data *pd, struct seq_file *s)
- {
- 	struct ioc_gq *iocg = pd_to_iocg(pd);
- 	struct ioc *ioc = iocg->ioc;
-
- 	if (!ioc->enabled)
--		return false;
-+		return;
-
- 	if (iocg->level == 0) {
- 		unsigned vp10k = DIV64_U64_ROUND_CLOSEST(
-@@ -3017,7 +3017,6 @@ static bool ioc_pd_stat(struct blkg_policy_data *pd, struct seq_file *s)
- 			iocg->last_stat.wait_us,
- 			iocg->last_stat.indebt_us,
- 			iocg->last_stat.indelay_us);
--	return true;
- }
-
- static u64 ioc_weight_prfill(struct seq_file *sf, struct blkg_policy_data *pd,
-diff --git a/block/blk-iolatency.c b/block/blk-iolatency.c
-index c0545f9da549..d33460f3d43d 100644
---- a/block/blk-iolatency.c
-+++ b/block/blk-iolatency.c
-@@ -890,7 +890,7 @@ static int iolatency_print_limit(struct seq_file *sf, void *v)
- 	return 0;
- }
-
--static bool iolatency_ssd_stat(struct iolatency_grp *iolat, struct seq_file *s)
-+static void iolatency_ssd_stat(struct iolatency_grp *iolat, struct seq_file *s)
- {
- 	struct latency_stat stat;
- 	int cpu;
-@@ -913,17 +913,16 @@ static bool iolatency_ssd_stat(struct iolatency_grp *iolat, struct seq_file *s)
- 			(unsigned long long)stat.ps.missed,
- 			(unsigned long long)stat.ps.total,
- 			iolat->rq_depth.max_depth);
--	return true;
- }
-
--static bool iolatency_pd_stat(struct blkg_policy_data *pd, struct seq_file *s)
-+static void iolatency_pd_stat(struct blkg_policy_data *pd, struct seq_file *s)
- {
- 	struct iolatency_grp *iolat = pd_to_lat(pd);
- 	unsigned long long avg_lat;
- 	unsigned long long cur_win;
-
- 	if (!blkcg_debug_stats)
--		return false;
-+		return;
-
- 	if (iolat->ssd)
- 		return iolatency_ssd_stat(iolat, s);
-@@ -936,7 +935,6 @@ static bool iolatency_pd_stat(struct blkg_policy_data *pd, struct seq_file *s)
- 	else
- 		seq_printf(s, " depth=%u avg_lat=%llu win=%llu",
- 			iolat->rq_depth.max_depth, avg_lat, cur_win);
--	return true;
- }
-
- static struct blkg_policy_data *iolatency_pd_alloc(gfp_t gfp,
-diff --git a/include/linux/blk-cgroup.h b/include/linux/blk-cgroup.h
-index b4de2010fba5..132e05ed6935 100644
---- a/include/linux/blk-cgroup.h
-+++ b/include/linux/blk-cgroup.h
-@@ -152,7 +152,7 @@ typedef void (blkcg_pol_online_pd_fn)(struct blkg_policy_data *pd);
- typedef void (blkcg_pol_offline_pd_fn)(struct blkg_policy_data *pd);
- typedef void (blkcg_pol_free_pd_fn)(struct blkg_policy_data *pd);
- typedef void (blkcg_pol_reset_pd_stats_fn)(struct blkg_policy_data *pd);
--typedef bool (blkcg_pol_stat_pd_fn)(struct blkg_policy_data *pd,
-+typedef void (blkcg_pol_stat_pd_fn)(struct blkg_policy_data *pd,
- 				struct seq_file *s);
-
- struct blkcg_policy {

@@ -1,4 +1,4 @@
-CONFIG_DEBUG_INFO=n # PVE strips debug info afterwards
+CONFIG_DEBUG_INFO_NONE=y # PVE strips debug info afterwards
 CONFIG_INTEL_MEI_WDT=m
 CONFIG_SND_PCM_OSS=n
 CONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y
