@@ -1,3 +1,9 @@
+pve-kernel (5.18.11-1) edge; urgency=medium
+
+  * Update to Linux 5.18.11.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 13 Jul 2022 12:11:49 +0000
+
 pve-kernel (5.18.10-1) edge; urgency=medium
 
   * Update to Linux 5.18.10.
