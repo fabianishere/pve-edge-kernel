@@ -13,16 +13,16 @@ Older builds are still available at the [Releases](https://github.com/fabianishe
 First, set up our Debian repository on your Proxmox installation: 
 1. **Add the repository's GPG key:**  
    ```bash
-   curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7.key' | apt-key add -
+   curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7.key' | gpg --dearmor -o /usr/share/keyrings/pve-edge-kernel.gpg
    ```
 2. **Set up the `pve-edge-kernel` repository:**  
    If you are still on _Proxmox VE 6_, pick the Buster-based repository:
    ```bash
-   echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian buster main" > /etc/apt/sources.list.d/pve-edge-kernel.list
+   echo "deb [signed-by=/usr/share/keyrings/pve-edge-kernel.gpg] https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian buster main" > /etc/apt/sources.list.d/pve-edge-kernel.list
    ```
    If you are already on _Proxmox VE 7_, pick the Bullseye-based repository:
    ```bash
-   echo "deb https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian bullseye main" > /etc/apt/sources.list.d/pve-edge-kernel.list
+   echo "deb [signed-by=/usr/share/keyrings/pve-edge-kernel.gpg] https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian bullseye main" > /etc/apt/sources.list.d/pve-edge-kernel.list
    ```
 3. **Install a kernel package:**  
    ```bash
