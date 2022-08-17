@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Wed, 3 Aug 2022 18:49:59 +0300
+Subject: [PATCH] bug: introduce ASSERT_STRUCT_OFFSET
+
+ASSERT_STRUCT_OFFSET allows to assert during the build of
+the kernel that a field in a struct have an expected offset.
+
+KVM used to have such macro, but there is almost nothing KVM specific
+in it so move it to build_bug.h, so that it can be used in other
+places in KVM.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/kvm/vmx/vmcs12.h | 5 ++---
+ include/linux/build_bug.h | 9 +++++++++
+ 2 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/kvm/vmx/vmcs12.h b/arch/x86/kvm/vmx/vmcs12.h
+index 2a45f026ee11..ba8617964982 100644
+--- a/arch/x86/kvm/vmx/vmcs12.h
++++ b/arch/x86/kvm/vmx/vmcs12.h
+@@ -208,9 +208,8 @@ struct __packed vmcs12 {
+ /*
+  * For save/restore compatibility, the vmcs12 field offsets must not change.
+  */
+-#define CHECK_OFFSET(field, loc)				\
+-	BUILD_BUG_ON_MSG(offsetof(struct vmcs12, field) != (loc),	\
+-		"Offset of " #field " in struct vmcs12 has changed.")
++#define CHECK_OFFSET(field, loc) \
++	ASSERT_STRUCT_OFFSET(struct vmcs12, field, loc)
+ 
+ static inline void vmx_check_vmcs12_offsets(void)
+ {
+diff --git a/include/linux/build_bug.h b/include/linux/build_bug.h
+index e3a0be2c90ad..3aa3640f8c18 100644
+--- a/include/linux/build_bug.h
++++ b/include/linux/build_bug.h
+@@ -77,4 +77,13 @@
+ #define static_assert(expr, ...) __static_assert(expr, ##__VA_ARGS__, #expr)
+ #define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
+ 
++
++/*
++ * Compile time check that field has an expected offset
++ */
++#define ASSERT_STRUCT_OFFSET(type, field, expected_offset)	\
++	BUILD_BUG_ON_MSG(offsetof(type, field) != (expected_offset),	\
++		"Offset of " #field " in " #type " has changed.")
++
++
+ #endif	/* _LINUX_BUILD_BUG_H */
