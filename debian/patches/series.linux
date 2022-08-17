@@ -8,6 +8,24 @@ pve/0002-bridge-keep-MAC-of-first-assigned-port.patch
 pve/0003-pci-Enable-overrides-for-missing-ACS-capabilities-4..patch
 pve/0004-kvm-disable-default-dynamic-halt-polling-growth.patch
 pve/0005-net-core-downgrade-unregister_netdevice-refcount-lea.patch
-# pve/0006-Revert-PCI-Coalesce-host-bridge-contiguous-apertures.patch
-# pve/0007-PCI-Reinstate-PCI-Coalesce-host-bridge-contiguous-ap.patch
+# pve/0006-Revert-PCI-Coalesce-host-bridge-contiguous-apertures.patch # Already in mainline (v5.16)
+# pve/0007-PCI-Reinstate-PCI-Coalesce-host-bridge-contiguous-ap.patch # Already in mainline (v5.16)
 pve/0008-do-not-generate-split-BTF-type-info-per-default.patch
+# pve/0009-blk-cgroup-always-terminate-io.stat-lines.patch # Already in mainline (v5.17)
+# pve/0010-drivers-firmware-Don-t-mark-as-busy-the-simple-frame.patch # Already in mainline (v5.18)
+# pve/0011-drm-simpledrm-Request-memory-region-in-driver.patch # Already in mainline (v5.18)
+# pve/0012-fbdev-simplefb-Request-memory-region-in-driver.patch # Already in mainline (v5.18)
+# pve/0013-NFSv4.1-provide-mount-option-to-toggle-trunking-disc.patch # Already in mainline (v5.18)
+# pve/0014-EDAC-amd64-Add-PCI-device-IDs-for-family-19h-model-5.patch # Already in mainline (v5.17)
+pve/0015-bug-introduce-ASSERT_STRUCT_OFFSET.patch
+pve/0016-KVM-x86-emulator-em_sysexit-should-update-ctxt-mode.patch
+pve/0017-KVM-x86-emulator-introduce-emulator_recalc_and_set_m.patch
+pve/0018-KVM-x86-emulator-update-the-emulation-mode-after-rsm.patch
+pve/0019-KVM-x86-emulator-update-the-emulation-mode-after-CR0.patch
+pve/0020-KVM-x86-emulator-smm-add-structs-for-KVM-s-smram-lay.patch
+pve/0021-KVM-x86-emulator-smm-use-smram-structs-in-the-common.patch
+pve/0022-KVM-x86-emulator-smm-use-smram-struct-for-32-bit-smr.patch
+pve/0023-KVM-x86-emulator-smm-use-smram-struct-for-64-bit-smr.patch
+pve/0024-KVM-x86-SVM-use-smram-structs.patch
+pve/0025-KVM-x86-SVM-don-t-save-SVM-state-to-SMRAM-when-VM-is.patch
+pve/0026-KVM-x86-emulator-smm-preserve-interrupt-shadow-in-SM.patch
