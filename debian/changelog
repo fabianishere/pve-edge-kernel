@@ -1,3 +1,9 @@
+pve-kernel (5.18.17-2) edge; urgency=medium
+
+  * Synchronize patches with Proxmox upstream.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 17 Aug 2022 15:00:00 +0000
+
 pve-kernel (5.18.17-1) edge; urgency=medium
 
   * Update to Linux 5.18.17.

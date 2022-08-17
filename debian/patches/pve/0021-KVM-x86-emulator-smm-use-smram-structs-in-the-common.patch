@@ -1,0 +1,214 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Wed, 3 Aug 2022 18:50:06 +0300
+Subject: [PATCH] KVM: x86: emulator/smm: use smram structs in the common code
+
+Switch from using a raw array to 'union kvm_smram'.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/include/asm/kvm_host.h |  5 +++--
+ arch/x86/kvm/emulate.c          | 12 +++++++-----
+ arch/x86/kvm/kvm_emulate.h      |  3 ++-
+ arch/x86/kvm/svm/svm.c          |  8 ++++++--
+ arch/x86/kvm/vmx/vmx.c          |  4 ++--
+ arch/x86/kvm/x86.c              | 16 ++++++++--------
+ 6 files changed, 28 insertions(+), 20 deletions(-)
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 867febee8fc3..fb48dd8773e1 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -200,6 +200,7 @@ typedef enum exit_fastpath_completion fastpath_t;
+ 
+ struct x86_emulate_ctxt;
+ struct x86_exception;
++union kvm_smram;
+ enum x86_intercept;
+ enum x86_intercept_stage;
+ 
+@@ -1463,8 +1464,8 @@ struct kvm_x86_ops {
+ 	void (*setup_mce)(struct kvm_vcpu *vcpu);
+ 
+ 	int (*smi_allowed)(struct kvm_vcpu *vcpu, bool for_injection);
+-	int (*enter_smm)(struct kvm_vcpu *vcpu, char *smstate);
+-	int (*leave_smm)(struct kvm_vcpu *vcpu, const char *smstate);
++	int (*enter_smm)(struct kvm_vcpu *vcpu, union kvm_smram *smram);
++	int (*leave_smm)(struct kvm_vcpu *vcpu, const union kvm_smram *smram);
+ 	void (*enable_smi_window)(struct kvm_vcpu *vcpu);
+ 
+ 	int (*mem_enc_op)(struct kvm *kvm, void __user *argp);
+diff --git a/arch/x86/kvm/emulate.c b/arch/x86/kvm/emulate.c
+index bfaf5d24bf1e..730c3e2662d6 100644
+--- a/arch/x86/kvm/emulate.c
++++ b/arch/x86/kvm/emulate.c
+@@ -2567,16 +2567,18 @@ static int rsm_load_state_64(struct x86_emulate_ctxt *ctxt,
+ static int em_rsm(struct x86_emulate_ctxt *ctxt)
+ {
+ 	unsigned long cr0, cr4, efer;
+-	char buf[512];
++	const union kvm_smram smram;
+ 	u64 smbase;
+ 	int ret;
+ 
++	BUILD_BUG_ON(sizeof(smram) != 512);
++
+ 	if ((ctxt->ops->get_hflags(ctxt) & X86EMUL_SMM_MASK) == 0)
+ 		return emulate_ud(ctxt);
+ 
+ 	smbase = ctxt->ops->get_smbase(ctxt);
+ 
+-	ret = ctxt->ops->read_phys(ctxt, smbase + 0xfe00, buf, sizeof(buf));
++	ret = ctxt->ops->read_phys(ctxt, smbase + 0xfe00, (void *)&smram, sizeof(smram));
+ 	if (ret != X86EMUL_CONTINUE)
+ 		return X86EMUL_UNHANDLEABLE;
+ 
+@@ -2626,15 +2628,15 @@ static int em_rsm(struct x86_emulate_ctxt *ctxt)
+ 	 * state (e.g. enter guest mode) before loading state from the SMM
+ 	 * state-save area.
+ 	 */
+-	if (ctxt->ops->leave_smm(ctxt, buf))
++	if (ctxt->ops->leave_smm(ctxt, &smram))
+ 		goto emulate_shutdown;
+ 
+ #ifdef CONFIG_X86_64
+ 	if (emulator_has_longmode(ctxt))
+-		ret = rsm_load_state_64(ctxt, buf);
++		ret = rsm_load_state_64(ctxt, (const char *)&smram);
+ 	else
+ #endif
+-		ret = rsm_load_state_32(ctxt, buf);
++		ret = rsm_load_state_32(ctxt, (const char *)&smram);
+ 
+ 	if (ret != X86EMUL_CONTINUE)
+ 		goto emulate_shutdown;
+diff --git a/arch/x86/kvm/kvm_emulate.h b/arch/x86/kvm/kvm_emulate.h
+index 0b2bbcce321a..3b37b3e17379 100644
+--- a/arch/x86/kvm/kvm_emulate.h
++++ b/arch/x86/kvm/kvm_emulate.h
+@@ -19,6 +19,7 @@
+ struct x86_emulate_ctxt;
+ enum x86_intercept;
+ enum x86_intercept_stage;
++union kvm_smram;
+ 
+ struct x86_exception {
+ 	u8 vector;
+@@ -233,7 +234,7 @@ struct x86_emulate_ops {
+ 
+ 	unsigned (*get_hflags)(struct x86_emulate_ctxt *ctxt);
+ 	void (*exiting_smm)(struct x86_emulate_ctxt *ctxt);
+-	int (*leave_smm)(struct x86_emulate_ctxt *ctxt, const char *smstate);
++	int (*leave_smm)(struct x86_emulate_ctxt *ctxt, const union kvm_smram *smram);
+ 	void (*triple_fault)(struct x86_emulate_ctxt *ctxt);
+ 	int (*set_xcr)(struct x86_emulate_ctxt *ctxt, u32 index, u64 xcr);
+ };
+diff --git a/arch/x86/kvm/svm/svm.c b/arch/x86/kvm/svm/svm.c
+index 21f747eacc9a..d903120811b9 100644
+--- a/arch/x86/kvm/svm/svm.c
++++ b/arch/x86/kvm/svm/svm.c
+@@ -4302,12 +4302,14 @@ static int svm_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+ 	return !svm_smi_blocked(vcpu);
+ }
+ 
+-static int svm_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
++static int svm_enter_smm(struct kvm_vcpu *vcpu, union kvm_smram *smram)
+ {
+ 	struct vcpu_svm *svm = to_svm(vcpu);
+ 	struct kvm_host_map map_save;
+ 	int ret;
+ 
++	char *smstate = (char *)smram;
++
+ 	if (!is_guest_mode(vcpu))
+ 		return 0;
+ 
+@@ -4349,7 +4351,7 @@ static int svm_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
+ 	return 0;
+ }
+ 
+-static int svm_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
++static int svm_leave_smm(struct kvm_vcpu *vcpu, const union kvm_smram *smram)
+ {
+ 	struct vcpu_svm *svm = to_svm(vcpu);
+ 	struct kvm_host_map map, map_save;
+@@ -4357,6 +4359,8 @@ static int svm_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
+ 	struct vmcb *vmcb12;
+ 	int ret;
+ 
++	const char *smstate = (const char *)smram;
++
+ 	if (!guest_cpuid_has(vcpu, X86_FEATURE_LM))
+ 		return 0;
+ 
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index 417176817d80..a45a43bcc844 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -7594,7 +7594,7 @@ static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+ 	return !is_smm(vcpu);
+ }
+ 
+-static int vmx_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
++static int vmx_enter_smm(struct kvm_vcpu *vcpu, union kvm_smram *smram)
+ {
+ 	struct vcpu_vmx *vmx = to_vmx(vcpu);
+ 
+@@ -7608,7 +7608,7 @@ static int vmx_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
+ 	return 0;
+ }
+ 
+-static int vmx_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
++static int vmx_leave_smm(struct kvm_vcpu *vcpu, const union kvm_smram *smram)
+ {
+ 	struct vcpu_vmx *vmx = to_vmx(vcpu);
+ 	int ret;
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 07575e5eb254..2ebbb441880c 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -7312,9 +7312,9 @@ static void emulator_exiting_smm(struct x86_emulate_ctxt *ctxt)
+ }
+ 
+ static int emulator_leave_smm(struct x86_emulate_ctxt *ctxt,
+-				  const char *smstate)
++			      const union kvm_smram *smram)
+ {
+-	return static_call(kvm_x86_leave_smm)(emul_to_vcpu(ctxt), smstate);
++	return static_call(kvm_x86_leave_smm)(emul_to_vcpu(ctxt), smram);
+ }
+ 
+ static void emulator_triple_fault(struct x86_emulate_ctxt *ctxt)
+@@ -9164,25 +9164,25 @@ static void enter_smm(struct kvm_vcpu *vcpu)
+ 	struct kvm_segment cs, ds;
+ 	struct desc_ptr dt;
+ 	unsigned long cr0;
+-	char buf[512];
++	union kvm_smram smram;
+ 
+-	memset(buf, 0, 512);
++	memset(smram.bytes, 0, sizeof(smram.bytes));
+ #ifdef CONFIG_X86_64
+ 	if (guest_cpuid_has(vcpu, X86_FEATURE_LM))
+-		enter_smm_save_state_64(vcpu, buf);
++		enter_smm_save_state_64(vcpu, (char *)&smram);
+ 	else
+ #endif
+-		enter_smm_save_state_32(vcpu, buf);
++		enter_smm_save_state_32(vcpu, (char *)&smram);
+ 
+ 	/*
+ 	 * Give enter_smm() a chance to make ISA-specific changes to the vCPU
+ 	 * state (e.g. leave guest mode) after we've saved the state into the
+ 	 * SMM state-save area.
+ 	 */
+-	static_call(kvm_x86_enter_smm)(vcpu, buf);
++	static_call(kvm_x86_enter_smm)(vcpu, &smram);
+ 
+ 	kvm_smm_changed(vcpu, true);
+-	kvm_vcpu_write_guest(vcpu, vcpu->arch.smbase + 0xfe00, buf, sizeof(buf));
++	kvm_vcpu_write_guest(vcpu, vcpu->arch.smbase + 0xfe00, &smram, sizeof(smram));
+ 
+ 	if (static_call(kvm_x86_get_nmi_mask)(vcpu))
+ 		vcpu->arch.hflags |= HF_SMM_INSIDE_NMI_MASK;

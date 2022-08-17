@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Wed, 3 Aug 2022 18:50:10 +0300
+Subject: [PATCH] KVM: x86: SVM: don't save SVM state to SMRAM when VM is not
+ long mode capable
+
+When the guest CPUID doesn't have support for long mode, 32 bit SMRAM
+layout is used and it has no support for preserving EFER and/or SVM
+state.
+
+Note that this isn't relevant to running 32 bit guests on VM which is
+long mode capable - such VM can still run 32 bit guests in compatibility
+mode.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/kvm/svm/svm.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/arch/x86/kvm/svm/svm.c b/arch/x86/kvm/svm/svm.c
+index 742497b1d4c3..938b9b24f0ee 100644
+--- a/arch/x86/kvm/svm/svm.c
++++ b/arch/x86/kvm/svm/svm.c
+@@ -4311,6 +4311,15 @@ static int svm_enter_smm(struct kvm_vcpu *vcpu, union kvm_smram *smram)
+ 	if (!is_guest_mode(vcpu))
+ 		return 0;
+ 
++	/*
++	 * 32 bit SMRAM format doesn't preserve EFER and SVM state.
++	 * SVM should not be enabled by the userspace without marking
++	 * the CPU as at least long mode capable.
++	 */
++
++	if (!guest_cpuid_has(vcpu, X86_FEATURE_LM))
++		return 1;
++
+ 	smram->smram64.svm_guest_flag = 1;
+ 	smram->smram64.svm_guest_vmcb_gpa = svm->nested.vmcb12_gpa;
+ 

@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Marc Bevand <m@zorinaq.com>
+Date: Tue, 21 Dec 2021 15:31:12 -0800
+Subject: [PATCH] EDAC/amd64: Add PCI device IDs for family 19h model 50h
+
+Add the new family 19h model 50h PCI IDs (device 18h functions 0 and 6)
+to support Ryzen 5000 APUs ("Cezanne").
+
+Signed-off-by: Marc Bevand <m@zorinaq.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ drivers/edac/amd64_edac.c | 15 +++++++++++++++
+ drivers/edac/amd64_edac.h |  3 +++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/drivers/edac/amd64_edac.c b/drivers/edac/amd64_edac.c
+index c6c58f01067f..f8ef2edf8abf 100644
+--- a/drivers/edac/amd64_edac.c
++++ b/drivers/edac/amd64_edac.c
+@@ -2660,6 +2660,16 @@ static struct amd64_family_type family_types[] = {
+ 			.dbam_to_cs		= f17_addr_mask_to_cs_size,
+ 		}
+ 	},
++	[F19_M50H_CPUS] = {
++		.ctl_name = "F19h_M50h",
++		.f0_id = PCI_DEVICE_ID_AMD_19H_M50H_DF_F0,
++		.f6_id = PCI_DEVICE_ID_AMD_19H_M50H_DF_F6,
++		.max_mcs = 2,
++		.ops = {
++			.early_channel_count	= f17_early_channel_count,
++			.dbam_to_cs		= f17_addr_mask_to_cs_size,
++		}
++	},
+ };
+ 
+ /*
+@@ -3706,6 +3716,11 @@ static struct amd64_family_type *per_family_init(struct amd64_pvt *pvt)
+ 			pvt->ops = &family_types[F17_M70H_CPUS].ops;
+ 			fam_type->ctl_name = "F19h_M20h";
+ 			break;
++		} else if (pvt->model >= 0x50 && pvt->model <= 0x5f) {
++			fam_type = &family_types[F19_M50H_CPUS];
++			pvt->ops = &family_types[F19_M50H_CPUS].ops;
++			fam_type->ctl_name = "F19h_M50h";
++			break;
+ 		} else if (pvt->model >= 0xa0 && pvt->model <= 0xaf) {
+ 			fam_type = &family_types[F19_M10H_CPUS];
+ 			pvt->ops = &family_types[F19_M10H_CPUS].ops;
+diff --git a/drivers/edac/amd64_edac.h b/drivers/edac/amd64_edac.h
+index 650cab401e21..352bda9803f6 100644
+--- a/drivers/edac/amd64_edac.h
++++ b/drivers/edac/amd64_edac.h
+@@ -128,6 +128,8 @@
+ #define PCI_DEVICE_ID_AMD_19H_DF_F6	0x1656
+ #define PCI_DEVICE_ID_AMD_19H_M10H_DF_F0 0x14ad
+ #define PCI_DEVICE_ID_AMD_19H_M10H_DF_F6 0x14b3
++#define PCI_DEVICE_ID_AMD_19H_M50H_DF_F0 0x166a
++#define PCI_DEVICE_ID_AMD_19H_M50H_DF_F6 0x1670
+ 
+ /*
+  * Function 1 - Address Map
+@@ -301,6 +303,7 @@ enum amd_families {
+ 	F17_M70H_CPUS,
+ 	F19_CPUS,
+ 	F19_M10H_CPUS,
++	F19_M50H_CPUS,
+ 	NUM_FAMILIES,
+ };
+ 
