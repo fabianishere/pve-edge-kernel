@@ -123,6 +123,15 @@ Kernel options may be controlled from [debian/config/config.pve](debian/config/c
 additional patches, you may add them to the [debian/patches/pve](debian/patches/pve) directory
 and update the [series](debian/patches/series.linux) file accordingly.
 
+## Removal
+Use `apt` to remove individual kernel packages from your system. If you want
+to remove all packages from a particular kernel release, use the following
+command:
+
+```bash
+apt remove pve-kernel-5.19*edge pve-headers-5.19*edge
+```
+
 ## Contributing
 Questions, suggestions and contributions are welcome and appreciated!
 You can contribute in various meaningful ways:
