@@ -1,6 +1,6 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From cd22e3c62bdf90babba3bdf1bc2b48e4e2e664d5 Mon Sep 17 00:00:00 2001
 From: Maxim Levitsky <mlevitsk@redhat.com>
-Date: Wed, 3 Aug 2022 18:49:59 +0300
+Date: Tue, 25 Oct 2022 15:47:27 +0300
 Subject: [PATCH] bug: introduce ASSERT_STRUCT_OFFSET
 
 ASSERT_STRUCT_OFFSET allows to assert during the build of
@@ -11,14 +11,13 @@ in it so move it to build_bug.h, so that it can be used in other
 places in KVM.
 
 Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
-Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  arch/x86/kvm/vmx/vmcs12.h | 5 ++---
  include/linux/build_bug.h | 9 +++++++++
  2 files changed, 11 insertions(+), 3 deletions(-)
 
 diff --git a/arch/x86/kvm/vmx/vmcs12.h b/arch/x86/kvm/vmx/vmcs12.h
-index 2a45f026ee11..ba8617964982 100644
+index 746129ddd5ae..01936013428b 100644
 --- a/arch/x86/kvm/vmx/vmcs12.h
 +++ b/arch/x86/kvm/vmx/vmcs12.h
 @@ -208,9 +208,8 @@ struct __packed vmcs12 {
@@ -51,3 +50,6 @@ index e3a0be2c90ad..3aa3640f8c18 100644
 +
 +
  #endif	/* _LINUX_BUILD_BUG_H */
+-- 
+2.38.1
+

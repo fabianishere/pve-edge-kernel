@@ -1,0 +1,284 @@
+From dae1d13d62cdc44a137c51fbc92c5037a8f104c5 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:34 +0300
+Subject: [PATCH] KVM: x86: smm: add structs for KVM's smram layout
+
+Add structs that will be used to define and read/write the KVM's
+SMRAM layout, instead of reading/writing to raw offsets.
+
+Also document the differences between KVM's SMRAM layout and SMRAM
+layout that is used by real Intel/AMD cpus.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+---
+ arch/x86/kvm/smm.c |  94 +++++++++++++++++++++++++++++++++
+ arch/x86/kvm/smm.h | 127 +++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 221 insertions(+)
+
+diff --git a/arch/x86/kvm/smm.c b/arch/x86/kvm/smm.c
+index 1191a79cf027..01dab9fc3ab4 100644
+--- a/arch/x86/kvm/smm.c
++++ b/arch/x86/kvm/smm.c
+@@ -8,6 +8,97 @@
+ #include "cpuid.h"
+ #include "trace.h"
+ 
++#define CHECK_SMRAM32_OFFSET(field, offset) \
++	ASSERT_STRUCT_OFFSET(struct kvm_smram_state_32, field, offset - 0xFE00)
++
++#define CHECK_SMRAM64_OFFSET(field, offset) \
++	ASSERT_STRUCT_OFFSET(struct kvm_smram_state_64, field, offset - 0xFE00)
++
++static void check_smram_offsets(void)
++{
++	/* 32 bit SMRAM image */
++	CHECK_SMRAM32_OFFSET(reserved1,			0xFE00);
++	CHECK_SMRAM32_OFFSET(smbase,			0xFEF8);
++	CHECK_SMRAM32_OFFSET(smm_revision,		0xFEFC);
++	CHECK_SMRAM32_OFFSET(reserved2,			0xFF00);
++	CHECK_SMRAM32_OFFSET(cr4,			0xFF14);
++	CHECK_SMRAM32_OFFSET(reserved3,			0xFF18);
++	CHECK_SMRAM32_OFFSET(ds,			0xFF2C);
++	CHECK_SMRAM32_OFFSET(fs,			0xFF38);
++	CHECK_SMRAM32_OFFSET(gs,			0xFF44);
++	CHECK_SMRAM32_OFFSET(idtr,			0xFF50);
++	CHECK_SMRAM32_OFFSET(tr,			0xFF5C);
++	CHECK_SMRAM32_OFFSET(gdtr,			0xFF6C);
++	CHECK_SMRAM32_OFFSET(ldtr,			0xFF78);
++	CHECK_SMRAM32_OFFSET(es,			0xFF84);
++	CHECK_SMRAM32_OFFSET(cs,			0xFF90);
++	CHECK_SMRAM32_OFFSET(ss,			0xFF9C);
++	CHECK_SMRAM32_OFFSET(es_sel,			0xFFA8);
++	CHECK_SMRAM32_OFFSET(cs_sel,			0xFFAC);
++	CHECK_SMRAM32_OFFSET(ss_sel,			0xFFB0);
++	CHECK_SMRAM32_OFFSET(ds_sel,			0xFFB4);
++	CHECK_SMRAM32_OFFSET(fs_sel,			0xFFB8);
++	CHECK_SMRAM32_OFFSET(gs_sel,			0xFFBC);
++	CHECK_SMRAM32_OFFSET(ldtr_sel,			0xFFC0);
++	CHECK_SMRAM32_OFFSET(tr_sel,			0xFFC4);
++	CHECK_SMRAM32_OFFSET(dr7,			0xFFC8);
++	CHECK_SMRAM32_OFFSET(dr6,			0xFFCC);
++	CHECK_SMRAM32_OFFSET(gprs,			0xFFD0);
++	CHECK_SMRAM32_OFFSET(eip,			0xFFF0);
++	CHECK_SMRAM32_OFFSET(eflags,			0xFFF4);
++	CHECK_SMRAM32_OFFSET(cr3,			0xFFF8);
++	CHECK_SMRAM32_OFFSET(cr0,			0xFFFC);
++
++	/* 64 bit SMRAM image */
++	CHECK_SMRAM64_OFFSET(es,			0xFE00);
++	CHECK_SMRAM64_OFFSET(cs,			0xFE10);
++	CHECK_SMRAM64_OFFSET(ss,			0xFE20);
++	CHECK_SMRAM64_OFFSET(ds,			0xFE30);
++	CHECK_SMRAM64_OFFSET(fs,			0xFE40);
++	CHECK_SMRAM64_OFFSET(gs,			0xFE50);
++	CHECK_SMRAM64_OFFSET(gdtr,			0xFE60);
++	CHECK_SMRAM64_OFFSET(ldtr,			0xFE70);
++	CHECK_SMRAM64_OFFSET(idtr,			0xFE80);
++	CHECK_SMRAM64_OFFSET(tr,			0xFE90);
++	CHECK_SMRAM64_OFFSET(io_restart_rip,		0xFEA0);
++	CHECK_SMRAM64_OFFSET(io_restart_rcx,		0xFEA8);
++	CHECK_SMRAM64_OFFSET(io_restart_rsi,		0xFEB0);
++	CHECK_SMRAM64_OFFSET(io_restart_rdi,		0xFEB8);
++	CHECK_SMRAM64_OFFSET(io_restart_dword,		0xFEC0);
++	CHECK_SMRAM64_OFFSET(reserved1,			0xFEC4);
++	CHECK_SMRAM64_OFFSET(io_inst_restart,		0xFEC8);
++	CHECK_SMRAM64_OFFSET(auto_hlt_restart,		0xFEC9);
++	CHECK_SMRAM64_OFFSET(reserved2,			0xFECA);
++	CHECK_SMRAM64_OFFSET(efer,			0xFED0);
++	CHECK_SMRAM64_OFFSET(svm_guest_flag,		0xFED8);
++	CHECK_SMRAM64_OFFSET(svm_guest_vmcb_gpa,	0xFEE0);
++	CHECK_SMRAM64_OFFSET(svm_guest_virtual_int,	0xFEE8);
++	CHECK_SMRAM64_OFFSET(reserved3,			0xFEF0);
++	CHECK_SMRAM64_OFFSET(smm_revison,		0xFEFC);
++	CHECK_SMRAM64_OFFSET(smbase,			0xFF00);
++	CHECK_SMRAM64_OFFSET(reserved4,			0xFF04);
++	CHECK_SMRAM64_OFFSET(ssp,			0xFF18);
++	CHECK_SMRAM64_OFFSET(svm_guest_pat,		0xFF20);
++	CHECK_SMRAM64_OFFSET(svm_host_efer,		0xFF28);
++	CHECK_SMRAM64_OFFSET(svm_host_cr4,		0xFF30);
++	CHECK_SMRAM64_OFFSET(svm_host_cr3,		0xFF38);
++	CHECK_SMRAM64_OFFSET(svm_host_cr0,		0xFF40);
++	CHECK_SMRAM64_OFFSET(cr4,			0xFF48);
++	CHECK_SMRAM64_OFFSET(cr3,			0xFF50);
++	CHECK_SMRAM64_OFFSET(cr0,			0xFF58);
++	CHECK_SMRAM64_OFFSET(dr7,			0xFF60);
++	CHECK_SMRAM64_OFFSET(dr6,			0xFF68);
++	CHECK_SMRAM64_OFFSET(rflags,			0xFF70);
++	CHECK_SMRAM64_OFFSET(rip,			0xFF78);
++	CHECK_SMRAM64_OFFSET(gprs,			0xFF80);
++
++	BUILD_BUG_ON(sizeof(union kvm_smram) != 512);
++}
++
++#undef CHECK_SMRAM64_OFFSET
++#undef CHECK_SMRAM32_OFFSET
++
++
+ void kvm_smm_changed(struct kvm_vcpu *vcpu, bool entering_smm)
+ {
+ 	trace_kvm_smm_transition(vcpu->vcpu_id, vcpu->arch.smbase, entering_smm);
+@@ -199,6 +290,8 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 	unsigned long cr0;
+ 	char buf[512];
+ 
++	check_smram_offsets();
++
+ 	memset(buf, 0, 512);
+ #ifdef CONFIG_X86_64
+ 	if (guest_cpuid_has(vcpu, X86_FEATURE_LM))
+@@ -449,6 +542,7 @@ static int rsm_load_state_64(struct x86_emulate_ctxt *ctxt,
+ 	u64 val, cr0, cr3, cr4;
+ 	int i, r;
+ 
++
+ 	for (i = 0; i < 16; i++)
+ 		*reg_write(ctxt, i) = GET_SMSTATE(u64, smstate, 0x7ff8 - i * 8);
+ 
+diff --git a/arch/x86/kvm/smm.h b/arch/x86/kvm/smm.h
+index a6795b93ba30..bf5c7ffeb11e 100644
+--- a/arch/x86/kvm/smm.h
++++ b/arch/x86/kvm/smm.h
+@@ -2,6 +2,8 @@
+ #ifndef ASM_KVM_SMM_H
+ #define ASM_KVM_SMM_H
+ 
++#include <linux/build_bug.h>
++
+ #define GET_SMSTATE(type, buf, offset)		\
+ 	(*(type *)((buf) + (offset) - 0x7e00))
+ 
+@@ -9,6 +11,131 @@
+ 	*(type *)((buf) + (offset) - 0x7e00) = val
+ 
+ #ifdef CONFIG_KVM_SMM
++
++
++/* 32 bit KVM's emulated SMM layout. Loosely based on Intel's layout */
++
++struct kvm_smm_seg_state_32 {
++	u32 flags;
++	u32 limit;
++	u32 base;
++} __packed;
++
++struct kvm_smram_state_32 {
++	u32 reserved1[62];
++	u32 smbase;
++	u32 smm_revision;
++	u32 reserved2[5];
++	u32 cr4; /* CR4 is not present in Intel/AMD SMRAM image */
++	u32 reserved3[5];
++
++	/*
++	 * Segment state is not present/documented in the Intel/AMD SMRAM image
++	 * Instead this area on Intel/AMD contains IO/HLT restart flags.
++	 */
++	struct kvm_smm_seg_state_32 ds;
++	struct kvm_smm_seg_state_32 fs;
++	struct kvm_smm_seg_state_32 gs;
++	struct kvm_smm_seg_state_32 idtr; /* IDTR has only base and limit */
++	struct kvm_smm_seg_state_32 tr;
++	u32 reserved;
++	struct kvm_smm_seg_state_32 gdtr; /* GDTR has only base and limit */
++	struct kvm_smm_seg_state_32 ldtr;
++	struct kvm_smm_seg_state_32 es;
++	struct kvm_smm_seg_state_32 cs;
++	struct kvm_smm_seg_state_32 ss;
++
++	u32 es_sel;
++	u32 cs_sel;
++	u32 ss_sel;
++	u32 ds_sel;
++	u32 fs_sel;
++	u32 gs_sel;
++	u32 ldtr_sel;
++	u32 tr_sel;
++
++	u32 dr7;
++	u32 dr6;
++	u32 gprs[8]; /* GPRS in the "natural" X86 order (EAX/ECX/EDX.../EDI) */
++	u32 eip;
++	u32 eflags;
++	u32 cr3;
++	u32 cr0;
++} __packed;
++
++
++/* 64 bit KVM's emulated SMM layout. Based on AMD64 layout */
++
++struct kvm_smm_seg_state_64 {
++	u16 selector;
++	u16 attributes;
++	u32 limit;
++	u64 base;
++};
++
++struct kvm_smram_state_64 {
++
++	struct kvm_smm_seg_state_64 es;
++	struct kvm_smm_seg_state_64 cs;
++	struct kvm_smm_seg_state_64 ss;
++	struct kvm_smm_seg_state_64 ds;
++	struct kvm_smm_seg_state_64 fs;
++	struct kvm_smm_seg_state_64 gs;
++	struct kvm_smm_seg_state_64 gdtr; /* GDTR has only base and limit*/
++	struct kvm_smm_seg_state_64 ldtr;
++	struct kvm_smm_seg_state_64 idtr; /* IDTR has only base and limit*/
++	struct kvm_smm_seg_state_64 tr;
++
++	/* I/O restart and auto halt restart are not implemented by KVM */
++	u64 io_restart_rip;
++	u64 io_restart_rcx;
++	u64 io_restart_rsi;
++	u64 io_restart_rdi;
++	u32 io_restart_dword;
++	u32 reserved1;
++	u8 io_inst_restart;
++	u8 auto_hlt_restart;
++	u8 reserved2[6];
++
++	u64 efer;
++
++	/*
++	 * Two fields below are implemented on AMD only, to store
++	 * SVM guest vmcb address if the #SMI was received while in the guest mode.
++	 */
++	u64 svm_guest_flag;
++	u64 svm_guest_vmcb_gpa;
++	u64 svm_guest_virtual_int; /* unknown purpose, not implemented */
++
++	u32 reserved3[3];
++	u32 smm_revison;
++	u32 smbase;
++	u32 reserved4[5];
++
++	/* ssp and svm_* fields below are not implemented by KVM */
++	u64 ssp;
++	u64 svm_guest_pat;
++	u64 svm_host_efer;
++	u64 svm_host_cr4;
++	u64 svm_host_cr3;
++	u64 svm_host_cr0;
++
++	u64 cr4;
++	u64 cr3;
++	u64 cr0;
++	u64 dr7;
++	u64 dr6;
++	u64 rflags;
++	u64 rip;
++	u64 gprs[16]; /* GPRS in a reversed "natural" X86 order (R15/R14/../RCX/RAX.) */
++};
++
++union kvm_smram {
++	struct kvm_smram_state_64 smram64;
++	struct kvm_smram_state_32 smram32;
++	u8 bytes[512];
++};
++
+ static inline int kvm_inject_smi(struct kvm_vcpu *vcpu)
+ {
+ 	kvm_make_request(KVM_REQ_SMI, vcpu);
+-- 
+2.38.1
+

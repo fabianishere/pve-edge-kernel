@@ -1,0 +1,194 @@
+From e13349f01bc9b4b94dd995d60fad196d3074a868 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:35 +0300
+Subject: [PATCH] KVM: x86: smm: use smram structs in the common code
+
+Use kvm_smram union instad of raw arrays in the common smm code.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+---
+ arch/x86/include/asm/kvm_host.h |  5 +++--
+ arch/x86/kvm/smm.c              | 27 ++++++++++++++-------------
+ arch/x86/kvm/svm/svm.c          |  8 ++++++--
+ arch/x86/kvm/vmx/vmx.c          |  4 ++--
+ 4 files changed, 25 insertions(+), 19 deletions(-)
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 87ee187b3f26..84c0b441a336 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -206,6 +206,7 @@ typedef enum exit_fastpath_completion fastpath_t;
+ 
+ struct x86_emulate_ctxt;
+ struct x86_exception;
++union kvm_smram;
+ enum x86_intercept;
+ enum x86_intercept_stage;
+ 
+@@ -1604,8 +1605,8 @@ struct kvm_x86_ops {
+ 
+ #ifdef CONFIG_KVM_SMM
+ 	int (*smi_allowed)(struct kvm_vcpu *vcpu, bool for_injection);
+-	int (*enter_smm)(struct kvm_vcpu *vcpu, char *smstate);
+-	int (*leave_smm)(struct kvm_vcpu *vcpu, const char *smstate);
++	int (*enter_smm)(struct kvm_vcpu *vcpu, union kvm_smram *smram);
++	int (*leave_smm)(struct kvm_vcpu *vcpu, const union kvm_smram *smram);
+ 	void (*enable_smi_window)(struct kvm_vcpu *vcpu);
+ #endif
+ 
+diff --git a/arch/x86/kvm/smm.c b/arch/x86/kvm/smm.c
+index 01dab9fc3ab4..e714d43b746c 100644
+--- a/arch/x86/kvm/smm.c
++++ b/arch/x86/kvm/smm.c
+@@ -288,17 +288,18 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 	struct kvm_segment cs, ds;
+ 	struct desc_ptr dt;
+ 	unsigned long cr0;
+-	char buf[512];
++	union kvm_smram smram;
+ 
+ 	check_smram_offsets();
+ 
+-	memset(buf, 0, 512);
++	memset(smram.bytes, 0, sizeof(smram.bytes));
++
+ #ifdef CONFIG_X86_64
+ 	if (guest_cpuid_has(vcpu, X86_FEATURE_LM))
+-		enter_smm_save_state_64(vcpu, buf);
++		enter_smm_save_state_64(vcpu, smram.bytes);
+ 	else
+ #endif
+-		enter_smm_save_state_32(vcpu, buf);
++		enter_smm_save_state_32(vcpu, smram.bytes);
+ 
+ 	/*
+ 	 * Give enter_smm() a chance to make ISA-specific changes to the vCPU
+@@ -308,12 +309,12 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 	 * Kill the VM in the unlikely case of failure, because the VM
+ 	 * can be in undefined state in this case.
+ 	 */
+-	if (static_call(kvm_x86_enter_smm)(vcpu, buf))
++	if (static_call(kvm_x86_enter_smm)(vcpu, &smram))
+ 		goto error;
+ 
+ 	kvm_smm_changed(vcpu, true);
+ 
+-	if (kvm_vcpu_write_guest(vcpu, vcpu->arch.smbase + 0xfe00, buf, sizeof(buf)))
++	if (kvm_vcpu_write_guest(vcpu, vcpu->arch.smbase + 0xfe00, &smram, sizeof(smram)))
+ 		goto error;
+ 
+ 	if (static_call(kvm_x86_get_nmi_mask)(vcpu))
+@@ -473,7 +474,7 @@ static int rsm_enter_protected_mode(struct kvm_vcpu *vcpu,
+ }
+ 
+ static int rsm_load_state_32(struct x86_emulate_ctxt *ctxt,
+-			     const char *smstate)
++			     u8 *smstate)
+ {
+ 	struct kvm_vcpu *vcpu = ctxt->vcpu;
+ 	struct kvm_segment desc;
+@@ -534,7 +535,7 @@ static int rsm_load_state_32(struct x86_emulate_ctxt *ctxt,
+ 
+ #ifdef CONFIG_X86_64
+ static int rsm_load_state_64(struct x86_emulate_ctxt *ctxt,
+-			     const char *smstate)
++			     u8 *smstate)
+ {
+ 	struct kvm_vcpu *vcpu = ctxt->vcpu;
+ 	struct kvm_segment desc;
+@@ -606,13 +607,13 @@ int emulator_leave_smm(struct x86_emulate_ctxt *ctxt)
+ {
+ 	struct kvm_vcpu *vcpu = ctxt->vcpu;
+ 	unsigned long cr0, cr4, efer;
+-	char buf[512];
++	union kvm_smram smram;
+ 	u64 smbase;
+ 	int ret;
+ 
+ 	smbase = vcpu->arch.smbase;
+ 
+-	ret = kvm_vcpu_read_guest(vcpu, smbase + 0xfe00, buf, sizeof(buf));
++	ret = kvm_vcpu_read_guest(vcpu, smbase + 0xfe00, smram.bytes, sizeof(smram));
+ 	if (ret < 0)
+ 		return X86EMUL_UNHANDLEABLE;
+ 
+@@ -666,13 +667,13 @@ int emulator_leave_smm(struct x86_emulate_ctxt *ctxt)
+ 	 * state (e.g. enter guest mode) before loading state from the SMM
+ 	 * state-save area.
+ 	 */
+-	if (static_call(kvm_x86_leave_smm)(vcpu, buf))
++	if (static_call(kvm_x86_leave_smm)(vcpu, &smram))
+ 		return X86EMUL_UNHANDLEABLE;
+ 
+ #ifdef CONFIG_X86_64
+ 	if (guest_cpuid_has(vcpu, X86_FEATURE_LM))
+-		return rsm_load_state_64(ctxt, buf);
++		return rsm_load_state_64(ctxt, smram.bytes);
+ 	else
+ #endif
+-		return rsm_load_state_32(ctxt, buf);
++		return rsm_load_state_32(ctxt, smram.bytes);
+ }
+diff --git a/arch/x86/kvm/svm/svm.c b/arch/x86/kvm/svm/svm.c
+index e69390909d08..2a61b8c50ab4 100644
+--- a/arch/x86/kvm/svm/svm.c
++++ b/arch/x86/kvm/svm/svm.c
+@@ -4437,12 +4437,14 @@ static int svm_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+ 	return 1;
+ }
+ 
+-static int svm_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
++static int svm_enter_smm(struct kvm_vcpu *vcpu, union kvm_smram *smram)
+ {
+ 	struct vcpu_svm *svm = to_svm(vcpu);
+ 	struct kvm_host_map map_save;
+ 	int ret;
+ 
++	char *smstate = (char *)smram;
++
+ 	if (!is_guest_mode(vcpu))
+ 		return 0;
+ 
+@@ -4484,7 +4486,7 @@ static int svm_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
+ 	return 0;
+ }
+ 
+-static int svm_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
++static int svm_leave_smm(struct kvm_vcpu *vcpu, const union kvm_smram *smram)
+ {
+ 	struct vcpu_svm *svm = to_svm(vcpu);
+ 	struct kvm_host_map map, map_save;
+@@ -4492,6 +4494,8 @@ static int svm_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
+ 	struct vmcb *vmcb12;
+ 	int ret;
+ 
++	const char *smstate = (const char *)smram;
++
+ 	if (!guest_cpuid_has(vcpu, X86_FEATURE_LM))
+ 		return 0;
+ 
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index 8cfb40cfad10..480ff79071c6 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -7922,7 +7922,7 @@ static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+ 	return !is_smm(vcpu);
+ }
+ 
+-static int vmx_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
++static int vmx_enter_smm(struct kvm_vcpu *vcpu, union kvm_smram *smram)
+ {
+ 	struct vcpu_vmx *vmx = to_vmx(vcpu);
+ 
+@@ -7943,7 +7943,7 @@ static int vmx_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
+ 	return 0;
+ }
+ 
+-static int vmx_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
++static int vmx_leave_smm(struct kvm_vcpu *vcpu, const union kvm_smram *smram)
+ {
+ 	struct vcpu_vmx *vmx = to_vmx(vcpu);
+ 	int ret;
+-- 
+2.38.1
+

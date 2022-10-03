@@ -1,0 +1,80 @@
+From 20e250dd42abe942ed3498c5b5be02699e38cc4a Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:26 +0300
+Subject: [PATCH] KVM: x86: do not define KVM_REQ_SMI if SMM disabled
+
+This ensures that all the relevant code is compiled out, in fact
+the process_smi stub can be removed too.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ arch/x86/include/asm/kvm_host.h | 2 ++
+ arch/x86/kvm/smm.h              | 1 -
+ arch/x86/kvm/x86.c              | 6 ++++++
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index dcaa0b43baef..87ee187b3f26 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -81,7 +81,9 @@
+ #define KVM_REQ_NMI			KVM_ARCH_REQ(9)
+ #define KVM_REQ_PMU			KVM_ARCH_REQ(10)
+ #define KVM_REQ_PMI			KVM_ARCH_REQ(11)
++#ifdef CONFIG_KVM_SMM
+ #define KVM_REQ_SMI			KVM_ARCH_REQ(12)
++#endif
+ #define KVM_REQ_MASTERCLOCK_UPDATE	KVM_ARCH_REQ(13)
+ #define KVM_REQ_MCLOCK_INPROGRESS \
+ 	KVM_ARCH_REQ_FLAGS(14, KVM_REQUEST_WAIT | KVM_REQUEST_NO_WAKEUP)
+diff --git a/arch/x86/kvm/smm.h b/arch/x86/kvm/smm.h
+index 7ccce6b655ca..a6795b93ba30 100644
+--- a/arch/x86/kvm/smm.h
++++ b/arch/x86/kvm/smm.h
+@@ -28,7 +28,6 @@ void process_smi(struct kvm_vcpu *vcpu);
+ static inline int kvm_inject_smi(struct kvm_vcpu *vcpu) { return -ENOTTY; }
+ static inline bool is_smm(struct kvm_vcpu *vcpu) { return false; }
+ static inline void kvm_smm_changed(struct kvm_vcpu *vcpu, bool in_smm) { WARN_ON_ONCE(1); }
+-static inline void process_smi(struct kvm_vcpu *vcpu) { WARN_ON_ONCE(1); }
+ 
+ /*
+  * emulator_leave_smm is used as a function pointer, so the
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 33c8fb8f4c61..7b109120f47d 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -5013,8 +5013,10 @@ static void kvm_vcpu_ioctl_x86_get_vcpu_events(struct kvm_vcpu *vcpu,
+ {
+ 	process_nmi(vcpu);
+ 
++#ifdef CONFIG_KVM_SMM
+ 	if (kvm_check_request(KVM_REQ_SMI, vcpu))
+ 		process_smi(vcpu);
++#endif
+ 
+ 	/*
+ 	 * In guest mode, payload delivery should be deferred,
+@@ -10027,8 +10029,10 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
+ 		}
+ 		if (kvm_check_request(KVM_REQ_STEAL_UPDATE, vcpu))
+ 			record_steal_time(vcpu);
++#ifdef CONFIG_KVM_SMM
+ 		if (kvm_check_request(KVM_REQ_SMI, vcpu))
+ 			process_smi(vcpu);
++#endif
+ 		if (kvm_check_request(KVM_REQ_NMI, vcpu))
+ 			process_nmi(vcpu);
+ 		if (kvm_check_request(KVM_REQ_PMU, vcpu))
+@@ -12351,7 +12355,9 @@ bool kvm_arch_dy_runnable(struct kvm_vcpu *vcpu)
+ 		return true;
+ 
+ 	if (kvm_test_request(KVM_REQ_NMI, vcpu) ||
++#ifdef CONFIG_KVM_SMM
+ 		kvm_test_request(KVM_REQ_SMI, vcpu) ||
++#endif
+ 		 kvm_test_request(KVM_REQ_EVENT, vcpu))
+ 		return true;
+ 
+-- 
+2.38.1
+

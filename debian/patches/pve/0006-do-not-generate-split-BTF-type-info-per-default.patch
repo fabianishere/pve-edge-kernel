@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fabian=20Gr=C3=BCnbichler?= <f.gruenbichler@proxmox.com>
+Date: Thu, 14 Sep 2017 11:09:58 +0200
+Subject: [PATCH] do not generate split BTF type info per default
+
+This reverts commit a8ed1a0607cfa5478ff6009539f44790c4d0956d.
+
+It breaks ZFS sometimes:
+https://github.com/openzfs/zfs/issues/12301#issuecomment-873303739
+
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ lib/Kconfig.debug | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+index 2e24db4bff19..7766a24d0f19 100644
+--- a/lib/Kconfig.debug
++++ b/lib/Kconfig.debug
+@@ -357,7 +357,7 @@ config PAHOLE_HAS_BTF_TAG
+ 	  these attributes, so make the config depend on CC_IS_CLANG.
+ 
+ config DEBUG_INFO_BTF_MODULES
+-	def_bool y
++	def_bool n
+ 	depends on DEBUG_INFO_BTF && MODULES && PAHOLE_HAS_SPLIT_BTF
+ 	help
+ 	  Generate compact split BTF type information for kernel modules.
