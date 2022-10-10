@@ -1,8 +1,8 @@
-pve-kernel (5.19.14-1) edge; urgency=medium
+pve-kernel (5.19.14-2) edge; urgency=medium
 
-  * Update to Linux 5.19.14.
+  * Update to ZFS 2.1.6.
 
- -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Wed, 05 Oct 2022 12:13:28 +0000
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Mon, 10 Oct 2022 11:00:00 +0000
 
 pve-kernel (5.19.12-1) edge; urgency=medium
 
