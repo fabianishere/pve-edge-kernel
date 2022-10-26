@@ -15,7 +15,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
     strategy:
       matrix:
-        debian: [buster, bullseye]
+        debian: [bullseye]
         include:
           - build_profile: 'generic'
             build_cc: gcc
@@ -81,14 +81,10 @@ jobs:
         tag: v${{ steps.format_release.outputs.release }}
         body: ${{ steps.format_release.outputs.changelog }}
         token: ${{ secrets.PAT }}
-        artifacts: "artifacts/buster-generic/pve-headers-*.deb,artifacts/buster-generic/pve-kernel-*.deb,artifacts/buster-generic/linux-tools-*.deb"
+        artifacts: "artifacts/bullseye-generic/pve-headers-*.deb,artifacts/bullseye-generic/pve-kernel-*.deb,artifacts/bullseye-generic/linux-tools-*.deb"
     - name: Release to CloudSmith
       run: |
         pip install --upgrade cloudsmith-cli
-        find artifacts/buster-generic \
-          -name '*.deb' \
-          -not -name "*dbgsym*" \
-          -exec cloudsmith push deb pve-edge/kernel/debian/buster {} --republish \;
         find artifacts/bullseye-generic \
              -name '*.deb' \
              -not -name "*dbgsym*" \
