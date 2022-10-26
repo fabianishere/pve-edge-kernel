@@ -24,7 +24,7 @@ jobs:
     - name: Clean Workspace
       run: rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
     - name: Checkout Sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
           submodules: recursive
           path: pve-edge-kernel
@@ -44,7 +44,7 @@ jobs:
           PVE_KERNEL_CFLAGS: ${{ matrix.build_cflags }}
           PVE_ZFS_CC: ${{ matrix.build_cc }}
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.debian }}-${{ matrix.build_profile }}
         path: "*.deb"
@@ -55,11 +55,11 @@ jobs:
     needs: build
     steps:
     - name: Checkout Sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Download Artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
           path: artifacts
     - name: Delete Debug Symbols

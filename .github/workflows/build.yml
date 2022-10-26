@@ -11,7 +11,7 @@ jobs:
     - name: Clean Workspace
       run: rm -rf *.deb *.ddeb *.build *.buildinfo *.changes
     - name: Checkout Sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
           submodules: recursive
           path: pve-edge-kernel
@@ -24,7 +24,7 @@ jobs:
         debian/rules debian/control
         debuild -e CCACHE_DIR=/var/cache/ccache --prepend-path=/usr/lib/ccache --jobs=auto -b -uc -us
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v3
       with:
         name: debs
         path: "*.deb"
