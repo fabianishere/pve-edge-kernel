@@ -1,0 +1,68 @@
+From a01916088ebb15b357d5c110270b797295d02f78 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:33 +0300
+Subject: [PATCH] KVM: x86: smm: check for failures on smm entry
+
+In the rare case of the failure on SMM entry, the KVM should at
+least terminate the VM instead of going south.
+
+Suggested-by: Sean Christopherson <seanjc@google.com>
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+---
+ arch/x86/kvm/smm.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/kvm/smm.c b/arch/x86/kvm/smm.c
+index b290ad14070f..1191a79cf027 100644
+--- a/arch/x86/kvm/smm.c
++++ b/arch/x86/kvm/smm.c
+@@ -211,11 +211,17 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 	 * Give enter_smm() a chance to make ISA-specific changes to the vCPU
+ 	 * state (e.g. leave guest mode) after we've saved the state into the
+ 	 * SMM state-save area.
++	 *
++	 * Kill the VM in the unlikely case of failure, because the VM
++	 * can be in undefined state in this case.
+ 	 */
+-	static_call(kvm_x86_enter_smm)(vcpu, buf);
++	if (static_call(kvm_x86_enter_smm)(vcpu, buf))
++		goto error;
+ 
+ 	kvm_smm_changed(vcpu, true);
+-	kvm_vcpu_write_guest(vcpu, vcpu->arch.smbase + 0xfe00, buf, sizeof(buf));
++
++	if (kvm_vcpu_write_guest(vcpu, vcpu->arch.smbase + 0xfe00, buf, sizeof(buf)))
++		goto error;
+ 
+ 	if (static_call(kvm_x86_get_nmi_mask)(vcpu))
+ 		vcpu->arch.hflags |= HF_SMM_INSIDE_NMI_MASK;
+@@ -235,7 +241,8 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 	dt.address = dt.size = 0;
+ 	static_call(kvm_x86_set_idt)(vcpu, &dt);
+ 
+-	kvm_set_dr(vcpu, 7, DR7_FIXED_1);
++	if (WARN_ON_ONCE(kvm_set_dr(vcpu, 7, DR7_FIXED_1)))
++		goto error;
+ 
+ 	cs.selector = (vcpu->arch.smbase >> 4) & 0xffff;
+ 	cs.base = vcpu->arch.smbase;
+@@ -264,11 +271,15 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 
+ #ifdef CONFIG_X86_64
+ 	if (guest_cpuid_has(vcpu, X86_FEATURE_LM))
+-		static_call(kvm_x86_set_efer)(vcpu, 0);
++		if (static_call(kvm_x86_set_efer)(vcpu, 0))
++			goto error;
+ #endif
+ 
+ 	kvm_update_cpuid_runtime(vcpu);
+ 	kvm_mmu_reset_context(vcpu);
++	return;
++error:
++	kvm_vm_dead(vcpu->kvm);
+ }
+ 
+ static void rsm_set_desc_flags(struct kvm_segment *desc, u32 flags)
+-- 
+2.38.1
+

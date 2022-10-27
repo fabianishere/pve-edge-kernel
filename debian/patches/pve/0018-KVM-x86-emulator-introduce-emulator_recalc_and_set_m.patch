@@ -1,30 +1,29 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From d2c4fc069a073d621d2cbc97ffe9547754784639 Mon Sep 17 00:00:00 2001
 From: Maxim Levitsky <mlevitsk@redhat.com>
-Date: Wed, 3 Aug 2022 18:50:01 +0300
+Date: Tue, 25 Oct 2022 15:47:29 +0300
 Subject: [PATCH] KVM: x86: emulator: introduce emulator_recalc_and_set_mode
 
-Some instructions update the cpu execution mode, which needs
-to update the emulation mode.
+Some instructions update the cpu execution mode, which needs to update the
+emulation mode.
 
 Extract this code, and make assign_eip_far use it.
 
 assign_eip_far now reads CS, instead of getting it via a parameter,
-which is ok, because callers always assign CS to the
-same value before calling it.
+which is ok, because callers always assign CS to the same value
+before calling this function.
 
 No functional change is intended.
 
 Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
-Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  arch/x86/kvm/emulate.c | 85 ++++++++++++++++++++++++++++--------------
  1 file changed, 57 insertions(+), 28 deletions(-)
 
 diff --git a/arch/x86/kvm/emulate.c b/arch/x86/kvm/emulate.c
-index 35b12692739c..6a597d68d456 100644
+index 5ee1998dd38e..d75d33d60cb8 100644
 --- a/arch/x86/kvm/emulate.c
 +++ b/arch/x86/kvm/emulate.c
-@@ -795,8 +795,7 @@ static int linearize(struct x86_emulate_ctxt *ctxt,
+@@ -760,8 +760,7 @@ static int linearize(struct x86_emulate_ctxt *ctxt,
  			   ctxt->mode, linear);
  }
  
@@ -34,7 +33,7 @@ index 35b12692739c..6a597d68d456 100644
  {
  	ulong linear;
  	int rc;
-@@ -806,41 +805,71 @@ static inline int assign_eip(struct x86_emulate_ctxt *ctxt, ulong dst,
+@@ -771,41 +770,71 @@ static inline int assign_eip(struct x86_emulate_ctxt *ctxt, ulong dst,
  
  	if (ctxt->op_bytes != sizeof(unsigned long))
  		addr.ea = dst & ((1UL << (ctxt->op_bytes << 3)) - 1);
@@ -54,7 +53,7 @@ index 35b12692739c..6a597d68d456 100644
 +
 +	ctxt->ops->get_msr(ctxt, MSR_EFER, &efer);
 +
-+	if (!ctxt->ops->get_cr(ctxt, 0) & X86_CR0_PE) {
++	if (!(ctxt->ops->get_cr(ctxt, 0) & X86_CR0_PE)) {
 +		/* Real mode. cpu must not have long mode active */
 +		if (efer & EFER_LMA)
 +			return X86EMUL_UNHANDLEABLE;
@@ -129,7 +128,7 @@ index 35b12692739c..6a597d68d456 100644
  }
  
  static inline int jmp_rel(struct x86_emulate_ctxt *ctxt, int rel)
-@@ -2154,7 +2183,7 @@ static int em_jmp_far(struct x86_emulate_ctxt *ctxt)
+@@ -2139,7 +2168,7 @@ static int em_jmp_far(struct x86_emulate_ctxt *ctxt)
  	if (rc != X86EMUL_CONTINUE)
  		return rc;
  
@@ -138,7 +137,7 @@ index 35b12692739c..6a597d68d456 100644
  	/* Error handling is not implemented. */
  	if (rc != X86EMUL_CONTINUE)
  		return X86EMUL_UNHANDLEABLE;
-@@ -2235,7 +2264,7 @@ static int em_ret_far(struct x86_emulate_ctxt *ctxt)
+@@ -2217,7 +2246,7 @@ static int em_ret_far(struct x86_emulate_ctxt *ctxt)
  				       &new_desc);
  	if (rc != X86EMUL_CONTINUE)
  		return rc;
@@ -147,7 +146,7 @@ index 35b12692739c..6a597d68d456 100644
  	/* Error handling is not implemented. */
  	if (rc != X86EMUL_CONTINUE)
  		return X86EMUL_UNHANDLEABLE;
-@@ -3459,7 +3488,7 @@ static int em_call_far(struct x86_emulate_ctxt *ctxt)
+@@ -3117,7 +3146,7 @@ static int em_call_far(struct x86_emulate_ctxt *ctxt)
  	if (rc != X86EMUL_CONTINUE)
  		return rc;
  
@@ -156,3 +155,6 @@ index 35b12692739c..6a597d68d456 100644
  	if (rc != X86EMUL_CONTINUE)
  		goto fail;
  
+-- 
+2.38.1
+

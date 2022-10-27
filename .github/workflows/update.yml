@@ -19,7 +19,7 @@ jobs:
     runs-on: [ubuntu-latest]
     steps:
     - name: Checkout Sources
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
           submodules: recursive
     - name: Setup System Dependencies
@@ -42,7 +42,7 @@ jobs:
         echo "::set-output name=changelog::$changelog"
         echo "::set-output name=branch::${GITHUB_REF##*/}"
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v3
+      uses: peter-evans/create-pull-request@v4
       with:
         token: ${{ secrets.PAT }} # Custom token needed to recursively trigger workflows
         author: Fabian Mastenbroek <mail.fabianm@gmail.com>

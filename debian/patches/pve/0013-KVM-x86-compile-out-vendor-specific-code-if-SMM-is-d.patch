@@ -1,0 +1,194 @@
+From 3b69dd23b153e6f4a512a9495612a2664d236872 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:24 +0300
+Subject: [PATCH] KVM: x86: compile out vendor-specific code if SMM is disabled
+
+Vendor-specific code that deals with SMI injection and saving/restoring
+SMM state is not needed if CONFIG_KVM_SMM is disabled, so remove the
+four callbacks smi_allowed, enter_smm, leave_smm and enable_smi_window.
+The users in svm/nested.c and x86.c also have to be compiled out; the
+amount of #ifdef'ed code is small and it's not worth moving it to
+smm.c.
+
+enter_smm is now used only within #ifdef CONFIG_KVM_SMM, and the stub
+can therefore be removed.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ arch/x86/include/asm/kvm-x86-ops.h | 2 ++
+ arch/x86/include/asm/kvm_host.h    | 2 ++
+ arch/x86/kvm/smm.h                 | 1 -
+ arch/x86/kvm/svm/nested.c          | 2 ++
+ arch/x86/kvm/svm/svm.c             | 4 ++++
+ arch/x86/kvm/vmx/vmx.c             | 4 ++++
+ arch/x86/kvm/x86.c                 | 4 ++++
+ 7 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/kvm-x86-ops.h b/arch/x86/include/asm/kvm-x86-ops.h
+index 51f777071584..d92ec198db2a 100644
+--- a/arch/x86/include/asm/kvm-x86-ops.h
++++ b/arch/x86/include/asm/kvm-x86-ops.h
+@@ -110,10 +110,12 @@ KVM_X86_OP_OPTIONAL_RET0(dy_apicv_has_pending_interrupt)
+ KVM_X86_OP_OPTIONAL(set_hv_timer)
+ KVM_X86_OP_OPTIONAL(cancel_hv_timer)
+ KVM_X86_OP(setup_mce)
++#ifdef CONFIG_KVM_SMM
+ KVM_X86_OP(smi_allowed)
+ KVM_X86_OP(enter_smm)
+ KVM_X86_OP(leave_smm)
+ KVM_X86_OP(enable_smi_window)
++#endif
+ KVM_X86_OP_OPTIONAL(mem_enc_ioctl)
+ KVM_X86_OP_OPTIONAL(mem_enc_register_region)
+ KVM_X86_OP_OPTIONAL(mem_enc_unregister_region)
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 5b466eb0feca..3f6a31175db1 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -1600,10 +1600,12 @@ struct kvm_x86_ops {
+ 
+ 	void (*setup_mce)(struct kvm_vcpu *vcpu);
+ 
++#ifdef CONFIG_KVM_SMM
+ 	int (*smi_allowed)(struct kvm_vcpu *vcpu, bool for_injection);
+ 	int (*enter_smm)(struct kvm_vcpu *vcpu, char *smstate);
+ 	int (*leave_smm)(struct kvm_vcpu *vcpu, const char *smstate);
+ 	void (*enable_smi_window)(struct kvm_vcpu *vcpu);
++#endif
+ 
+ 	int (*mem_enc_ioctl)(struct kvm *kvm, void __user *argp);
+ 	int (*mem_enc_register_region)(struct kvm *kvm, struct kvm_enc_region *argp);
+diff --git a/arch/x86/kvm/smm.h b/arch/x86/kvm/smm.h
+index 4c699fee4492..7ccce6b655ca 100644
+--- a/arch/x86/kvm/smm.h
++++ b/arch/x86/kvm/smm.h
+@@ -28,7 +28,6 @@ void process_smi(struct kvm_vcpu *vcpu);
+ static inline int kvm_inject_smi(struct kvm_vcpu *vcpu) { return -ENOTTY; }
+ static inline bool is_smm(struct kvm_vcpu *vcpu) { return false; }
+ static inline void kvm_smm_changed(struct kvm_vcpu *vcpu, bool in_smm) { WARN_ON_ONCE(1); }
+-static inline void enter_smm(struct kvm_vcpu *vcpu) { WARN_ON_ONCE(1); }
+ static inline void process_smi(struct kvm_vcpu *vcpu) { WARN_ON_ONCE(1); }
+ 
+ /*
+diff --git a/arch/x86/kvm/svm/nested.c b/arch/x86/kvm/svm/nested.c
+index d6cc9963b04a..ec4d6be70639 100644
+--- a/arch/x86/kvm/svm/nested.c
++++ b/arch/x86/kvm/svm/nested.c
+@@ -1384,6 +1384,7 @@ static int svm_check_nested_events(struct kvm_vcpu *vcpu)
+ 		return 0;
+ 	}
+ 
++#ifdef CONFIG_KVM_SMM
+ 	if (vcpu->arch.smi_pending && !svm_smi_blocked(vcpu)) {
+ 		if (block_nested_events)
+ 			return -EBUSY;
+@@ -1392,6 +1393,7 @@ static int svm_check_nested_events(struct kvm_vcpu *vcpu)
+ 		nested_svm_simple_vmexit(svm, SVM_EXIT_SMI);
+ 		return 0;
+ 	}
++#endif
+ 
+ 	if (vcpu->arch.nmi_pending && !svm_nmi_blocked(vcpu)) {
+ 		if (block_nested_events)
+diff --git a/arch/x86/kvm/svm/svm.c b/arch/x86/kvm/svm/svm.c
+index a6807492bfae..e69390909d08 100644
+--- a/arch/x86/kvm/svm/svm.c
++++ b/arch/x86/kvm/svm/svm.c
+@@ -4409,6 +4409,7 @@ static void svm_setup_mce(struct kvm_vcpu *vcpu)
+ 	vcpu->arch.mcg_cap &= 0x1ff;
+ }
+ 
++#ifdef CONFIG_KVM_SMM
+ bool svm_smi_blocked(struct kvm_vcpu *vcpu)
+ {
+ 	struct vcpu_svm *svm = to_svm(vcpu);
+@@ -4558,6 +4559,7 @@ static void svm_enable_smi_window(struct kvm_vcpu *vcpu)
+ 		/* We must be in SMM; RSM will cause a vmexit anyway.  */
+ 	}
+ }
++#endif
+ 
+ static bool svm_can_emulate_instruction(struct kvm_vcpu *vcpu, int emul_type,
+ 					void *insn, int insn_len)
+@@ -4841,10 +4843,12 @@ static struct kvm_x86_ops svm_x86_ops __initdata = {
+ 	.pi_update_irte = avic_pi_update_irte,
+ 	.setup_mce = svm_setup_mce,
+ 
++#ifdef CONFIG_KVM_SMM
+ 	.smi_allowed = svm_smi_allowed,
+ 	.enter_smm = svm_enter_smm,
+ 	.leave_smm = svm_leave_smm,
+ 	.enable_smi_window = svm_enable_smi_window,
++#endif
+ 
+ 	.mem_enc_ioctl = sev_mem_enc_ioctl,
+ 	.mem_enc_register_region = sev_mem_enc_register_region,
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index ce22860156c5..8cfb40cfad10 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -7913,6 +7913,7 @@ static void vmx_setup_mce(struct kvm_vcpu *vcpu)
+ 			~FEAT_CTL_LMCE_ENABLED;
+ }
+ 
++#ifdef CONFIG_KVM_SMM
+ static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+ {
+ 	/* we need a nested vmexit to enter SMM, postpone if run is pending */
+@@ -7967,6 +7968,7 @@ static void vmx_enable_smi_window(struct kvm_vcpu *vcpu)
+ {
+ 	/* RSM will cause a vmexit anyway.  */
+ }
++#endif
+ 
+ static bool vmx_apic_init_signal_blocked(struct kvm_vcpu *vcpu)
+ {
+@@ -8134,10 +8136,12 @@ static struct kvm_x86_ops vmx_x86_ops __initdata = {
+ 
+ 	.setup_mce = vmx_setup_mce,
+ 
++#ifdef CONFIG_KVM_SMM
+ 	.smi_allowed = vmx_smi_allowed,
+ 	.enter_smm = vmx_enter_smm,
+ 	.leave_smm = vmx_leave_smm,
+ 	.enable_smi_window = vmx_enable_smi_window,
++#endif
+ 
+ 	.can_emulate_instruction = vmx_can_emulate_instruction,
+ 	.apic_init_signal_blocked = vmx_apic_init_signal_blocked,
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 14ef42c6efbd..33c8fb8f4c61 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -9696,6 +9696,7 @@ static int inject_pending_event(struct kvm_vcpu *vcpu, bool *req_immediate_exit)
+ 	 * in order to make progress and get back here for another iteration.
+ 	 * The kvm_x86_ops hooks communicate this by returning -EBUSY.
+ 	 */
++#ifdef CONFIG_KVM_SMM
+ 	if (vcpu->arch.smi_pending) {
+ 		r = can_inject ? static_call(kvm_x86_smi_allowed)(vcpu, true) : -EBUSY;
+ 		if (r < 0)
+@@ -9708,6 +9709,7 @@ static int inject_pending_event(struct kvm_vcpu *vcpu, bool *req_immediate_exit)
+ 		} else
+ 			static_call(kvm_x86_enable_smi_window)(vcpu);
+ 	}
++#endif
+ 
+ 	if (vcpu->arch.nmi_pending) {
+ 		r = can_inject ? static_call(kvm_x86_nmi_allowed)(vcpu, true) : -EBUSY;
+@@ -12300,10 +12302,12 @@ static inline bool kvm_vcpu_has_events(struct kvm_vcpu *vcpu)
+ 	     static_call(kvm_x86_nmi_allowed)(vcpu, false)))
+ 		return true;
+ 
++#ifdef CONFIG_KVM_SMM
+ 	if (kvm_test_request(KVM_REQ_SMI, vcpu) ||
+ 	    (vcpu->arch.smi_pending &&
+ 	     static_call(kvm_x86_smi_allowed)(vcpu, false)))
+ 		return true;
++#endif
+ 
+ 	if (kvm_arch_interrupt_allowed(vcpu) &&
+ 	    (kvm_cpu_has_interrupt(vcpu) ||
+-- 
+2.38.1
+

@@ -1,0 +1,41 @@
+From 8f5e12c8768ecff91ccf335e2242ab64482c01fb Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:25 +0300
+Subject: [PATCH] KVM: x86: remove SMRAM address space if SMM is not supported
+
+If CONFIG_KVM_SMM is not defined HF_SMM_MASK will always be zero, and
+we can spare userspace the hassle of setting up the SMRAM address space
+simply by reporting that only one address space is supported.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ arch/x86/include/asm/kvm_host.h | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 3f6a31175db1..dcaa0b43baef 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -1988,11 +1988,14 @@ enum {
+ #define HF_SMM_MASK		(1 << 6)
+ #define HF_SMM_INSIDE_NMI_MASK	(1 << 7)
+ 
+-#define __KVM_VCPU_MULTIPLE_ADDRESS_SPACE
+-#define KVM_ADDRESS_SPACE_NUM 2
+-
+-#define kvm_arch_vcpu_memslots_id(vcpu) ((vcpu)->arch.hflags & HF_SMM_MASK ? 1 : 0)
+-#define kvm_memslots_for_spte_role(kvm, role) __kvm_memslots(kvm, (role).smm)
++#ifdef CONFIG_KVM_SMM
++# define __KVM_VCPU_MULTIPLE_ADDRESS_SPACE
++# define KVM_ADDRESS_SPACE_NUM 2
++# define kvm_arch_vcpu_memslots_id(vcpu) ((vcpu)->arch.hflags & HF_SMM_MASK ? 1 : 0)
++# define kvm_memslots_for_spte_role(kvm, role) __kvm_memslots(kvm, (role).smm)
++#else
++# define kvm_memslots_for_spte_role(kvm, role) __kvm_memslots(kvm, 0)
++#endif
+ 
+ #define KVM_ARCH_WANT_MMU_NOTIFIER
+ 
+-- 
+2.38.1
+

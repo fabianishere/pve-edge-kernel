@@ -1,9 +1,9 @@
 # Proxmox Edge kernels
-Custom Linux kernels for Proxmox VE.
+Custom Linux kernels for Proxmox VE 7.
 
 #### Available Versions
-1. Linux 5.19
-1. Linux 5.18
+1. Linux 6.0
+2. Linux 5.19 **[EOL]**
 
 Older builds are still available at the [Releases](https://github.com/fabianishere/pve-edge-kernel/releases) page.
 
@@ -16,18 +16,13 @@ First, set up our Debian repository on your Proxmox installation:
    curl -1sLf 'https://dl.cloudsmith.io/public/pve-edge/kernel/gpg.8EC01CCF309B98E7.key' | gpg --dearmor -o /usr/share/keyrings/pve-edge-kernel.gpg
    ```
 2. **Set up the `pve-edge-kernel` repository:**  
-   If you are still on _Proxmox VE 6_, pick the Buster-based repository:
-   ```bash
-   echo "deb [signed-by=/usr/share/keyrings/pve-edge-kernel.gpg] https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian buster main" > /etc/apt/sources.list.d/pve-edge-kernel.list
-   ```
-   If you are already on _Proxmox VE 7_, pick the Bullseye-based repository:
    ```bash
    echo "deb [signed-by=/usr/share/keyrings/pve-edge-kernel.gpg] https://dl.cloudsmith.io/public/pve-edge/kernel/deb/debian bullseye main" > /etc/apt/sources.list.d/pve-edge-kernel.list
    ```
 3. **Install a kernel package:**  
    ```bash
    apt update
-   apt install pve-kernel-5.18-edge
+   apt install pve-kernel-6.0-edge
    ```
 
 Package repository hosting is graciously provided by  [Cloudsmith](https://cloudsmith.com).
@@ -44,17 +39,6 @@ Then, you can install the package as follows:
 apt install ./pve-kernel-VERSION_amd64.deb
 ```
 
-## AppArmor intervention
-Previously, these kernels required changing the AppArmor feature file to a non-default version.
-This issue has been fixed since version 5.16.
-If you have used the workaround, please update back to the default configuration in `/etc/apparmor/parser.conf` as follows:
-```diff
-## Pin feature set (avoid regressions when policy is lagging behind
-## the kernel) 
-- compile-features=/usr/share/apparmor-features/features.stock
-+ compile-features=/usr/share/apparmor-features/features
-```
-
 ## Building manually
 You may also choose to manually build one of these kernels yourself.
 
@@ -65,24 +49,6 @@ packages installed:
 ```bash
 apt install devscripts debhelper equivs git
 ```
-In case you are building a kernel version >= 5.8, make sure you have installed
-at least [dwarves >= 1.16.0](https://packages.debian.org/bullseye/dwarves).
-This version is currently is not available in the main repository.
-To work around this issue, we describe two options:
-
-1. You may add the Debian Buster Backports repository to your APT sources as described
-   [here](https://backports.debian.org/Instructions/) and install the
-   newer `dwarves` package as follows:
-   ```shell
-   apt install -t buster-backports dwarves
-   ```
-2. Alternatively, you may [download](https://packages.debian.org/bullseye/dwarves)
-   the newer `dwarves` (>= 1.16) package from the Debian website and install the
-   package manually, for example:
-   ```shell
-   wget http://ftp.us.debian.org/debian/pool/main/d/dwarves-dfsg/dwarves_1.17-1_amd64.deb
-   apt install ./dwarves_1.17-1_amd64.deb
-   ```
 
 #### Obtaining the source
 Obtain the source code as follows:
@@ -90,9 +56,9 @@ Obtain the source code as follows:
 git clone https://github.com/fabianishere/pve-edge-kernel
 cd pve-edge-kernel
 ```
-Then, select the branch of your likings (e.g. `v5.10.x`) and update the submodules:
+Then, select the branch of your likings (e.g. `v6.0.x`) and update the submodules:
 ```bash
-git checkout v5.10.x
+git checkout v6.0.x
 git submodule update --init --depth=1 --recursive linux
 git submodule update --init --recursive
 ```
@@ -129,7 +95,7 @@ to remove all packages from a particular kernel release, use the following
 command:
 
 ```bash
-apt remove pve-kernel-5.19*edge pve-headers-5.19*edge
+apt remove pve-kernel-6.0*edge pve-headers-6.0*edge
 ```
 
 ## Contributing

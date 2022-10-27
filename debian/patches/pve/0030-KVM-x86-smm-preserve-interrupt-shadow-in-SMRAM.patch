@@ -1,0 +1,138 @@
+From 810253988e9e317d6e576ebe608a5454f274b8fc Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:41 +0300
+Subject: [PATCH] KVM: x86: smm: preserve interrupt shadow in SMRAM
+
+When #SMI is asserted, the CPU can be in interrupt shadow due to sti or
+mov ss.
+
+It is not mandatory in  Intel/AMD prm to have the #SMI blocked during the
+shadow, and on top of that, since neither SVM nor VMX has true support
+for SMI window, waiting for one instruction would mean single stepping
+the guest.
+
+Instead, allow #SMI in this case, but both reset the interrupt window and
+stash its value in SMRAM to restore it on exit from SMM.
+
+This fixes rare failures seen mostly on windows guests on VMX, when #SMI
+falls on the sti instruction which mainfest in VM entry failure due
+to EFLAGS.IF not being set, but STI interrupt window still being set
+in the VMCS.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+---
+ arch/x86/kvm/smm.c | 24 +++++++++++++++++++++---
+ arch/x86/kvm/smm.h |  5 +++--
+ 2 files changed, 24 insertions(+), 5 deletions(-)
+
+diff --git a/arch/x86/kvm/smm.c b/arch/x86/kvm/smm.c
+index 82761384a866..46d2656937a7 100644
+--- a/arch/x86/kvm/smm.c
++++ b/arch/x86/kvm/smm.c
+@@ -21,6 +21,7 @@ static void check_smram_offsets(void)
+ 	CHECK_SMRAM32_OFFSET(smbase,			0xFEF8);
+ 	CHECK_SMRAM32_OFFSET(smm_revision,		0xFEFC);
+ 	CHECK_SMRAM32_OFFSET(reserved2,			0xFF00);
++	CHECK_SMRAM32_OFFSET(int_shadow,		0xFF10);
+ 	CHECK_SMRAM32_OFFSET(cr4,			0xFF14);
+ 	CHECK_SMRAM32_OFFSET(reserved3,			0xFF18);
+ 	CHECK_SMRAM32_OFFSET(ds,			0xFF2C);
+@@ -65,7 +66,7 @@ static void check_smram_offsets(void)
+ 	CHECK_SMRAM64_OFFSET(io_restart_rsi,		0xFEB0);
+ 	CHECK_SMRAM64_OFFSET(io_restart_rdi,		0xFEB8);
+ 	CHECK_SMRAM64_OFFSET(io_restart_dword,		0xFEC0);
+-	CHECK_SMRAM64_OFFSET(reserved1,			0xFEC4);
++	CHECK_SMRAM64_OFFSET(int_shadow,		0xFEC4);
+ 	CHECK_SMRAM64_OFFSET(io_inst_restart,		0xFEC8);
+ 	CHECK_SMRAM64_OFFSET(auto_hlt_restart,		0xFEC9);
+ 	CHECK_SMRAM64_OFFSET(reserved2,			0xFECA);
+@@ -212,6 +213,8 @@ static void enter_smm_save_state_32(struct kvm_vcpu *vcpu,
+ 	smram->cr4 = kvm_read_cr4(vcpu);
+ 	smram->smm_revision = 0x00020000;
+ 	smram->smbase = vcpu->arch.smbase;
++
++	smram->int_shadow = static_call(kvm_x86_get_interrupt_shadow)(vcpu);
+ }
+ 
+ #ifdef CONFIG_X86_64
+@@ -261,6 +264,8 @@ static void enter_smm_save_state_64(struct kvm_vcpu *vcpu,
+ 	enter_smm_save_seg_64(vcpu, &smram->ds, VCPU_SREG_DS);
+ 	enter_smm_save_seg_64(vcpu, &smram->fs, VCPU_SREG_FS);
+ 	enter_smm_save_seg_64(vcpu, &smram->gs, VCPU_SREG_GS);
++
++	smram->int_shadow = static_call(kvm_x86_get_interrupt_shadow)(vcpu);
+ }
+ #endif
+ 
+@@ -306,6 +311,8 @@ void enter_smm(struct kvm_vcpu *vcpu)
+ 	kvm_set_rflags(vcpu, X86_EFLAGS_FIXED);
+ 	kvm_rip_write(vcpu, 0x8000);
+ 
++	static_call(kvm_x86_set_interrupt_shadow)(vcpu, 0);
++
+ 	cr0 = vcpu->arch.cr0 & ~(X86_CR0_PE | X86_CR0_EM | X86_CR0_TS | X86_CR0_PG);
+ 	static_call(kvm_x86_set_cr0)(vcpu, cr0);
+ 	vcpu->arch.cr0 = cr0;
+@@ -453,7 +460,7 @@ static int rsm_load_state_32(struct x86_emulate_ctxt *ctxt,
+ {
+ 	struct kvm_vcpu *vcpu = ctxt->vcpu;
+ 	struct desc_ptr dt;
+-	int i;
++	int i, r;
+ 
+ 	ctxt->eflags =  smstate->eflags | X86_EFLAGS_FIXED;
+ 	ctxt->_eip =  smstate->eip;
+@@ -487,8 +494,16 @@ static int rsm_load_state_32(struct x86_emulate_ctxt *ctxt,
+ 
+ 	vcpu->arch.smbase = smstate->smbase;
+ 
+-	return rsm_enter_protected_mode(vcpu, smstate->cr0,
++	r = rsm_enter_protected_mode(vcpu, smstate->cr0,
+ 					smstate->cr3, smstate->cr4);
++
++	if (r != X86EMUL_CONTINUE)
++		return r;
++
++	static_call(kvm_x86_set_interrupt_shadow)(vcpu, 0);
++	ctxt->interruptibility = (u8)smstate->int_shadow;
++
++	return r;
+ }
+ 
+ #ifdef CONFIG_X86_64
+@@ -539,6 +554,9 @@ static int rsm_load_state_64(struct x86_emulate_ctxt *ctxt,
+ 	rsm_load_seg_64(vcpu, &smstate->fs, VCPU_SREG_FS);
+ 	rsm_load_seg_64(vcpu, &smstate->gs, VCPU_SREG_GS);
+ 
++	static_call(kvm_x86_set_interrupt_shadow)(vcpu, 0);
++	ctxt->interruptibility = (u8)smstate->int_shadow;
++
+ 	return X86EMUL_CONTINUE;
+ }
+ #endif
+diff --git a/arch/x86/kvm/smm.h b/arch/x86/kvm/smm.h
+index 8d96bff3f4d5..2eaec53bcc95 100644
+--- a/arch/x86/kvm/smm.h
++++ b/arch/x86/kvm/smm.h
+@@ -19,7 +19,8 @@ struct kvm_smram_state_32 {
+ 	u32 reserved1[62];
+ 	u32 smbase;
+ 	u32 smm_revision;
+-	u32 reserved2[5];
++	u32 reserved2[4];
++	u32 int_shadow; /* KVM extension */
+ 	u32 cr4; /* CR4 is not present in Intel/AMD SMRAM image */
+ 	u32 reserved3[5];
+ 
+@@ -86,7 +87,7 @@ struct kvm_smram_state_64 {
+ 	u64 io_restart_rsi;
+ 	u64 io_restart_rdi;
+ 	u32 io_restart_dword;
+-	u32 reserved1;
++	u32 int_shadow;
+ 	u8 io_inst_restart;
+ 	u8 auto_hlt_restart;
+ 	u8 reserved2[6];
+-- 
+2.38.1
+

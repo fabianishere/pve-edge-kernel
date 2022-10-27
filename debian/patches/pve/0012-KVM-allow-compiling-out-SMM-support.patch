@@ -1,0 +1,189 @@
+From 14fe6763b2618afb73a1109d7fda337cb06af0a2 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Tue, 25 Oct 2022 15:47:23 +0300
+Subject: [PATCH] KVM: allow compiling out SMM support
+
+Some users of KVM implement the UEFI variable store through a paravirtual device
+that does not require the "SMM lockbox" component of edk2; allow them to
+compile out system management mode, which is not a full implementation
+especially in how it interacts with nested virtualization.
+
+Suggested-by: Sean Christopherson <seanjc@google.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ arch/x86/kvm/Kconfig                          | 11 ++++++++++
+ arch/x86/kvm/Makefile                         |  2 +-
+ arch/x86/kvm/smm.h                            | 13 ++++++++++++
+ arch/x86/kvm/svm/svm.c                        |  2 ++
+ arch/x86/kvm/vmx/vmx.c                        |  2 ++
+ arch/x86/kvm/x86.c                            | 21 +++++++++++++++++--
+ tools/testing/selftests/kvm/x86_64/smm_test.c |  2 ++
+ 7 files changed, 50 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
+index e3cbd7706136..20d5aea868a4 100644
+--- a/arch/x86/kvm/Kconfig
++++ b/arch/x86/kvm/Kconfig
+@@ -86,6 +86,17 @@ config KVM_INTEL
+ 	  To compile this as a module, choose M here: the module
+ 	  will be called kvm-intel.
+ 
++config KVM_SMM
++	bool "System Management Mode emulation"
++	default y
++	depends on KVM
++	help
++	  Provides support for KVM to emulate System Management Mode (SMM)
++	  in virtual machines.  This can be used by the virtual machine
++	  firmware to implement UEFI secure boot.
++
++	  If unsure, say Y.
++
+ config X86_SGX_KVM
+ 	bool "Software Guard eXtensions (SGX) Virtualization"
+ 	depends on X86_SGX && KVM_INTEL
+diff --git a/arch/x86/kvm/Makefile b/arch/x86/kvm/Makefile
+index ec6f7656254b..6cf40f668277 100644
+--- a/arch/x86/kvm/Makefile
++++ b/arch/x86/kvm/Makefile
+@@ -20,7 +20,7 @@ endif
+ 
+ kvm-$(CONFIG_X86_64) += mmu/tdp_iter.o mmu/tdp_mmu.o
+ kvm-$(CONFIG_KVM_XEN)	+= xen.o
+-kvm-y			+= smm.o
++kvm-$(CONFIG_KVM_SMM)	+= smm.o
+ 
+ kvm-intel-y		+= vmx/vmx.o vmx/vmenter.o vmx/pmu_intel.o vmx/vmcs12.o \
+ 			   vmx/evmcs.o vmx/nested.o vmx/posted_intr.o
+diff --git a/arch/x86/kvm/smm.h b/arch/x86/kvm/smm.h
+index b0602a92e511..4c699fee4492 100644
+--- a/arch/x86/kvm/smm.h
++++ b/arch/x86/kvm/smm.h
+@@ -8,6 +8,7 @@
+ #define PUT_SMSTATE(type, buf, offset, val)                      \
+ 	*(type *)((buf) + (offset) - 0x7e00) = val
+ 
++#ifdef CONFIG_KVM_SMM
+ static inline int kvm_inject_smi(struct kvm_vcpu *vcpu)
+ {
+ 	kvm_make_request(KVM_REQ_SMI, vcpu);
+@@ -23,5 +24,17 @@ void kvm_smm_changed(struct kvm_vcpu *vcpu, bool in_smm);
+ void enter_smm(struct kvm_vcpu *vcpu);
+ int emulator_leave_smm(struct x86_emulate_ctxt *ctxt);
+ void process_smi(struct kvm_vcpu *vcpu);
++#else
++static inline int kvm_inject_smi(struct kvm_vcpu *vcpu) { return -ENOTTY; }
++static inline bool is_smm(struct kvm_vcpu *vcpu) { return false; }
++static inline void kvm_smm_changed(struct kvm_vcpu *vcpu, bool in_smm) { WARN_ON_ONCE(1); }
++static inline void enter_smm(struct kvm_vcpu *vcpu) { WARN_ON_ONCE(1); }
++static inline void process_smi(struct kvm_vcpu *vcpu) { WARN_ON_ONCE(1); }
++
++/*
++ * emulator_leave_smm is used as a function pointer, so the
++ * stub is defined in x86.c.
++ */
++#endif
+ 
+ #endif
+diff --git a/arch/x86/kvm/svm/svm.c b/arch/x86/kvm/svm/svm.c
+index f4ed4a02b109..a6807492bfae 100644
+--- a/arch/x86/kvm/svm/svm.c
++++ b/arch/x86/kvm/svm/svm.c
+@@ -4151,6 +4151,8 @@ static bool svm_has_emulated_msr(struct kvm *kvm, u32 index)
+ 	case MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
+ 		return false;
+ 	case MSR_IA32_SMBASE:
++		if (!IS_ENABLED(CONFIG_KVM_SMM))
++			return false;
+ 		/* SEV-ES guests do not support SMM, so report false */
+ 		if (kvm && sev_es_guest(kvm))
+ 			return false;
+diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
+index dc75de78ceb6..ce22860156c5 100644
+--- a/arch/x86/kvm/vmx/vmx.c
++++ b/arch/x86/kvm/vmx/vmx.c
+@@ -6849,6 +6849,8 @@ static bool vmx_has_emulated_msr(struct kvm *kvm, u32 index)
+ {
+ 	switch (index) {
+ 	case MSR_IA32_SMBASE:
++		if (!IS_ENABLED(CONFIG_KVM_SMM))
++			return false;
+ 		/*
+ 		 * We cannot do SMM unless we can run the guest in big
+ 		 * real mode.
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 77e0ca43ee27..14ef42c6efbd 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -3631,7 +3631,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+ 		break;
+ 	}
+ 	case MSR_IA32_SMBASE:
+-		if (!msr_info->host_initiated)
++		if (!IS_ENABLED(CONFIG_KVM_SMM) || !msr_info->host_initiated)
+ 			return 1;
+ 		vcpu->arch.smbase = data;
+ 		break;
+@@ -4047,7 +4047,7 @@ int kvm_get_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+ 		msr_info->data = vcpu->arch.ia32_misc_enable_msr;
+ 		break;
+ 	case MSR_IA32_SMBASE:
+-		if (!msr_info->host_initiated)
++		if (!IS_ENABLED(CONFIG_KVM_SMM) || !msr_info->host_initiated)
+ 			return 1;
+ 		msr_info->data = vcpu->arch.smbase;
+ 		break;
+@@ -4421,6 +4421,9 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
+ 			r |= KVM_X86_DISABLE_EXITS_MWAIT;
+ 		break;
+ 	case KVM_CAP_X86_SMM:
++		if (!IS_ENABLED(CONFIG_KVM_SMM))
++			break;
++
+ 		/* SMBASE is usually relocated above 1M on modern chipsets,
+ 		 * and SMM handlers might indeed rely on 4G segment limits,
+ 		 * so do not report SMM to be available if real mode is
+@@ -5146,6 +5149,12 @@ static int kvm_vcpu_ioctl_x86_set_vcpu_events(struct kvm_vcpu *vcpu,
+ 		vcpu->arch.apic->sipi_vector = events->sipi_vector;
+ 
+ 	if (events->flags & KVM_VCPUEVENT_VALID_SMM) {
++		if (!IS_ENABLED(CONFIG_KVM_SMM) &&
++		    (events->smi.smm ||
++		     events->smi.pending ||
++		     events->smi.smm_inside_nmi))
++			return -EINVAL;
++
+ 		if (!!(vcpu->arch.hflags & HF_SMM_MASK) != events->smi.smm) {
+ 			kvm_x86_ops.nested_ops->leave_nested(vcpu);
+ 			kvm_smm_changed(vcpu, events->smi.smm);
+@@ -8021,6 +8030,14 @@ static unsigned emulator_get_hflags(struct x86_emulate_ctxt *ctxt)
+ 	return emul_to_vcpu(ctxt)->arch.hflags;
+ }
+ 
++#ifndef CONFIG_KVM_SMM
++static int emulator_leave_smm(struct x86_emulate_ctxt *ctxt)
++{
++	WARN_ON_ONCE(1);
++	return X86EMUL_UNHANDLEABLE;
++}
++#endif
++
+ static void emulator_triple_fault(struct x86_emulate_ctxt *ctxt)
+ {
+ 	kvm_make_request(KVM_REQ_TRIPLE_FAULT, emul_to_vcpu(ctxt));
+diff --git a/tools/testing/selftests/kvm/x86_64/smm_test.c b/tools/testing/selftests/kvm/x86_64/smm_test.c
+index 1f136a81858e..cb38a478e1f6 100644
+--- a/tools/testing/selftests/kvm/x86_64/smm_test.c
++++ b/tools/testing/selftests/kvm/x86_64/smm_test.c
+@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
+ 	struct kvm_x86_state *state;
+ 	int stage, stage_reported;
+ 
++	TEST_REQUIRE(kvm_has_cap(KVM_CAP_X86_SMM));
++
+ 	/* Create VM */
+ 	vm = vm_create_with_one_vcpu(&vcpu, guest_code);
+ 
+-- 
+2.38.1
+
