@@ -1,3 +1,9 @@
+pve-kernel (6.0.6-1) edge; urgency=medium
+
+  * Update to Linux 6.0.6.
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Sat, 29 Oct 2022 12:12:02 +0000
+
 pve-kernel (6.0.5-1) edge; urgency=medium
 
   * Update to Linux 6.0.5.
