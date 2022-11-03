@@ -92,7 +92,7 @@ ${KERNEL_SRC}/.config:
 		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.common.${DEB_BUILD_ARCH} \
 		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.flavour.generic \
 		debian/config/config.pve
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} oldconfig
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} olddefconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
