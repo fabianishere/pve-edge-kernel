@@ -1,4 +1,4 @@
-From 887f248c4502610baed368a9f198cfbb9eabdc10 Mon Sep 17 00:00:00 2001
+From b549570b9e715183d712441a5c2e0ac7d2cbc69b Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:21 +0300
 Subject: [PATCH] KVM: x86: move SMM exit to a new file
@@ -18,15 +18,15 @@ caches, etc.
 
 Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
 ---
- arch/x86/kvm/emulate.c     | 356 +------------------------------------
+ arch/x86/kvm/emulate.c     | 355 +------------------------------------
  arch/x86/kvm/kvm_emulate.h |  34 +++-
- arch/x86/kvm/smm.c         | 316 ++++++++++++++++++++++++++++++++
+ arch/x86/kvm/smm.c         | 316 +++++++++++++++++++++++++++++++++
  arch/x86/kvm/smm.h         |   1 +
  arch/x86/kvm/x86.c         |  14 --
- 5 files changed, 351 insertions(+), 370 deletions(-)
+ 5 files changed, 351 insertions(+), 369 deletions(-)
 
 diff --git a/arch/x86/kvm/emulate.c b/arch/x86/kvm/emulate.c
-index 3c3bf6f66a7e..853262d4fb6c 100644
+index c08cdaf874eb..8e4060a9f2e9 100644
 --- a/arch/x86/kvm/emulate.c
 +++ b/arch/x86/kvm/emulate.c
 @@ -30,7 +30,6 @@
@@ -75,7 +75,7 @@ index 3c3bf6f66a7e..853262d4fb6c 100644
  static void writeback_registers(struct x86_emulate_ctxt *ctxt)
  {
  	unsigned long dirty = ctxt->regs_dirty;
-@@ -2308,334 +2276,14 @@ static int em_lseg(struct x86_emulate_ctxt *ctxt)
+@@ -2337,335 +2305,16 @@ static int em_lseg(struct x86_emulate_ctxt *ctxt)
  	return rc;
  }
  
@@ -202,7 +202,7 @@ index 3c3bf6f66a7e..853262d4fb6c 100644
 -	ctxt->eflags =             GET_SMSTATE(u32, smstate, 0x7ff4) | X86_EFLAGS_FIXED;
 -	ctxt->_eip =               GET_SMSTATE(u32, smstate, 0x7ff0);
 -
--	for (i = 0; i < NR_EMULATOR_GPRS; i++)
+-	for (i = 0; i < 8; i++)
 -		*reg_write(ctxt, i) = GET_SMSTATE(u32, smstate, 0x7fd0 + i * 4);
 -
 -	val = GET_SMSTATE(u32, smstate, 0x7fcc);
@@ -259,7 +259,7 @@ index 3c3bf6f66a7e..853262d4fb6c 100644
 -	u16 selector;
 -	int i, r;
 -
--	for (i = 0; i < NR_EMULATOR_GPRS; i++)
+-	for (i = 0; i < 16; i++)
 -		*reg_write(ctxt, i) = GET_SMSTATE(u64, smstate, 0x7ff8 - i * 8);
 -
 -	ctxt->_eip   = GET_SMSTATE(u64, smstate, 0x7f78);
@@ -319,7 +319,7 @@ index 3c3bf6f66a7e..853262d4fb6c 100644
 -	return X86EMUL_CONTINUE;
 -}
 -#endif
--
+ 
  static int em_rsm(struct x86_emulate_ctxt *ctxt)
  {
 -	unsigned long cr0, cr4, efer;
@@ -394,7 +394,9 @@ index 3c3bf6f66a7e..853262d4fb6c 100644
 -
 -	if (ret != X86EMUL_CONTINUE)
 -		goto emulate_shutdown;
--
++	if (ctxt->ops->leave_smm(ctxt))
++		ctxt->ops->triple_fault(ctxt);
+ 
 -	/*
 -	 * Note, the ctxt->ops callbacks are responsible for handling side
 -	 * effects when writing MSRs and CRs, e.g. MMU context resets, CPUID
@@ -403,15 +405,14 @@ index 3c3bf6f66a7e..853262d4fb6c 100644
 -	 * those side effects need to be explicitly handled for both success
 -	 * and shutdown.
 -	 */
--	return X86EMUL_CONTINUE;
-+	if (ctxt->ops->leave_smm(ctxt))
-+		ctxt->ops->triple_fault(ctxt);
- 
+ 	return emulator_recalc_and_set_mode(ctxt);
+-
 -emulate_shutdown:
 -	ctxt->ops->triple_fault(ctxt);
- 	return X86EMUL_CONTINUE;
+-	return X86EMUL_CONTINUE;
  }
  
+ static void
 diff --git a/arch/x86/kvm/kvm_emulate.h b/arch/x86/kvm/kvm_emulate.h
 index 89246446d6aa..d7afbc448dd2 100644
 --- a/arch/x86/kvm/kvm_emulate.h
@@ -463,7 +464,7 @@ index 89246446d6aa..d7afbc448dd2 100644
 +
  #endif /* _ASM_X86_KVM_X86_EMULATE_H */
 diff --git a/arch/x86/kvm/smm.c b/arch/x86/kvm/smm.c
-index 26a6859e421f..773e07b6397d 100644
+index 26a6859e421f..073dad4f04b5 100644
 --- a/arch/x86/kvm/smm.c
 +++ b/arch/x86/kvm/smm.c
 @@ -270,3 +270,319 @@ void enter_smm(struct kvm_vcpu *vcpu)
@@ -594,7 +595,7 @@ index 26a6859e421f..773e07b6397d 100644
 +	ctxt->eflags =             GET_SMSTATE(u32, smstate, 0x7ff4) | X86_EFLAGS_FIXED;
 +	ctxt->_eip =               GET_SMSTATE(u32, smstate, 0x7ff0);
 +
-+	for (i = 0; i < NR_EMULATOR_GPRS; i++)
++	for (i = 0; i < 8; i++)
 +		*reg_write(ctxt, i) = GET_SMSTATE(u32, smstate, 0x7fd0 + i * 4);
 +
 +	val = GET_SMSTATE(u32, smstate, 0x7fcc);
@@ -651,7 +652,7 @@ index 26a6859e421f..773e07b6397d 100644
 +	u16 selector;
 +	int i, r;
 +
-+	for (i = 0; i < NR_EMULATOR_GPRS; i++)
++	for (i = 0; i < 16; i++)
 +		*reg_write(ctxt, i) = GET_SMSTATE(u64, smstate, 0x7ff8 - i * 8);
 +
 +	ctxt->_eip   = GET_SMSTATE(u64, smstate, 0x7f78);
@@ -799,10 +800,10 @@ index aacc6dac2c99..b0602a92e511 100644
  
  #endif
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index f86b6be363b0..dae68ef0c3c8 100644
+index a9f59c5f33e9..6cf8a0d29a1c 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -8050,19 +8050,6 @@ static unsigned emulator_get_hflags(struct x86_emulate_ctxt *ctxt)
+@@ -8116,19 +8116,6 @@ static unsigned emulator_get_hflags(struct x86_emulate_ctxt *ctxt)
  	return emul_to_vcpu(ctxt)->arch.hflags;
  }
  
@@ -822,7 +823,7 @@ index f86b6be363b0..dae68ef0c3c8 100644
  static void emulator_triple_fault(struct x86_emulate_ctxt *ctxt)
  {
  	kvm_make_request(KVM_REQ_TRIPLE_FAULT, emul_to_vcpu(ctxt));
-@@ -8126,7 +8113,6 @@ static const struct x86_emulate_ops emulate_ops = {
+@@ -8192,7 +8179,6 @@ static const struct x86_emulate_ops emulate_ops = {
  	.guest_has_rdpid     = emulator_guest_has_rdpid,
  	.set_nmi_mask        = emulator_set_nmi_mask,
  	.get_hflags          = emulator_get_hflags,

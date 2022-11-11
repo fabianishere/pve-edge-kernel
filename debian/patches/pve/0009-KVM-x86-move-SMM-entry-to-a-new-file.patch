@@ -1,4 +1,4 @@
-From 44a9857098c34b64ebe2ce3f60284e5f56412ff8 Mon Sep 17 00:00:00 2001
+From 0cc88f7bbac52f27bf779abfffe6882003fb692c Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:20 +0300
 Subject: [PATCH] KVM: x86: move SMM entry to a new file
@@ -291,7 +291,7 @@ index d85d4ccd32dd..aacc6dac2c99 100644
  
  #endif
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 7e60b4c12b91..f86b6be363b0 100644
+index bf07bd061688..a9f59c5f33e9 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
 @@ -120,7 +120,6 @@ static u64 __read_mostly cr4_reserved_bits = CR4_RESERVED_BITS;
@@ -302,7 +302,7 @@ index 7e60b4c12b91..f86b6be363b0 100644
  static void __kvm_set_rflags(struct kvm_vcpu *vcpu, unsigned long rflags);
  static void store_regs(struct kvm_vcpu *vcpu);
  static int sync_regs(struct kvm_vcpu *vcpu);
-@@ -7013,8 +7012,8 @@ static int vcpu_mmio_read(struct kvm_vcpu *vcpu, gpa_t addr, int len, void *v)
+@@ -7079,8 +7078,8 @@ static int vcpu_mmio_read(struct kvm_vcpu *vcpu, gpa_t addr, int len, void *v)
  	return handled;
  }
  
@@ -313,7 +313,7 @@ index 7e60b4c12b91..f86b6be363b0 100644
  {
  	static_call(kvm_x86_set_segment)(vcpu, var, seg);
  }
-@@ -9801,240 +9800,6 @@ static void process_nmi(struct kvm_vcpu *vcpu)
+@@ -9883,240 +9882,6 @@ static void process_nmi(struct kvm_vcpu *vcpu)
  	kvm_make_request(KVM_REQ_EVENT, vcpu);
  }
  

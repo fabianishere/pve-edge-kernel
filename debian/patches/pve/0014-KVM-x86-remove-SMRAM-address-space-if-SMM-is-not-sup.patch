@@ -1,4 +1,4 @@
-From 8f5e12c8768ecff91ccf335e2242ab64482c01fb Mon Sep 17 00:00:00 2001
+From 405d4789abe381e4c6b059bf5a8692b7e96b1aaf Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:25 +0300
 Subject: [PATCH] KVM: x86: remove SMRAM address space if SMM is not supported

@@ -1,4 +1,4 @@
-From 14fe6763b2618afb73a1109d7fda337cb06af0a2 Mon Sep 17 00:00:00 2001
+From f123b64c6c96b5fc770e96ad0f35b51cc501dddf Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:23 +0300
 Subject: [PATCH] KVM: allow compiling out SMM support
@@ -99,10 +99,10 @@ index f4ed4a02b109..a6807492bfae 100644
  		if (kvm && sev_es_guest(kvm))
  			return false;
 diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
-index dc75de78ceb6..ce22860156c5 100644
+index 0e525fa58051..2195f00c7711 100644
 --- a/arch/x86/kvm/vmx/vmx.c
 +++ b/arch/x86/kvm/vmx/vmx.c
-@@ -6849,6 +6849,8 @@ static bool vmx_has_emulated_msr(struct kvm *kvm, u32 index)
+@@ -6863,6 +6863,8 @@ static bool vmx_has_emulated_msr(struct kvm *kvm, u32 index)
  {
  	switch (index) {
  	case MSR_IA32_SMBASE:
@@ -112,10 +112,10 @@ index dc75de78ceb6..ce22860156c5 100644
  		 * We cannot do SMM unless we can run the guest in big
  		 * real mode.
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 77e0ca43ee27..14ef42c6efbd 100644
+index 7b4bb25e6b96..e45c222b4d01 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -3631,7 +3631,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+@@ -3638,7 +3638,7 @@ int kvm_set_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
  		break;
  	}
  	case MSR_IA32_SMBASE:
@@ -124,7 +124,7 @@ index 77e0ca43ee27..14ef42c6efbd 100644
  			return 1;
  		vcpu->arch.smbase = data;
  		break;
-@@ -4047,7 +4047,7 @@ int kvm_get_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+@@ -4054,7 +4054,7 @@ int kvm_get_msr_common(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
  		msr_info->data = vcpu->arch.ia32_misc_enable_msr;
  		break;
  	case MSR_IA32_SMBASE:
@@ -133,7 +133,7 @@ index 77e0ca43ee27..14ef42c6efbd 100644
  			return 1;
  		msr_info->data = vcpu->arch.smbase;
  		break;
-@@ -4421,6 +4421,9 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
+@@ -4428,6 +4428,9 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
  			r |= KVM_X86_DISABLE_EXITS_MWAIT;
  		break;
  	case KVM_CAP_X86_SMM:
@@ -143,7 +143,7 @@ index 77e0ca43ee27..14ef42c6efbd 100644
  		/* SMBASE is usually relocated above 1M on modern chipsets,
  		 * and SMM handlers might indeed rely on 4G segment limits,
  		 * so do not report SMM to be available if real mode is
-@@ -5146,6 +5149,12 @@ static int kvm_vcpu_ioctl_x86_set_vcpu_events(struct kvm_vcpu *vcpu,
+@@ -5153,6 +5156,12 @@ static int kvm_vcpu_ioctl_x86_set_vcpu_events(struct kvm_vcpu *vcpu,
  		vcpu->arch.apic->sipi_vector = events->sipi_vector;
  
  	if (events->flags & KVM_VCPUEVENT_VALID_SMM) {
@@ -156,7 +156,7 @@ index 77e0ca43ee27..14ef42c6efbd 100644
  		if (!!(vcpu->arch.hflags & HF_SMM_MASK) != events->smi.smm) {
  			kvm_x86_ops.nested_ops->leave_nested(vcpu);
  			kvm_smm_changed(vcpu, events->smi.smm);
-@@ -8021,6 +8030,14 @@ static unsigned emulator_get_hflags(struct x86_emulate_ctxt *ctxt)
+@@ -8087,6 +8096,14 @@ static unsigned emulator_get_hflags(struct x86_emulate_ctxt *ctxt)
  	return emul_to_vcpu(ctxt)->arch.hflags;
  }
  

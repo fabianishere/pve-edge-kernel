@@ -1,4 +1,4 @@
-From c0c8e5258f6aa8e5fa65ce118333b7c1e484c607 Mon Sep 17 00:00:00 2001
+From 69cf47ca89be1c52926a3d893eea556f4c2dbc60 Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:19 +0300
 Subject: [PATCH] KVM: x86: start moving SMM-related functions to new files
@@ -58,7 +58,7 @@ index 30f244b64523..ec6f7656254b 100644
  kvm-intel-y		+= vmx/vmx.o vmx/vmenter.o vmx/pmu_intel.o vmx/vmcs12.o \
  			   vmx/evmcs.o vmx/nested.o vmx/posted_intr.o
 diff --git a/arch/x86/kvm/emulate.c b/arch/x86/kvm/emulate.c
-index aacb28c83e43..3c3bf6f66a7e 100644
+index fdb20b3c38f5..c08cdaf874eb 100644
 --- a/arch/x86/kvm/emulate.c
 +++ b/arch/x86/kvm/emulate.c
 @@ -30,6 +30,7 @@
@@ -218,7 +218,7 @@ index f3813dbacb9f..f4ed4a02b109 100644
  	svm->vmcb->save.rax = vcpu->arch.regs[VCPU_REGS_RAX];
  	svm->vmcb->save.rsp = vcpu->arch.regs[VCPU_REGS_RSP];
 diff --git a/arch/x86/kvm/vmx/nested.c b/arch/x86/kvm/vmx/nested.c
-index ddd4367d4826..e8197915b8b0 100644
+index 03d348fa6485..3a63ecbd1a75 100644
 --- a/arch/x86/kvm/vmx/nested.c
 +++ b/arch/x86/kvm/vmx/nested.c
 @@ -16,6 +16,7 @@
@@ -230,7 +230,7 @@ index ddd4367d4826..e8197915b8b0 100644
  static bool __read_mostly enable_shadow_vmcs = 1;
  module_param_named(enable_shadow_vmcs, enable_shadow_vmcs, bool, S_IRUGO);
 diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
-index c9b49a09e6b5..dc75de78ceb6 100644
+index 74de8c9e401b..0e525fa58051 100644
 --- a/arch/x86/kvm/vmx/vmx.c
 +++ b/arch/x86/kvm/vmx/vmx.c
 @@ -66,6 +66,7 @@
@@ -242,7 +242,7 @@ index c9b49a09e6b5..dc75de78ceb6 100644
  MODULE_AUTHOR("Qumranet");
  MODULE_LICENSE("GPL");
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index b0c47b41c264..7e60b4c12b91 100644
+index 05f4424eb0c5..bf07bd061688 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
 @@ -30,6 +30,7 @@
@@ -261,7 +261,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  static void enter_smm(struct kvm_vcpu *vcpu);
  static void __kvm_set_rflags(struct kvm_vcpu *vcpu, unsigned long rflags);
  static void store_regs(struct kvm_vcpu *vcpu);
-@@ -4878,13 +4878,6 @@ static int kvm_vcpu_ioctl_nmi(struct kvm_vcpu *vcpu)
+@@ -4885,13 +4885,6 @@ static int kvm_vcpu_ioctl_nmi(struct kvm_vcpu *vcpu)
  	return 0;
  }
  
@@ -275,7 +275,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  static int vcpu_ioctl_tpr_access_reporting(struct kvm_vcpu *vcpu,
  					   struct kvm_tpr_access_ctl *tac)
  {
-@@ -5095,8 +5088,6 @@ static void kvm_vcpu_ioctl_x86_get_vcpu_events(struct kvm_vcpu *vcpu,
+@@ -5102,8 +5095,6 @@ static void kvm_vcpu_ioctl_x86_get_vcpu_events(struct kvm_vcpu *vcpu,
  	memset(&events->reserved, 0, sizeof(events->reserved));
  }
  
@@ -284,7 +284,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  static int kvm_vcpu_ioctl_x86_set_vcpu_events(struct kvm_vcpu *vcpu,
  					      struct kvm_vcpu_events *events)
  {
-@@ -5536,7 +5527,7 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
+@@ -5543,7 +5534,7 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
  		break;
  	}
  	case KVM_SMI: {
@@ -293,7 +293,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  		break;
  	}
  	case KVM_SET_CPUID: {
-@@ -8470,29 +8461,6 @@ static bool retry_instruction(struct x86_emulate_ctxt *ctxt,
+@@ -8536,29 +8527,6 @@ static bool retry_instruction(struct x86_emulate_ctxt *ctxt,
  static int complete_emulated_mmio(struct kvm_vcpu *vcpu);
  static int complete_emulated_pio(struct kvm_vcpu *vcpu);
  
@@ -323,7 +323,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  static int kvm_vcpu_check_hw_bp(unsigned long addr, u32 type, u32 dr7,
  				unsigned long *db)
  {
-@@ -9853,16 +9821,16 @@ static void enter_smm_save_seg_32(struct kvm_vcpu *vcpu, char *buf, int n)
+@@ -9935,16 +9903,16 @@ static void enter_smm_save_seg_32(struct kvm_vcpu *vcpu, char *buf, int n)
  	int offset;
  
  	kvm_get_segment(vcpu, &seg, n);
@@ -344,7 +344,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  }
  
  #ifdef CONFIG_X86_64
-@@ -9876,10 +9844,10 @@ static void enter_smm_save_seg_64(struct kvm_vcpu *vcpu, char *buf, int n)
+@@ -9958,10 +9926,10 @@ static void enter_smm_save_seg_64(struct kvm_vcpu *vcpu, char *buf, int n)
  	offset = 0x7e00 + n * 16;
  
  	flags = enter_smm_get_segment_flags(&seg) >> 8;
@@ -359,7 +359,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  }
  #endif
  
-@@ -9890,47 +9858,47 @@ static void enter_smm_save_state_32(struct kvm_vcpu *vcpu, char *buf)
+@@ -9972,47 +9940,47 @@ static void enter_smm_save_state_32(struct kvm_vcpu *vcpu, char *buf)
  	unsigned long val;
  	int i;
  
@@ -429,7 +429,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  }
  
  #ifdef CONFIG_X86_64
-@@ -9942,46 +9910,46 @@ static void enter_smm_save_state_64(struct kvm_vcpu *vcpu, char *buf)
+@@ -10024,46 +9992,46 @@ static void enter_smm_save_state_64(struct kvm_vcpu *vcpu, char *buf)
  	int i;
  
  	for (i = 0; i < 16; i++)
@@ -499,7 +499,7 @@ index b0c47b41c264..7e60b4c12b91 100644
  
  	for (i = 0; i < 6; i++)
  		enter_smm_save_seg_64(vcpu, buf, i);
-@@ -10067,12 +10035,6 @@ static void enter_smm(struct kvm_vcpu *vcpu)
+@@ -10149,12 +10117,6 @@ static void enter_smm(struct kvm_vcpu *vcpu)
  	kvm_mmu_reset_context(vcpu);
  }
  

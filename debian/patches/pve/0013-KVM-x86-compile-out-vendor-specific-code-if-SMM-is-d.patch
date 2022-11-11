@@ -1,4 +1,4 @@
-From 3b69dd23b153e6f4a512a9495612a2664d236872 Mon Sep 17 00:00:00 2001
+From cc47b69fa5548e172a3cb4a93299912e47abe58e Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:24 +0300
 Subject: [PATCH] KVM: x86: compile out vendor-specific code if SMM is disabled
@@ -124,10 +124,10 @@ index a6807492bfae..e69390909d08 100644
  	.mem_enc_ioctl = sev_mem_enc_ioctl,
  	.mem_enc_register_region = sev_mem_enc_register_region,
 diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
-index ce22860156c5..8cfb40cfad10 100644
+index 2195f00c7711..f2220a65981a 100644
 --- a/arch/x86/kvm/vmx/vmx.c
 +++ b/arch/x86/kvm/vmx/vmx.c
-@@ -7913,6 +7913,7 @@ static void vmx_setup_mce(struct kvm_vcpu *vcpu)
+@@ -7927,6 +7927,7 @@ static void vmx_setup_mce(struct kvm_vcpu *vcpu)
  			~FEAT_CTL_LMCE_ENABLED;
  }
  
@@ -135,7 +135,7 @@ index ce22860156c5..8cfb40cfad10 100644
  static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
  {
  	/* we need a nested vmexit to enter SMM, postpone if run is pending */
-@@ -7967,6 +7968,7 @@ static void vmx_enable_smi_window(struct kvm_vcpu *vcpu)
+@@ -7981,6 +7982,7 @@ static void vmx_enable_smi_window(struct kvm_vcpu *vcpu)
  {
  	/* RSM will cause a vmexit anyway.  */
  }
@@ -143,7 +143,7 @@ index ce22860156c5..8cfb40cfad10 100644
  
  static bool vmx_apic_init_signal_blocked(struct kvm_vcpu *vcpu)
  {
-@@ -8134,10 +8136,12 @@ static struct kvm_x86_ops vmx_x86_ops __initdata = {
+@@ -8148,10 +8150,12 @@ static struct kvm_x86_ops vmx_x86_ops __initdata = {
  
  	.setup_mce = vmx_setup_mce,
  
@@ -157,10 +157,10 @@ index ce22860156c5..8cfb40cfad10 100644
  	.can_emulate_instruction = vmx_can_emulate_instruction,
  	.apic_init_signal_blocked = vmx_apic_init_signal_blocked,
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 14ef42c6efbd..33c8fb8f4c61 100644
+index e45c222b4d01..f4bcab667704 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -9696,6 +9696,7 @@ static int inject_pending_event(struct kvm_vcpu *vcpu, bool *req_immediate_exit)
+@@ -9778,6 +9778,7 @@ static int inject_pending_event(struct kvm_vcpu *vcpu, bool *req_immediate_exit)
  	 * in order to make progress and get back here for another iteration.
  	 * The kvm_x86_ops hooks communicate this by returning -EBUSY.
  	 */
@@ -168,7 +168,7 @@ index 14ef42c6efbd..33c8fb8f4c61 100644
  	if (vcpu->arch.smi_pending) {
  		r = can_inject ? static_call(kvm_x86_smi_allowed)(vcpu, true) : -EBUSY;
  		if (r < 0)
-@@ -9708,6 +9709,7 @@ static int inject_pending_event(struct kvm_vcpu *vcpu, bool *req_immediate_exit)
+@@ -9790,6 +9791,7 @@ static int inject_pending_event(struct kvm_vcpu *vcpu, bool *req_immediate_exit)
  		} else
  			static_call(kvm_x86_enable_smi_window)(vcpu);
  	}
@@ -176,7 +176,7 @@ index 14ef42c6efbd..33c8fb8f4c61 100644
  
  	if (vcpu->arch.nmi_pending) {
  		r = can_inject ? static_call(kvm_x86_nmi_allowed)(vcpu, true) : -EBUSY;
-@@ -12300,10 +12302,12 @@ static inline bool kvm_vcpu_has_events(struct kvm_vcpu *vcpu)
+@@ -12384,10 +12386,12 @@ static inline bool kvm_vcpu_has_events(struct kvm_vcpu *vcpu)
  	     static_call(kvm_x86_nmi_allowed)(vcpu, false)))
  		return true;
  
