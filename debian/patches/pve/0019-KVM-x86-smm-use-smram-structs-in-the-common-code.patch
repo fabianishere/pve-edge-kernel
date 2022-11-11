@@ -1,4 +1,4 @@
-From e13349f01bc9b4b94dd995d60fad196d3074a868 Mon Sep 17 00:00:00 2001
+From 475409527189bc01f36d50d54ff939d9ff2b32b7 Mon Sep 17 00:00:00 2001
 From: Maxim Levitsky <mlevitsk@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:35 +0300
 Subject: [PATCH] KVM: x86: smm: use smram structs in the common code
@@ -168,10 +168,10 @@ index e69390909d08..2a61b8c50ab4 100644
  		return 0;
  
 diff --git a/arch/x86/kvm/vmx/vmx.c b/arch/x86/kvm/vmx/vmx.c
-index 8cfb40cfad10..480ff79071c6 100644
+index f2220a65981a..d886983ae95a 100644
 --- a/arch/x86/kvm/vmx/vmx.c
 +++ b/arch/x86/kvm/vmx/vmx.c
-@@ -7922,7 +7922,7 @@ static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+@@ -7936,7 +7936,7 @@ static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
  	return !is_smm(vcpu);
  }
  
@@ -180,7 +180,7 @@ index 8cfb40cfad10..480ff79071c6 100644
  {
  	struct vcpu_vmx *vmx = to_vmx(vcpu);
  
-@@ -7943,7 +7943,7 @@ static int vmx_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
+@@ -7957,7 +7957,7 @@ static int vmx_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
  	return 0;
  }
  

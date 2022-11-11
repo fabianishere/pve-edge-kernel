@@ -1,4 +1,4 @@
-From fa637dcaf7f19a746fe507349db8b56f49ab03b0 Mon Sep 17 00:00:00 2001
+From f8365d7cc4eb67c23817af3a9a7bec8a94d9d061 Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Wed, 26 Oct 2022 14:47:45 +0200
 Subject: [PATCH] KVM: x86: do not go through ctxt->ops when emulating rsm
@@ -59,7 +59,7 @@ index d7afbc448dd2..84b1f2661463 100644
  	int (*check_pmc)(struct x86_emulate_ctxt *ctxt, u32 pmc);
  	int (*read_pmc)(struct x86_emulate_ctxt *ctxt, u32 pmc, u64 *pdata);
 diff --git a/arch/x86/kvm/smm.c b/arch/x86/kvm/smm.c
-index 773e07b6397d..41ca128478fc 100644
+index 073dad4f04b5..b290ad14070f 100644
 --- a/arch/x86/kvm/smm.c
 +++ b/arch/x86/kvm/smm.c
 @@ -271,71 +271,59 @@ void enter_smm(struct kvm_vcpu *vcpu)
@@ -272,7 +272,7 @@ index 773e07b6397d..41ca128478fc 100644
 -	u16 selector;
  	int i, r;
  
- 	for (i = 0; i < NR_EMULATOR_GPRS; i++)
+ 	for (i = 0; i < 16; i++)
 @@ -459,51 +446,49 @@ static int rsm_load_state_64(struct x86_emulate_ctxt *ctxt,
  
  	val = GET_SMSTATE(u64, smstate, 0x7f68);
@@ -429,10 +429,10 @@ index 773e07b6397d..41ca128478fc 100644
  	else
  #endif
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index dae68ef0c3c8..77e0ca43ee27 100644
+index 6cf8a0d29a1c..7b4bb25e6b96 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -7171,15 +7171,6 @@ static int emulator_read_std(struct x86_emulate_ctxt *ctxt,
+@@ -7237,15 +7237,6 @@ static int emulator_read_std(struct x86_emulate_ctxt *ctxt,
  	return kvm_read_guest_virt_helper(addr, val, bytes, vcpu, access, exception);
  }
  
@@ -448,7 +448,7 @@ index dae68ef0c3c8..77e0ca43ee27 100644
  static int kvm_write_guest_virt_helper(gva_t addr, void *val, unsigned int bytes,
  				      struct kvm_vcpu *vcpu, u64 access,
  				      struct x86_exception *exception)
-@@ -7956,26 +7947,6 @@ static int emulator_get_msr(struct x86_emulate_ctxt *ctxt,
+@@ -8022,26 +8013,6 @@ static int emulator_get_msr(struct x86_emulate_ctxt *ctxt,
  	return kvm_get_msr(emul_to_vcpu(ctxt), msr_index, pdata);
  }
  
@@ -475,7 +475,7 @@ index dae68ef0c3c8..77e0ca43ee27 100644
  static int emulator_check_pmc(struct x86_emulate_ctxt *ctxt,
  			      u32 pmc)
  {
-@@ -8074,7 +8045,6 @@ static const struct x86_emulate_ops emulate_ops = {
+@@ -8140,7 +8111,6 @@ static const struct x86_emulate_ops emulate_ops = {
  	.write_gpr           = emulator_write_gpr,
  	.read_std            = emulator_read_std,
  	.write_std           = emulator_write_std,
@@ -483,7 +483,7 @@ index dae68ef0c3c8..77e0ca43ee27 100644
  	.fetch               = kvm_fetch_guest_virt,
  	.read_emulated       = emulator_read_emulated,
  	.write_emulated      = emulator_write_emulated,
-@@ -8094,11 +8064,8 @@ static const struct x86_emulate_ops emulate_ops = {
+@@ -8160,11 +8130,8 @@ static const struct x86_emulate_ops emulate_ops = {
  	.cpl                 = emulator_get_cpl,
  	.get_dr              = emulator_get_dr,
  	.set_dr              = emulator_set_dr,

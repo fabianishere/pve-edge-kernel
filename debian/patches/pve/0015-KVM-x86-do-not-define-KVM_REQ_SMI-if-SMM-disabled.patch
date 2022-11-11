@@ -1,4 +1,4 @@
-From 20e250dd42abe942ed3498c5b5be02699e38cc4a Mon Sep 17 00:00:00 2001
+From 3afdde6112c643fcfecadfbfec864a9f0ac0a809 Mon Sep 17 00:00:00 2001
 From: Paolo Bonzini <pbonzini@redhat.com>
 Date: Tue, 25 Oct 2022 15:47:26 +0300
 Subject: [PATCH] KVM: x86: do not define KVM_REQ_SMI if SMM disabled
@@ -40,10 +40,10 @@ index 7ccce6b655ca..a6795b93ba30 100644
  /*
   * emulator_leave_smm is used as a function pointer, so the
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 33c8fb8f4c61..7b109120f47d 100644
+index f4bcab667704..44eb44c3585a 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -5013,8 +5013,10 @@ static void kvm_vcpu_ioctl_x86_get_vcpu_events(struct kvm_vcpu *vcpu,
+@@ -5020,8 +5020,10 @@ static void kvm_vcpu_ioctl_x86_get_vcpu_events(struct kvm_vcpu *vcpu,
  {
  	process_nmi(vcpu);
  
@@ -54,7 +54,7 @@ index 33c8fb8f4c61..7b109120f47d 100644
  
  	/*
  	 * In guest mode, payload delivery should be deferred,
-@@ -10027,8 +10029,10 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
+@@ -10109,8 +10111,10 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
  		}
  		if (kvm_check_request(KVM_REQ_STEAL_UPDATE, vcpu))
  			record_steal_time(vcpu);
@@ -65,7 +65,7 @@ index 33c8fb8f4c61..7b109120f47d 100644
  		if (kvm_check_request(KVM_REQ_NMI, vcpu))
  			process_nmi(vcpu);
  		if (kvm_check_request(KVM_REQ_PMU, vcpu))
-@@ -12351,7 +12355,9 @@ bool kvm_arch_dy_runnable(struct kvm_vcpu *vcpu)
+@@ -12435,7 +12439,9 @@ bool kvm_arch_dy_runnable(struct kvm_vcpu *vcpu)
  		return true;
  
  	if (kvm_test_request(KVM_REQ_NMI, vcpu) ||
