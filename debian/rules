@@ -86,13 +86,12 @@ override_dh_auto_clean: debian/control
 PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PVE_KERNEL_PKG}.%, $(wildcard debian/templates/pve-kernel.*.in))
 
 ${KERNEL_SRC}/.config:
+	python3 ${KERNEL_SRC}/debian/scripts/misc/annotations -f ${KERNEL_SRC}/debian.master/config/annotations -a ${DEB_BUILD_ARCH} --export > ${KERNEL_SRC}/debian.master/config/config.ubuntu
 	${KERNEL_SRC}/scripts/kconfig/merge_config.sh -m \
 		-O ${KERNEL_SRC} \
-		${KERNEL_SRC}/debian.master/config/config.common.ubuntu \
-		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.common.${DEB_BUILD_ARCH} \
-		${KERNEL_SRC}/debian.master/config/${DEB_BUILD_ARCH}/config.flavour.generic \
+		${KERNEL_SRC}/debian.master/config/config.ubuntu \
 		debian/config/config.pve
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} oldconfig
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} olddefconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
