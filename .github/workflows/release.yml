@@ -67,13 +67,12 @@ jobs:
     - name: Format Release Name
       id: format_release
       run: |
-        release=$(scripts/version.sh)
-        echo "::set-output name=release::$release"
+        echo "release=$(scripts/version.sh)" >> $GITHUB_OUTPUT
         changelog=$(dpkg-parsechangelog -c 1 -l debian/changelog)
         changelog="${changelog//'%'/'%25'}"
         changelog="${changelog//$'\n'/'%0A'}"
         changelog="${changelog//$'\r'/'%0D'}"
-        echo "::set-output name=changelog::$changelog"
+        echo "changelog=$changelog" >> $GITHUB_OUTPUT
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:

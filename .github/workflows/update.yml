@@ -33,14 +33,14 @@ jobs:
         VERSION_OPT=${VERSION:+-v ${VERSION}}
         RELEASE_OPT=${RELEASE:+-r ${RELEASE}}
         ./scripts/update.sh -t ${{ github.event.inputs.tag }} $VERSION_OPT $RELEASE_OPT
-        echo "::set-output name=version::$(scripts/version.sh -L)"
-        echo "::set-output name=full::$(scripts/version.sh)"
+        echo "version=$(scripts/version.sh -L)" >> $GITHUB_OUTPUT
+        echo "full=$(scripts/version.sh)" >> $GITHUB_OUTPUT
         changelog=$(dpkg-parsechangelog -c 1 -l debian/changelog)
         changelog="${changelog//'%'/'%25'}"
         changelog="${changelog//$'\n'/'%0A'}"
         changelog="${changelog//$'\r'/'%0D'}"
-        echo "::set-output name=changelog::$changelog"
-        echo "::set-output name=branch::${GITHUB_REF##*/}"
+        echo "changelog=$changelog" >> $GITHUB_OUTPUT
+        echo "branch=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v4
       with:

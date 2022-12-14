@@ -35,7 +35,7 @@ jobs:
             exit 0
         fi
         echo "No staging update found: triggering update"
-        echo "::set-output name=version::$NEW"
+        echo "version=$NEW" >> $GITHUB_OUTPUT
     - name: Trigger Update
       if: ${{ steps.check.outputs.version }}
       uses: benc-uk/workflow-dispatch@v1
