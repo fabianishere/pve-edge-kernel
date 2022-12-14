@@ -67,10 +67,7 @@ jobs:
       run: |
         echo "release=$(scripts/version.sh)" >> $GITHUB_OUTPUT
         changelog=$(dpkg-parsechangelog -c 1 -l debian/changelog)
-        changelog="${changelog//'%'/'%25'}"
-        changelog="${changelog//$'\n'/'%0A'}"
-        changelog="${changelog//$'\r'/'%0D'}"
-        echo "changelog=$changelog" >> $GITHUB_OUTPUT
+        echo "changelog<<EOF\n$changelog\nEOF" >> $GITHUB_OUTPUT
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:

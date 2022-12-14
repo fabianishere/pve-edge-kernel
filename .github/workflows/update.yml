@@ -36,10 +36,7 @@ jobs:
         echo "version=$(scripts/version.sh -L)" >> $GITHUB_OUTPUT
         echo "full=$(scripts/version.sh)" >> $GITHUB_OUTPUT
         changelog=$(dpkg-parsechangelog -c 1 -l debian/changelog)
-        changelog="${changelog//'%'/'%25'}"
-        changelog="${changelog//$'\n'/'%0A'}"
-        changelog="${changelog//$'\r'/'%0D'}"
-        echo "changelog=$changelog" >> $GITHUB_OUTPUT
+        echo "changelog<<EOF\n$changelog\nEOF" >> $GITHUB_OUTPUT
         echo "branch=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v4
