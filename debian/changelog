@@ -1,3 +1,10 @@
+pve-kernel (6.1.0-1) edge; urgency=medium
+
+  * Update to Linux 6.1
+  * Update to ZFS 2.1.7
+
+ -- Fabian Mastenbroek <mail.fabianm@gmail.com>  Sat, 17 Dec 2022 17:00:00 +0000
+
 pve-kernel (6.0.0-1) edge; urgency=medium
 
   * Update to Linux 6.0

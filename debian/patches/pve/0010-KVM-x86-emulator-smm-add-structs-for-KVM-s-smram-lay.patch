@@ -1,0 +1,280 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Wed, 3 Aug 2022 18:50:05 +0300
+Subject: [PATCH] KVM: x86: emulator/smm: add structs for KVM's smram layout
+
+Those structs will be used to read/write the smram state image.
+
+Also document the differences between KVM's SMRAM layout and SMRAM
+layout that is used by real Intel/AMD cpus.
+
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+---
+ arch/x86/kvm/emulate.c     |   6 +
+ arch/x86/kvm/kvm_emulate.h | 218 +++++++++++++++++++++++++++++++++++++
+ arch/x86/kvm/x86.c         |   1 +
+ 3 files changed, 225 insertions(+)
+
+diff --git a/arch/x86/kvm/emulate.c b/arch/x86/kvm/emulate.c
+index 4f7f5117ec7a..470dd4453b01 100644
+--- a/arch/x86/kvm/emulate.c
++++ b/arch/x86/kvm/emulate.c
+@@ -5856,3 +5856,9 @@ bool emulator_can_use_gpa(struct x86_emulate_ctxt *ctxt)
+ 
+ 	return true;
+ }
++
++void  __init kvm_emulator_init(void)
++{
++	__check_smram32_offsets();
++	__check_smram64_offsets();
++}
+diff --git a/arch/x86/kvm/kvm_emulate.h b/arch/x86/kvm/kvm_emulate.h
+index 89246446d6aa..dd0ae61e44a1 100644
+--- a/arch/x86/kvm/kvm_emulate.h
++++ b/arch/x86/kvm/kvm_emulate.h
+@@ -13,6 +13,7 @@
+ #define _ASM_X86_KVM_X86_EMULATE_H
+ 
+ #include <asm/desc_defs.h>
++#include <linux/build_bug.h>
+ #include "fpu.h"
+ 
+ struct x86_emulate_ctxt;
+@@ -503,6 +504,223 @@ enum x86_intercept {
+ 	nr_x86_intercepts
+ };
+ 
++
++/* 32 bit KVM's emulated SMM layout. Loosely based on Intel's layout */
++
++struct kvm_smm_seg_state_32 {
++	u32 flags;
++	u32 limit;
++	u32 base;
++} __packed;
++
++struct kvm_smram_state_32 {
++	u32 reserved1[62];
++	u32 smbase;
++	u32 smm_revision;
++	u32 reserved2[5];
++	u32 cr4; /* CR4 is not present in Intel/AMD SMRAM image */
++	u32 reserved3[5];
++
++	/*
++	 * Segment state is not present/documented in the Intel/AMD SMRAM image
++	 * Instead this area on Intel/AMD contains IO/HLT restart flags.
++	 */
++	struct kvm_smm_seg_state_32 ds;
++	struct kvm_smm_seg_state_32 fs;
++	struct kvm_smm_seg_state_32 gs;
++	struct kvm_smm_seg_state_32 idtr; /* IDTR has only base and limit */
++	struct kvm_smm_seg_state_32 tr;
++	u32 reserved;
++	struct kvm_smm_seg_state_32 gdtr; /* GDTR has only base and limit */
++	struct kvm_smm_seg_state_32 ldtr;
++	struct kvm_smm_seg_state_32 es;
++	struct kvm_smm_seg_state_32 cs;
++	struct kvm_smm_seg_state_32 ss;
++
++	u32 es_sel;
++	u32 cs_sel;
++	u32 ss_sel;
++	u32 ds_sel;
++	u32 fs_sel;
++	u32 gs_sel;
++	u32 ldtr_sel;
++	u32 tr_sel;
++
++	u32 dr7;
++	u32 dr6;
++	u32 gprs[8]; /* GPRS in the "natural" X86 order (EAX/ECX/EDX.../EDI) */
++	u32 eip;
++	u32 eflags;
++	u32 cr3;
++	u32 cr0;
++} __packed;
++
++
++static inline void __check_smram32_offsets(void)
++{
++#define __CHECK_SMRAM32_OFFSET(field, offset) \
++	ASSERT_STRUCT_OFFSET(struct kvm_smram_state_32, field, offset - 0xFE00)
++
++	__CHECK_SMRAM32_OFFSET(reserved1,	0xFE00);
++	__CHECK_SMRAM32_OFFSET(smbase,		0xFEF8);
++	__CHECK_SMRAM32_OFFSET(smm_revision,	0xFEFC);
++	__CHECK_SMRAM32_OFFSET(reserved2,	0xFF00);
++	__CHECK_SMRAM32_OFFSET(cr4,		0xFF14);
++	__CHECK_SMRAM32_OFFSET(reserved3,	0xFF18);
++	__CHECK_SMRAM32_OFFSET(ds,		0xFF2C);
++	__CHECK_SMRAM32_OFFSET(fs,		0xFF38);
++	__CHECK_SMRAM32_OFFSET(gs,		0xFF44);
++	__CHECK_SMRAM32_OFFSET(idtr,		0xFF50);
++	__CHECK_SMRAM32_OFFSET(tr,		0xFF5C);
++	__CHECK_SMRAM32_OFFSET(gdtr,		0xFF6C);
++	__CHECK_SMRAM32_OFFSET(ldtr,		0xFF78);
++	__CHECK_SMRAM32_OFFSET(es,		0xFF84);
++	__CHECK_SMRAM32_OFFSET(cs,		0xFF90);
++	__CHECK_SMRAM32_OFFSET(ss,		0xFF9C);
++	__CHECK_SMRAM32_OFFSET(es_sel,		0xFFA8);
++	__CHECK_SMRAM32_OFFSET(cs_sel,		0xFFAC);
++	__CHECK_SMRAM32_OFFSET(ss_sel,		0xFFB0);
++	__CHECK_SMRAM32_OFFSET(ds_sel,		0xFFB4);
++	__CHECK_SMRAM32_OFFSET(fs_sel,		0xFFB8);
++	__CHECK_SMRAM32_OFFSET(gs_sel,		0xFFBC);
++	__CHECK_SMRAM32_OFFSET(ldtr_sel,	0xFFC0);
++	__CHECK_SMRAM32_OFFSET(tr_sel,		0xFFC4);
++	__CHECK_SMRAM32_OFFSET(dr7,		0xFFC8);
++	__CHECK_SMRAM32_OFFSET(dr6,		0xFFCC);
++	__CHECK_SMRAM32_OFFSET(gprs,		0xFFD0);
++	__CHECK_SMRAM32_OFFSET(eip,		0xFFF0);
++	__CHECK_SMRAM32_OFFSET(eflags,		0xFFF4);
++	__CHECK_SMRAM32_OFFSET(cr3,		0xFFF8);
++	__CHECK_SMRAM32_OFFSET(cr0,		0xFFFC);
++#undef __CHECK_SMRAM32_OFFSET
++}
++
++
++/* 64 bit KVM's emulated SMM layout. Based on AMD64 layout */
++
++struct kvm_smm_seg_state_64 {
++	u16 selector;
++	u16 attributes;
++	u32 limit;
++	u64 base;
++};
++
++struct kvm_smram_state_64 {
++
++	struct kvm_smm_seg_state_64 es;
++	struct kvm_smm_seg_state_64 cs;
++	struct kvm_smm_seg_state_64 ss;
++	struct kvm_smm_seg_state_64 ds;
++	struct kvm_smm_seg_state_64 fs;
++	struct kvm_smm_seg_state_64 gs;
++	struct kvm_smm_seg_state_64 gdtr; /* GDTR has only base and limit*/
++	struct kvm_smm_seg_state_64 ldtr;
++	struct kvm_smm_seg_state_64 idtr; /* IDTR has only base and limit*/
++	struct kvm_smm_seg_state_64 tr;
++
++	/* I/O restart and auto halt restart are not implemented by KVM */
++	u64 io_restart_rip;
++	u64 io_restart_rcx;
++	u64 io_restart_rsi;
++	u64 io_restart_rdi;
++	u32 io_restart_dword;
++	u32 reserved1;
++	u8 io_inst_restart;
++	u8 auto_hlt_restart;
++	u8 reserved2[6];
++
++	u64 efer;
++
++	/*
++	 * Two fields below are implemented on AMD only, to store
++	 * SVM guest vmcb address if the #SMI was received while in the guest mode.
++	 */
++	u64 svm_guest_flag;
++	u64 svm_guest_vmcb_gpa;
++	u64 svm_guest_virtual_int; /* unknown purpose, not implemented */
++
++	u32 reserved3[3];
++	u32 smm_revison;
++	u32 smbase;
++	u32 reserved4[5];
++
++	/* ssp and svm_* fields below are not implemented by KVM */
++	u64 ssp;
++	u64 svm_guest_pat;
++	u64 svm_host_efer;
++	u64 svm_host_cr4;
++	u64 svm_host_cr3;
++	u64 svm_host_cr0;
++
++	u64 cr4;
++	u64 cr3;
++	u64 cr0;
++	u64 dr7;
++	u64 dr6;
++	u64 rflags;
++	u64 rip;
++	u64 gprs[16]; /* GPRS in a reversed "natural" X86 order (R15/R14/../RCX/RAX.) */
++};
++
++
++static inline void __check_smram64_offsets(void)
++{
++#define __CHECK_SMRAM64_OFFSET(field, offset) \
++	ASSERT_STRUCT_OFFSET(struct kvm_smram_state_64, field, offset - 0xFE00)
++
++	__CHECK_SMRAM64_OFFSET(es,			0xFE00);
++	__CHECK_SMRAM64_OFFSET(cs,			0xFE10);
++	__CHECK_SMRAM64_OFFSET(ss,			0xFE20);
++	__CHECK_SMRAM64_OFFSET(ds,			0xFE30);
++	__CHECK_SMRAM64_OFFSET(fs,			0xFE40);
++	__CHECK_SMRAM64_OFFSET(gs,			0xFE50);
++	__CHECK_SMRAM64_OFFSET(gdtr,			0xFE60);
++	__CHECK_SMRAM64_OFFSET(ldtr,			0xFE70);
++	__CHECK_SMRAM64_OFFSET(idtr,			0xFE80);
++	__CHECK_SMRAM64_OFFSET(tr,			0xFE90);
++	__CHECK_SMRAM64_OFFSET(io_restart_rip,		0xFEA0);
++	__CHECK_SMRAM64_OFFSET(io_restart_rcx,		0xFEA8);
++	__CHECK_SMRAM64_OFFSET(io_restart_rsi,		0xFEB0);
++	__CHECK_SMRAM64_OFFSET(io_restart_rdi,		0xFEB8);
++	__CHECK_SMRAM64_OFFSET(io_restart_dword,	0xFEC0);
++	__CHECK_SMRAM64_OFFSET(reserved1,		0xFEC4);
++	__CHECK_SMRAM64_OFFSET(io_inst_restart,		0xFEC8);
++	__CHECK_SMRAM64_OFFSET(auto_hlt_restart,	0xFEC9);
++	__CHECK_SMRAM64_OFFSET(reserved2,		0xFECA);
++	__CHECK_SMRAM64_OFFSET(efer,			0xFED0);
++	__CHECK_SMRAM64_OFFSET(svm_guest_flag,		0xFED8);
++	__CHECK_SMRAM64_OFFSET(svm_guest_vmcb_gpa,	0xFEE0);
++	__CHECK_SMRAM64_OFFSET(svm_guest_virtual_int,	0xFEE8);
++	__CHECK_SMRAM64_OFFSET(reserved3,		0xFEF0);
++	__CHECK_SMRAM64_OFFSET(smm_revison,		0xFEFC);
++	__CHECK_SMRAM64_OFFSET(smbase,			0xFF00);
++	__CHECK_SMRAM64_OFFSET(reserved4,		0xFF04);
++	__CHECK_SMRAM64_OFFSET(ssp,			0xFF18);
++	__CHECK_SMRAM64_OFFSET(svm_guest_pat,		0xFF20);
++	__CHECK_SMRAM64_OFFSET(svm_host_efer,		0xFF28);
++	__CHECK_SMRAM64_OFFSET(svm_host_cr4,		0xFF30);
++	__CHECK_SMRAM64_OFFSET(svm_host_cr3,		0xFF38);
++	__CHECK_SMRAM64_OFFSET(svm_host_cr0,		0xFF40);
++	__CHECK_SMRAM64_OFFSET(cr4,			0xFF48);
++	__CHECK_SMRAM64_OFFSET(cr3,			0xFF50);
++	__CHECK_SMRAM64_OFFSET(cr0,			0xFF58);
++	__CHECK_SMRAM64_OFFSET(dr7,			0xFF60);
++	__CHECK_SMRAM64_OFFSET(dr6,			0xFF68);
++	__CHECK_SMRAM64_OFFSET(rflags,			0xFF70);
++	__CHECK_SMRAM64_OFFSET(rip,			0xFF78);
++	__CHECK_SMRAM64_OFFSET(gprs,			0xFF80);
++#undef __CHECK_SMRAM64_OFFSET
++}
++
++union kvm_smram {
++	struct kvm_smram_state_64 smram64;
++	struct kvm_smram_state_32 smram32;
++	u8 bytes[512];
++};
++
++void  __init kvm_emulator_init(void);
++
++
+ /* Host execution mode. */
+ #if defined(CONFIG_X86_32)
+ #define X86EMUL_MODE_HOST X86EMUL_MODE_PROT32
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index acca85b10545..20aec64e3521 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -13730,6 +13730,7 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(kvm_vmgexit_msr_protocol_exit);
+ static int __init kvm_x86_init(void)
+ {
+ 	kvm_mmu_x86_module_init();
++	kvm_emulator_init();
+ 	return 0;
+ }
+ module_init(kvm_x86_init);

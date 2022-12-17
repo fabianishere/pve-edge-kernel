@@ -17,28 +17,19 @@ $KBUILD_BUILD_TIMESTAMP.
 Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
 Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
- scripts/mkcompile_h | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ init/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/scripts/mkcompile_h b/scripts/mkcompile_h
-index ca40a5258c87..6ae930a732f0 100755
---- a/scripts/mkcompile_h
-+++ b/scripts/mkcompile_h
-@@ -23,10 +23,14 @@ else
- 	VERSION=$KBUILD_BUILD_VERSION
- fi
+diff --git a/init/Makefile b/init/Makefile
+index 8316c23bead2..e99b8de4a93a 100644
+--- a/init/Makefile
++++ b/init/Makefile
+@@ -29,7 +29,7 @@ preempt-flag-$(CONFIG_PREEMPT_DYNAMIC)	:= PREEMPT_DYNAMIC
+ preempt-flag-$(CONFIG_PREEMPT_RT)	:= PREEMPT_RT
  
--if [ -z "$KBUILD_BUILD_TIMESTAMP" ]; then
--	TIMESTAMP=`date`
-+if [ -z "$KBUILD_BUILD_VERSION_TIMESTAMP" ]; then
-+	if [ -z "$KBUILD_BUILD_TIMESTAMP" ]; then
-+		TIMESTAMP=`date`
-+	else
-+		TIMESTAMP=$KBUILD_BUILD_TIMESTAMP
-+	fi
- else
--	TIMESTAMP=$KBUILD_BUILD_TIMESTAMP
-+	TIMESTAMP=$KBUILD_BUILD_VERSION_TIMESTAMP
- fi
- if test -z "$KBUILD_BUILD_USER"; then
- 	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
+ build-version = $(or $(KBUILD_BUILD_VERSION), $(build-version-auto))
+-build-timestamp = $(or $(KBUILD_BUILD_TIMESTAMP), $(build-timestamp-auto))
++build-timestamp = $(or $(KBUILD_BUILD_VERSION_TIMESTAMP), $(KBUILD_BUILD_TIMESTAMP), $(build-timestamp-auto))
+ 
+ # Maximum length of UTS_VERSION is 64 chars
+ filechk_uts_version = \
