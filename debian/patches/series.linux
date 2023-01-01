@@ -27,3 +27,4 @@ pve/0022-KVM-svm-drop-explicit-return-value-of-kvm_vcpu_map.patch
 pve/0023-KVM-x86-SVM-use-smram-structs.patch
 pve/0024-KVM-x86-SVM-don-t-save-SVM-state-to-SMRAM-when-VM-is.patch
 pve/0025-KVM-x86-smm-preserve-interrupt-shadow-in-SMRAM.patch
+pve/0026-Revert-fortify-Do-not-cast-to-unsigned-char.patch

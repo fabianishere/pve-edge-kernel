@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Thomas Lamprecht <t.lamprecht@proxmox.com>
+Date: Tue, 10 Jan 2023 08:52:40 +0100
+Subject: [PATCH] Revert "fortify: Do not cast to "unsigned char""
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This reverts commit 106b7a61c488d2022f44e3531ce33461c7c0685f.
+
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+Signed-off-by: Fabian Grünbichler <f.gruenbichler@proxmox.com>
+---
+ include/linux/fortify-string.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/fortify-string.h b/include/linux/fortify-string.h
+index 5001a11258e4..1067a8450826 100644
+--- a/include/linux/fortify-string.h
++++ b/include/linux/fortify-string.h
+@@ -18,7 +18,7 @@ void __write_overflow_field(size_t avail, size_t wanted) __compiletime_warning("
+ 
+ #define __compiletime_strlen(p)					\
+ ({								\
+-	char *__p = (char *)(p);				\
++	unsigned char *__p = (unsigned char *)(p);		\
+ 	size_t __ret = SIZE_MAX;				\
+ 	size_t __p_size = __member_size(p);			\
+ 	if (__p_size != SIZE_MAX &&				\
