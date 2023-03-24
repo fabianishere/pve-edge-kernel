@@ -11,7 +11,7 @@ jobs:
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
-        branch: ['v6.0.x']
+        branch: []
     steps:
     - name: Checkout Sources
       uses: actions/checkout@v3
